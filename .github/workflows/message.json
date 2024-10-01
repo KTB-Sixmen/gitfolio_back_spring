@@ -1,0 +1,26 @@
+{
+    "korean": {
+        "PR_OPENED": "**PR이 생성되었습니다!**\nPR 명: {title}\n작성자: {user}\n{url}\n ${ job.status }",
+        "PR_SYNCHRONIZE": "**PR이 업데이트 되었습니다!**\nPR 명: {title}\n작성자: {user}\n{url}",
+        "PR_REOPENED": "**PR이 다시 열렸습니다!**\nPR 명: {title}\n작성자: {user}\n{url}\n ${ job.status }",
+        "PR_CLOSED": "**PR이 닫혔습니다!**\nPR 명: {title}\n작성자: {user}\n{url}",
+        "PR_MERGED": "**PR이 병합되었습니다!**\nPR 명: {title}\n작성자: {user}\n{url}",
+        "BRANCH_CREATE": "**브랜치가 생성되었습니다!**\n브런치 명: {title}\n작성자: {user}\n{url}",
+        "BRANCH_DELETE": "**브랜치 삭제되었습니다!**\n브런치 명: {title}\n작성자: {user}\n{url}",
+        "ISSUE_OPENED": "**새로운 이슈가 열렸습니다!**\n이슈 명: {title}\n작성자: {user}\n{url}",
+        "ISSUE_CLOSED": "**이슈가 닫혔습니다!**\n이슈 명: {title}\n작성자: {user}\n{url}",
+        "PUSH": "**새로운 커밋이 발생했습니다!**\n커밋 명: {title}\n작성자: {user}\n{url}"
+    },
+    "english": {
+        "PR_OPENED": "**PR opened!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_SYNCHRONIZE": "**PR synchronized!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_REOPENED": "**PR reopened!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_CLOSED": "**PR closed!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_MERGED": "**PR merged!!**\ntitle: {title}\nby: {user}\n{url}",
+        "BRANCH_CREATE": "**Branch created!**\ntitle: {title}\nby {user}\n{url}",
+        "BRANCH_DELETE": "**Branch deleted!**\ntitle: {title}\nby {user}\n{url}",
+        "ISSUE_OPENED": "**Issue opened!**\ntitle: {title}\nby {user}\n{url}",
+        "ISSUE_CLOSED": "**Issue closed!**\ntitle: {title}\nby {user}\n{url}",
+        "PUSH": "**Commit pushed!**\ntitle: {title}\by: {user}\n{url}"
+    }
+}
