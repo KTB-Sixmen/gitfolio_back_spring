@@ -3,6 +3,7 @@ name: Discord Notifications
 on:
   pull_request: # pr - opened, reopened 이벤트 발생 시 discord 알림
     types: [opened, reopened]
+    
 jobs:
   discordNotification:
     runs-on: ubuntu-latest
