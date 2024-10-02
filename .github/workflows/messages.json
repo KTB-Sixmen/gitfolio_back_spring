@@ -1,0 +1,12 @@
+{
+    "korean": {
+        "PR_OPENED": "**PR이 생성되었습니다!**\nPR 명: {title}\n작성자: {user}\n{url}\n",
+        "PR_SYNCHRONIZE": "**PR이 업데이트 되었습니다!**\nPR 명: {title}\n작성자: {user}\n{url}",
+        "PR_REOPENED": "**PR이 다시 열렸습니다!**\nPR 명: {title}\n작성자: {user}\n{url}\n"
+    },
+    "english": {
+        "PR_OPENED": "**PR opened!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_SYNCHRONIZE": "**PR synchronized!**\ntitle: {title}\nby {user}\n{url}",
+        "PR_REOPENED": "**PR reopened!**\ntitle: {title}\nby {user}\n{url}"
+    }
+}
