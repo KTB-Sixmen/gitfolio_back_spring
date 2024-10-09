@@ -36,6 +36,9 @@ out/
 ### VS Code ###
 .vscode/
 
+### envs ###
+.env
+
 ### Java ###
 # Compiled class file
 *.class
