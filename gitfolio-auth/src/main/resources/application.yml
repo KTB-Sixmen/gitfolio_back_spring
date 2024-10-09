@@ -1,0 +1,23 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-name: GitHub
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}
+            redirect-uri: "http://localhost:8080/login/oauth2/code/github"
+            authorization-grant-type: authorization_code
+            scope: read:user
+
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+
+server:
+  port: 8080
