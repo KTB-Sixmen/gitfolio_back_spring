@@ -1,0 +1,28 @@
+bootJar {
+	enabled = false
+}
+
+jar {
+	enabled = true
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+dependencies {
+	// JPA (MySQL) 관련 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// MongoDB 관련 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	// 공통 모듈 추가
+	implementation project(":gitfolio-common")
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
