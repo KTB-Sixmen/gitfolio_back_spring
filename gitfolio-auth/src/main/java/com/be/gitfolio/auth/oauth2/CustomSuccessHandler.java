@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -25,6 +26,12 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JWTUtil jwtUtil;
     private final RedisTokenRepository redisTokenRepository;
 
+    @Value("${jwt.refreshToken.expiry}")
+    private Long refreshTokenExpiry;
+
+    @Value("${jwt.redirectUrl}")
+    private String redirectUrl;
+
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
 
@@ -39,15 +46,15 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
 
         //토큰 생성
-        String refresh = jwtUtil.createJwt("refresh", username, role, memberId,86400000L);
+        String refresh = jwtUtil.createJwt("refresh", username, role, memberId,refreshTokenExpiry);
 
         //Refresh 토큰 저장
-        redisTokenRepository.saveRefreshToken(username, refresh, 86400000L);
+        redisTokenRepository.saveRefreshToken(username, refresh, refreshTokenExpiry);
 
         //응답 설정
         response.addCookie(createCookie("refresh", refresh));
         response.setStatus(HttpStatus.OK.value());
-        response.sendRedirect("http://localhost:5173/chat");
+        response.sendRedirect(redirectUrl);
     }
 
     private Cookie createCookie(String key, String value) {

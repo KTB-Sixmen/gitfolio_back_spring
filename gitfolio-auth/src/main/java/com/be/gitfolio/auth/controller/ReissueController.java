@@ -8,6 +8,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -19,6 +20,13 @@ public class ReissueController {
 
     private final JWTUtil jwtUtil;
     private final RedisTokenRepository redisTokenRepository;
+
+    @Value("${jwt.accessToken.expiry}")
+    private Long accessTokenExpiry;
+
+    @Value("${jwt.refreshToken.expiry}")
+    private Long refreshTokenExpiry;
+
 
     @PostMapping("/api/auth/reissue")
     public ResponseEntity<?> reissue(HttpServletRequest request, HttpServletResponse response) {
@@ -36,7 +44,7 @@ public class ReissueController {
 
         if (refresh == null) {
             //response status code
-            return new ResponseEntity<>("refresh token null", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Refresh Token null", HttpStatus.BAD_REQUEST);
         }
 
         // Refresh 토큰 만료 확인
@@ -68,12 +76,12 @@ public class ReissueController {
 
 
         //make new JWT
-        String newAccess = jwtUtil.createJwt("access", username, role, memberId, 600000L);
-        String newRefresh = jwtUtil.createJwt("refresh", username, role, memberId, 86400000L);
+        String newAccess = jwtUtil.createJwt("access", username, role, memberId, accessTokenExpiry);
+        String newRefresh = jwtUtil.createJwt("refresh", username, role, memberId, refreshTokenExpiry);
 
         //Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
         redisTokenRepository.deleteRefreshToken(refresh);
-        redisTokenRepository.saveRefreshToken(username, newRefresh, 86400000L);
+        redisTokenRepository.saveRefreshToken(username, newRefresh, refreshTokenExpiry);
 
         // 쿠키와 헤더에 토큰 설정
         response.setHeader("access", newAccess);

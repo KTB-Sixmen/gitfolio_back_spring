@@ -14,6 +14,7 @@ spring:
   jwt:
     secret: ${JWT_SECRET_KEY}
 
+
   data:
     redis:
       host: ${REDIS_HOST}
@@ -21,3 +22,14 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  refreshToken:
+    expiry: 86400000
+  accessToken:
+    expiry: 600000
+  redirectUrl: "http://localhost:5173/chat"
+
+member:
+  server:
+    url: http://localhost:8081

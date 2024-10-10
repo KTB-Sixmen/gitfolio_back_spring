@@ -5,6 +5,7 @@ import com.be.gitfolio.auth.dto.GithubResponse;
 import com.be.gitfolio.auth.dto.MemberDTO;
 import com.be.gitfolio.common.config.BaseResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -22,8 +23,8 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final WebClient webClient;
 
-    public CustomOAuth2UserService(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://localhost:8081").build();
+    public CustomOAuth2UserService(@Value("${member.server.url}") String memberServerUrl, WebClient.Builder webClientBuilder) {
+        this.webClient = webClientBuilder.baseUrl(memberServerUrl).build();
     }
 
     @Override
