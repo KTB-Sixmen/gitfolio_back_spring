@@ -2,10 +2,10 @@ package com.be.gitfolio.auth.config;
 
 import com.be.gitfolio.auth.jwt.CustomLogoutFilter;
 import com.be.gitfolio.auth.jwt.JWTFilter;
-import com.be.gitfolio.auth.jwt.JWTUtil;
 import com.be.gitfolio.auth.oauth2.CustomSuccessHandler;
 import com.be.gitfolio.auth.repository.RedisTokenRepository;
 import com.be.gitfolio.auth.service.CustomOAuth2UserService;
+import com.be.gitfolio.common.jwt.JWTUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

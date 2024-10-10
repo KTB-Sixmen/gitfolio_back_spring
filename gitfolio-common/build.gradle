@@ -1,4 +1,19 @@
 dependencies {
+
+    // JPA (MySQL) 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // MongoDB 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+
+    // JWT 관련 의존성
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
+    implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
+
+    // AWS
+    implementation 'org.springframework.cloud:spring-cloud-starter-aws:2.2.6.RELEASE'
+
 }
 bootJar {
     enabled = false

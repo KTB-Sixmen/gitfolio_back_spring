@@ -76,7 +76,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         log.info("GitHub Response: Username={}, Name={}, AvatarUrl={}", githubResponse.getGithubId(), githubResponse.getName(), githubResponse.getAvatarUrl());
         return MemberSaveRequestDTO.builder()
                 .username(githubResponse.getGithubId())
-                .name(githubResponse.getName())
+                .nickname(githubResponse.getName())
                 .role("ROLE_USER")
                 .avatarUrl(githubResponse.getAvatarUrl())
                 .build();
@@ -87,7 +87,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         OAuth2UserDTO memberDTO = OAuth2UserDTO.builder()
                 .memberId(memberId)
                 .username(githubResponse.getGithubId())
-                .name(githubResponse.getName())
+                .nickname(githubResponse.getName())
                 .role("ROLE_USER")
                 .build();
 
