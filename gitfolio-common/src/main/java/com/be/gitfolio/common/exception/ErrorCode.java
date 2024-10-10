@@ -24,11 +24,11 @@ public enum ErrorCode {
     /**
      * 토큰 에러
      */
-    TOKEN_IS_MISSING(HttpStatus.NOT_FOUND, "토큰이 존재하지 않습니다."),
+    TOKEN_IS_MISSING(HttpStatus.UNAUTHORIZED, "토큰이 존재하지 않습니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
-    TOKEN_CATEGORY_INCORRECT(HttpStatus.BAD_REQUEST, "토큰의 종류가 맞지 않습니다."),
-    TOKEN_NULL(HttpStatus.BAD_REQUEST, "토큰이 null 입니다."),
+    TOKEN_CATEGORY_INCORRECT(HttpStatus.UNAUTHORIZED, "토큰의 종류가 맞지 않습니다."),
+    TOKEN_NULL(HttpStatus.UNAUTHORIZED, "토큰이 null 입니다."),
 
 
     /**
