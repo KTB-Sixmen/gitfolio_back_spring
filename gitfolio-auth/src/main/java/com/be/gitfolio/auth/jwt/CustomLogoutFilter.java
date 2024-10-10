@@ -1,6 +1,7 @@
 package com.be.gitfolio.auth.jwt;
 
 import com.be.gitfolio.auth.repository.RedisTokenRepository;
+import com.be.gitfolio.common.jwt.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
