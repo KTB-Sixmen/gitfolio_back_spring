@@ -3,6 +3,7 @@ package com.be.gitfolio.common.aop;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Date;
 import java.util.Objects;
 
 @Component
@@ -37,7 +39,9 @@ public class AuthAspect {
         }
 
         // 토큰이 만료되었는지 검사
-        if (jwtUtil.isExpired(accessToken)) {
+        try {
+            jwtUtil.isExpired(accessToken);
+        } catch (ExpiredJwtException e) {
             throw new BaseException(ErrorCode.EXPIRED_TOKEN);
         }
 
