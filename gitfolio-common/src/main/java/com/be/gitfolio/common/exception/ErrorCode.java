@@ -16,23 +16,20 @@ public enum ErrorCode {
     /**
      * 멤버 에러
      */
-    LOGIN_FAILED(HttpStatus.BAD_REQUEST, "사용자 로그인에 실패했습니다."),
+    NO_MEMBER_INFO(HttpStatus.NOT_FOUND, "회원 정보가 존재하지 않습니다."),
     BAD_INPUT(HttpStatus.BAD_REQUEST, "입력 형식이 잘못되었습니다."),
-    NO_USER_INFO(HttpStatus.NOT_FOUND, "사용자 정보가 존재하지 않습니다."),
-    EXISTING_USER_INFO(HttpStatus.CONFLICT, "이미 존재하는 사용자입니다."),
+    ALREADY_EXIST_MEMBER_ADDITIONAL_INFO(HttpStatus.CONFLICT, "이미 회원의 추가정보가 존재합니다."),
+    NO_MEMBER_ADDITIONAL_INFO(HttpStatus.NOT_FOUND, "회원 추가 정보가 존재하지 않습니다."),
 
     /**
      * 토큰 에러
      */
-    NO_TOKEN_CONTENT(HttpStatus.BAD_REQUEST, "토큰의 내용을 가져오지 못했습니다."),
+    TOKEN_IS_MISSING(HttpStatus.UNAUTHORIZED, "토큰이 존재하지 않습니다."),
     EXPIRED_TOKEN(HttpStatus.UNAUTHORIZED, "토큰이 만료되었습니다."),
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
-    TOKEN_CATEGORY_INCORRECT(HttpStatus.BAD_REQUEST, "토큰의 종류가 맞지 않습니다."),
+    TOKEN_CATEGORY_INCORRECT(HttpStatus.UNAUTHORIZED, "토큰의 종류가 맞지 않습니다."),
+    TOKEN_NULL(HttpStatus.UNAUTHORIZED, "토큰이 null 입니다."),
 
-    /**
-     * 상품 에러
-     */
-    NOT_EXIST_PRODUCT(HttpStatus.NOT_FOUND, "존재하지 않는 상품입니다."),
 
     /**
      * 채팅 에러

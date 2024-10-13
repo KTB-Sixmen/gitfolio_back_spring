@@ -14,7 +14,7 @@ public class MemberDTO {
     @NoArgsConstructor
     public static class MemberSaveRequestDTO {
         private String role;
-        private String name;
+        private String nickname;
         private String username;
         private String avatarUrl;
     }
@@ -26,7 +26,7 @@ public class MemberDTO {
     public static class OAuth2UserDTO {
         private Long memberId;
         private String role;
-        private String name;
+        private String nickname;
         private String username;
     }
 

@@ -2,6 +2,7 @@ package com.be.gitfolio.auth.jwt;
 
 import com.be.gitfolio.auth.dto.CustomOAuth2User;
 import com.be.gitfolio.auth.dto.MemberDTO;
+import com.be.gitfolio.common.jwt.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -83,7 +84,6 @@ public class JWTFilter extends OncePerRequestFilter {
         //토큰에서 username과 role 획득
         String username = jwtUtil.getUsername(accessToken);
         String role = jwtUtil.getRole(accessToken);
-        String avatarUrl = jwtUtil.getAvatarUrl(accessToken);
         Long memberId = jwtUtil.getMemberId(accessToken);
 
         //userDTO를 생성하여 값 set
