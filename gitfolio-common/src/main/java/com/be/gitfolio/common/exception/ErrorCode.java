@@ -9,6 +9,11 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     /**
+     * 이력서 에러
+     */
+    RESUME_NOT_FOUND(HttpStatus.NOT_FOUND, "이력서가 존재하지 않습니다."),
+
+    /**
      * 인증 에러
      */
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "인증에 실패했습니다."),
@@ -29,6 +34,7 @@ public enum ErrorCode {
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
     TOKEN_CATEGORY_INCORRECT(HttpStatus.UNAUTHORIZED, "토큰의 종류가 맞지 않습니다."),
     TOKEN_NULL(HttpStatus.UNAUTHORIZED, "토큰이 null 입니다."),
+    INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "토큰의 Signature이 유효하지 않습니다."),
 
 
     /**
