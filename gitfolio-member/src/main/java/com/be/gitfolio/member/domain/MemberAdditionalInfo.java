@@ -23,9 +23,7 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
 
     @Id
     private String id;
-
     private String memberId; // 회원 ID
-
     private List<WorkExperience> workExperiences;
     private List<Education> educations;
     private List<Certificate> certificates;
