@@ -1,4 +1,4 @@
-package com.be.gitfolio.auth.config;
+package com.be.gitfolio.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
