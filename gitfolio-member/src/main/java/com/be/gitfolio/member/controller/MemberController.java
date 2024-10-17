@@ -49,33 +49,6 @@ public class MemberController {
         }
     }
 
-    /**
-     * 회원 추가 정보 생성
-     */
-    @AuthRequired
-    @PostMapping("/additionalInfo")
-    public ResponseEntity<BaseResponse<String>> createMemberAdditionalInfo(HttpServletRequest request,
-                                                                           @RequestBody MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
-        Long memberId = (Long) request.getAttribute("memberId");
-        return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
-                HttpStatus.CREATED,
-                "201 CREATED",
-                "회원 추가정보 생성에 성공했습니다.",
-                memberService.createMemberAdditionalInfo(memberId, memberAdditionalRequestDTO)));
-    }
-
-    /**
-     * 회원 추가 정보 수정
-     */
-    @AuthRequired
-    @PutMapping("/additionalInfo")
-    public ResponseEntity<BaseResponse<String>> updateMemberAdditionalInfo(HttpServletRequest request,
-                                                                           @RequestBody MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
-        Long memberId = (Long) request.getAttribute("memberId");
-        memberService.updateMemberAdditionalInfo(memberId, memberAdditionalRequestDTO);
-        return ResponseEntity.ok().body(new BaseResponse<>("회원 추가 정보 수정이 완료되었습니다."));
-    }
-
 
     /**
      * 회원 정보 상세 조회
@@ -94,10 +67,11 @@ public class MemberController {
     @PutMapping("/me")
     public ResponseEntity<BaseResponse<String>> updateMemberBasicInfo(HttpServletRequest request,
                                                                       @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
+                                                                      @RequestPart("memberAdditionalRequestDTO") MemberAdditionalRequestDTO memberAdditionalRequestDTO,
                                                                       @RequestPart("imageFile") MultipartFile imageFile) throws IOException {
 
         Long memberId = (Long) request.getAttribute("memberId");
-        memberService.updateMemberBasicInfo(memberId, memberUpdateRequestDTO, imageFile);
+        memberService.updateMemberInfo(memberId, memberUpdateRequestDTO, memberAdditionalRequestDTO, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("회원 기본 정보 수정이 완료되었습니다."));
     }
 }
