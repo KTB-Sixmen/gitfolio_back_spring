@@ -1,4 +1,7 @@
 spring:
+  # .env import
+  config:
+    import: optional:file:.env[.properties]
   security:
     oauth2:
       client:
@@ -10,6 +13,8 @@ spring:
             redirect-uri: "http://localhost:8080/login/oauth2/code/github"
             authorization-grant-type: authorization_code
             scope: read:user
+  datasource:
+    url: none
 
   jwt:
     secret: ${JWT_SECRET_KEY}
