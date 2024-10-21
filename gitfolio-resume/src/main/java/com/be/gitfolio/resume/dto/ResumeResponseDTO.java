@@ -1,5 +1,6 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -78,4 +79,23 @@ public class ResumeResponseDTO {
         private List<String> tags;
         private String aboutMe;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class CommentResponseDTO {
+        private Long id;
+        private String resumeId;
+        private Long memberId;
+        private String content;
+
+        public CommentResponseDTO(Comment comment) {
+            this.id = comment.getId();
+            this.resumeId = comment.getResumeId();
+            this.memberId = comment.getMemberId();
+            this.content = comment.getContent();
+        }
+    }
+
 }

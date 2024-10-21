@@ -59,4 +59,13 @@ public class ResumeRequestDTO {
         private List<Resume.Activity> activities;  // 대외 활동
         private List<Resume.Certificate> certificates;  // 자격증
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class CommentRequestDTO {
+        private String content;
+    }
+
 }

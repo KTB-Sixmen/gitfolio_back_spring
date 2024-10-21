@@ -4,6 +4,8 @@ import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.dto.ResumeResponseDTO;
+import com.be.gitfolio.resume.service.CommentService;
+import com.be.gitfolio.resume.service.LikeService;
 import com.be.gitfolio.resume.service.ResumeService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -22,12 +24,14 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 public class ResumeController {
 
     private final ResumeService resumeService;
+    private final LikeService likeService;
+    private final CommentService commentService;
 
     /**
      * 이력서 생성 요청
      */
     @AuthRequired
-    @PostMapping
+    @PostMapping()
     public ResponseEntity<BaseResponse<String>> createResume(HttpServletRequest request,
                                                              @RequestBody CreateResumeRequestDTO createResumeRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
@@ -42,7 +46,7 @@ public class ResumeController {
     /**
      * 이력서 목록 조회
      */
-    @GetMapping
+    @GetMapping()
     public ResponseEntity<BaseResponse<List<ResumeListDTO>>> getResumeList() {
         return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList()));
     }
@@ -97,4 +101,63 @@ public class ResumeController {
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
 
+    /**
+     * 좋아요 기능
+     */
+    @AuthRequired
+    @PostMapping("/{resumeId}/likes")
+    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId, HttpServletRequest request) {
+        String memberId = request.getAttribute("memberId").toString();
+        boolean liked = likeService.toggleLike(resumeId, Long.valueOf(memberId));
+        if (liked) {
+            return ResponseEntity.ok().body(new BaseResponse<>("좋아요가 추가되었습니다."));
+        } else {
+            return ResponseEntity.ok().body(new BaseResponse<>("좋아요 상태가 변경되었습니다."));
+        }
+    }
+
+    /**
+     * 댓글 작성
+     */
+    @AuthRequired
+    @PostMapping("/{resumeId}/comments")
+    public ResponseEntity<BaseResponse<Long>> createComment(@PathVariable("resumeId") String resumeId,
+                                                            HttpServletRequest request,
+                                                            @RequestBody CommentRequestDTO commentRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        return ResponseEntity.ok().body(new BaseResponse<>(commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)));
+    }
+
+    /**
+     * 댓글 수정
+     */
+    @AuthRequired
+    @PatchMapping("/comments/{commentId}")
+    public ResponseEntity<BaseResponse<String>> updateComment(@PathVariable("commentId") Long commentId,
+                                                              HttpServletRequest request,
+                                                              @RequestBody CommentRequestDTO commentRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        commentService.updateComment(commentId, Long.valueOf(memberId), commentRequestDTO);
+        return ResponseEntity.ok().body(new BaseResponse<>("댓글이 수정되었습니다."));
+    }
+
+    /**
+     * 댓글 삭제
+     */
+    @AuthRequired
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<BaseResponse<String>> deleteComment(@PathVariable("commentId") Long commentId,
+                                                              HttpServletRequest request) {
+        String memberId = request.getAttribute("memberId").toString();
+        commentService.deleteComment(commentId, Long.valueOf(memberId));
+        return ResponseEntity.ok().body(new BaseResponse<>("댓글 삭제가 완료되었습니다."));
+    }
+
+    /**
+     * 이력서별 댓글 조회
+     */
+    @GetMapping("/{resumeId}/comments")
+    public ResponseEntity<BaseResponse<List<CommentResponseDTO>>> getCommentList(@PathVariable("resumeId") String resumeId) {
+        return ResponseEntity.ok().body(new BaseResponse<>(commentService.getCommentList(resumeId)));
+    }
 }
