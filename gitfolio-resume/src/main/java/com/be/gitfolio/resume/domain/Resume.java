@@ -1,5 +1,6 @@
 package com.be.gitfolio.resume.domain;
 
+import com.be.gitfolio.common.config.BaseEntityMongo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +17,7 @@ import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Document(collection = "resume")
-public class Resume {
+public class Resume extends BaseEntityMongo {
 
     @Id
     private String id;  // 이력서 ID
