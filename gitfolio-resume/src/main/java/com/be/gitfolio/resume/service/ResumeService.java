@@ -91,6 +91,7 @@ public class ResumeService {
 
     /**
      * 이력서 삭제
+     * TODO : 좋아요 삭제 / 댓글 삭제 구현해야함!
      */
     @Transactional
     public void deleteResume(String resumeId) {
