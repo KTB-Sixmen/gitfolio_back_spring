@@ -26,6 +26,11 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+    // JPA (MySQL) 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
     // Redis 의존성
     implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.0'
 

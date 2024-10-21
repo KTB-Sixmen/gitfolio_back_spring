@@ -1,12 +1,15 @@
 spring:
+  # .env import
+  config:
+    import: optional:file:.env[.properties]
   data:
     mongodb:
       uri: mongodb://localhost:27017/gitfolio
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MYSQL_DB_HOST}:3306/${MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
-    username: ${MYSQL_DB_USERNAME}
-    password: ${MYSQL_DB_PASSWORD}
+    url: jdbc:mysql://${MEMBER_MYSQL_DB_HOST}:${MEMBER_MYSQL_DB_PORT}/${MEMBER_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${MEMBER_MYSQL_DB_USERNAME}
+    password: ${MEMBER_MYSQL_DB_PASSWORD}
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -40,3 +43,5 @@ cloud:
 
 server:
   port: 8081
+grpc:
+  port: 9090
