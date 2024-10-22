@@ -1,0 +1,43 @@
+bootJar {
+    enabled = false
+}
+
+jar {
+    enabled = true
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+dependencies {
+
+    // gRPC 관련 의존성
+    implementation 'io.grpc:grpc-netty-shaded:1.45.1'
+    implementation 'io.grpc:grpc-protobuf:1.45.1'
+    implementation 'io.grpc:grpc-stub:1.45.1'
+    implementation 'io.grpc:grpc-core:1.45.1'
+    implementation 'com.google.protobuf:protobuf-java:4.28.2'
+
+    // grpc-spring-boot-starter 의존성 추가
+    implementation 'io.github.lognet:grpc-spring-boot-starter:5.1.5'
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+
+    // MongoDB 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // JPA (MySQL) 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+    runtimeOnly 'com.mysql:mysql-connector-j'
+
+    // Redis 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis:3.3.0'
+
+    // 공통 모듈 추가
+    implementation project(":gitfolio-common")
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

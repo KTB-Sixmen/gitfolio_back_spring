@@ -3,13 +3,16 @@ spring:
   config:
     import: optional:file:.env[.properties]
   data:
+    redis:
+      host: localhost
+      port: 6378
     mongodb:
       uri: mongodb://localhost:27017/gitfolio
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${MEMBER_MYSQL_DB_HOST}:${MEMBER_MYSQL_DB_PORT}/${MEMBER_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
-    username: ${MEMBER_MYSQL_DB_USERNAME}
-    password: ${MEMBER_MYSQL_DB_PASSWORD}
+    url: jdbc:mysql://${LIKE_MYSQL_DB_HOST}:${LIKE_MYSQL_DB_PORT}/${LIKE_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${LIKE_MYSQL_DB_USERNAME}
+    password: ${LIKE_MYSQL_DB_PASSWORD}
 
   jpa:
     database-platform: org.hibernate.dialect.MySQLDialect
@@ -21,12 +24,9 @@ spring:
         format_sql: true
         show_sql: true
 
-  servlet:
-    multipart:
-      enabled: true
-      max-request-size: 30MB
-      max-file-size: 30MB
-      resolve-lazily: true
+
+
+
 
   jwt:
     secret: ${JWT_SECRET_KEY}
@@ -41,7 +41,7 @@ cloud:
       accessKey: ${S3_ACCESS_KEY}
       secretKey: ${S3_SECRET_KEY}
 
+
+
 server:
-  port: 8081
-grpc:
-  port: 9090
+  port: 8082

@@ -36,9 +36,14 @@ public class MemberService {
      */
     @Transactional
     public Long createMember(MemberCreateRequestDTO memberCreateRequestDTO) {
+        // 회원 기본정보 생성 및 저장
         Member member = Member.from(memberCreateRequestDTO);
-
         Member savedMember = memberRepository.save(member);
+
+        // 회원 추가정보 생성만
+        MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.from(savedMember.getId());
+        memberAdditionalInfoRepository.save(memberAdditionalInfo);
+
         return savedMember.getId();
     }
 
@@ -49,33 +54,33 @@ public class MemberService {
         return memberRepository.findByUsername(username);
     }
 
-    /**
-     * 회원 추가 정보 생성
-     */
-    @Transactional
-    public String createMemberAdditionalInfo(Long memberId, MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
-        Optional<MemberAdditionalInfo> memberAdditionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(memberId.toString());
+//    /**
+//     * 회원 추가 정보 생성
+//     */
+//    @Transactional
+//    public String createMemberAdditionalInfo(Long memberId, MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
+//        Optional<MemberAdditionalInfo> memberAdditionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(memberId.toString());
+//
+//        if (memberAdditionalInfoOpt.isPresent()) {
+//            throw new BaseException(ErrorCode.ALREADY_EXIST_MEMBER_ADDITIONAL_INFO);
+//        }
+//
+//        MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.of(memberId, memberAdditionalRequestDTO);
+//        MemberAdditionalInfo savedMemberAdditionalInfo = memberAdditionalInfoRepository.save(memberAdditionalInfo);
+//        return savedMemberAdditionalInfo.getId();
+//    }
 
-        if (memberAdditionalInfoOpt.isPresent()) {
-            throw new BaseException(ErrorCode.ALREADY_EXIST_MEMBER_ADDITIONAL_INFO);
-        }
-
-        MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.of(memberId, memberAdditionalRequestDTO);
-        MemberAdditionalInfo savedMemberAdditionalInfo = memberAdditionalInfoRepository.save(memberAdditionalInfo);
-        return savedMemberAdditionalInfo.getId();
-    }
-
-    /**
-     * 회원 추가 정보 수정
-     */
-    @Transactional
-    public void updateMemberAdditionalInfo(Long memberId, MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
-        MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoRepository.findByMemberId(memberId.toString())
-                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_ADDITIONAL_INFO));
-
-        memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalRequestDTO);
-        memberAdditionalInfoRepository.save(memberAdditionalInfo);
-    }
+//    /**
+//     * 회원 추가 정보 수정
+//     */
+//    @Transactional
+//    public void updateMemberAdditionalInfo(Long memberId, MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
+//        MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoRepository.findByMemberId(memberId.toString())
+//                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_ADDITIONAL_INFO));
+//
+//        memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalRequestDTO);
+//        memberAdditionalInfoRepository.save(memberAdditionalInfo);
+//    }
 
 
     /**
@@ -99,7 +104,8 @@ public class MemberService {
      * 회원 기본 정보 수정
      */
     @Transactional
-    public void updateMemberBasicInfo(Long memberId, MemberUpdateRequestDTO memberUpdateRequestDTO, MultipartFile imageFile) throws IOException {
+    public void updateMemberInfo(Long memberId, MemberUpdateRequestDTO memberUpdateRequestDTO, MemberAdditionalRequestDTO memberAdditionalRequestDTO, MultipartFile imageFile) throws IOException {
+        // 기본 정보 수정
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
 
@@ -111,5 +117,13 @@ public class MemberService {
         String avatarUrl = s3Service.uploadFile(imageFile);
 
         member.updateMember(memberUpdateRequestDTO, avatarUrl);
+        memberRepository.save(member);
+
+        // 추가 정보 수정
+        MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoRepository.findByMemberId(memberId.toString())
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_ADDITIONAL_INFO));
+
+        memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalRequestDTO);
+        memberAdditionalInfoRepository.save(memberAdditionalInfo);
     }
 }

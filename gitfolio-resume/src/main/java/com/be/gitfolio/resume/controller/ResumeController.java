@@ -1,0 +1,163 @@
+package com.be.gitfolio.resume.controller;
+
+import com.be.gitfolio.common.aop.AuthRequired;
+import com.be.gitfolio.common.config.BaseResponse;
+import com.be.gitfolio.resume.dto.ResumeRequestDTO;
+import com.be.gitfolio.resume.dto.ResumeResponseDTO;
+import com.be.gitfolio.resume.service.CommentService;
+import com.be.gitfolio.resume.service.LikeService;
+import com.be.gitfolio.resume.service.ResumeService;
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
+import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/api/resumes")
+public class ResumeController {
+
+    private final ResumeService resumeService;
+    private final LikeService likeService;
+    private final CommentService commentService;
+
+    /**
+     * 이력서 생성 요청
+     */
+    @AuthRequired
+    @PostMapping()
+    public ResponseEntity<BaseResponse<String>> createResume(HttpServletRequest request,
+                                                             @RequestBody CreateResumeRequestDTO createResumeRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
+                HttpStatus.CREATED,
+                "201 CREATED",
+                "이력서 생성에 성공했습니다.",
+                resumeService.createResume(memberId, createResumeRequestDTO)
+        ));
+    }
+
+    /**
+     * 이력서 목록 조회
+     */
+    @GetMapping()
+    public ResponseEntity<BaseResponse<List<ResumeListDTO>>> getResumeList() {
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList()));
+    }
+
+    /**
+     * 이력서 상세 조회
+     */
+    @GetMapping("/{resumeId}")
+    public ResponseEntity<BaseResponse<ResumeDetailDTO>> getResumeDetail(@PathVariable("resumeId") String resumeId,
+                                                                         HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeDetail(resumeId, clientIp)));
+    }
+
+    // 클라이언트 IP 가져오는 유틸리티 메서드
+    private String getClientIp(HttpServletRequest request) {
+        String ip = request.getHeader(("X-Forwarded-For"));
+        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
+        return ip;
+    }
+
+    /**
+     * 내 이력서 목록 조회
+     */
+    @AuthRequired
+    @GetMapping("/me")
+    public ResponseEntity<BaseResponse<List<ResumeListDTO>>> getMyResumeList(HttpServletRequest request) {
+        String memberId = request.getAttribute("memberId").toString();
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getMyResumeList(memberId)));
+
+    }
+
+    /**
+     * 이력서 단건 삭제
+     */
+    @AuthRequired
+    @DeleteMapping("/{resumeId}")
+    public ResponseEntity<BaseResponse<String>> deleteResume(@PathVariable("resumeId") String resumeId) {
+        resumeService.deleteResume(resumeId);
+        return ResponseEntity.ok().body(new BaseResponse<>("이력서 삭제가 완료되었습니다."));
+    }
+
+    /**
+     * 이력서 직접 수정
+     */
+    @AuthRequired
+    @PutMapping("/{resumeId}")
+    public ResponseEntity<BaseResponse<String>> updateResume(@PathVariable("resumeId") String resumeId, @RequestBody UpdateResumeRequestDTO updateResumeRequestDTO) {
+        resumeService.updateResume(resumeId, updateResumeRequestDTO);
+        return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
+    }
+
+    /**
+     * 좋아요 기능
+     */
+    @AuthRequired
+    @PostMapping("/{resumeId}/likes")
+    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId, HttpServletRequest request) {
+        String memberId = request.getAttribute("memberId").toString();
+        boolean liked = likeService.toggleLike(resumeId, Long.valueOf(memberId));
+        if (liked) {
+            return ResponseEntity.ok().body(new BaseResponse<>("좋아요가 추가되었습니다."));
+        } else {
+            return ResponseEntity.ok().body(new BaseResponse<>("좋아요 상태가 변경되었습니다."));
+        }
+    }
+
+    /**
+     * 댓글 작성
+     */
+    @AuthRequired
+    @PostMapping("/{resumeId}/comments")
+    public ResponseEntity<BaseResponse<Long>> createComment(@PathVariable("resumeId") String resumeId,
+                                                            HttpServletRequest request,
+                                                            @RequestBody CommentRequestDTO commentRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        return ResponseEntity.ok().body(new BaseResponse<>(commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)));
+    }
+
+    /**
+     * 댓글 수정
+     */
+    @AuthRequired
+    @PatchMapping("/comments/{commentId}")
+    public ResponseEntity<BaseResponse<String>> updateComment(@PathVariable("commentId") Long commentId,
+                                                              HttpServletRequest request,
+                                                              @RequestBody CommentRequestDTO commentRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        commentService.updateComment(commentId, Long.valueOf(memberId), commentRequestDTO);
+        return ResponseEntity.ok().body(new BaseResponse<>("댓글이 수정되었습니다."));
+    }
+
+    /**
+     * 댓글 삭제
+     */
+    @AuthRequired
+    @DeleteMapping("/comments/{commentId}")
+    public ResponseEntity<BaseResponse<String>> deleteComment(@PathVariable("commentId") Long commentId,
+                                                              HttpServletRequest request) {
+        String memberId = request.getAttribute("memberId").toString();
+        commentService.deleteComment(commentId, Long.valueOf(memberId));
+        return ResponseEntity.ok().body(new BaseResponse<>("댓글 삭제가 완료되었습니다."));
+    }
+
+    /**
+     * 이력서별 댓글 조회
+     */
+    @GetMapping("/{resumeId}/comments")
+    public ResponseEntity<BaseResponse<List<CommentResponseDTO>>> getCommentList(@PathVariable("resumeId") String resumeId) {
+        return ResponseEntity.ok().body(new BaseResponse<>(commentService.getCommentList(resumeId)));
+    }
+}

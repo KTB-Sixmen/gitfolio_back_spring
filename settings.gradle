@@ -2,3 +2,4 @@ rootProject.name = 'gitfolio'
 include('gitfolio-common')
 include('gitfolio-auth')
 include('gitfolio-member')
+include('gitfolio-resume')

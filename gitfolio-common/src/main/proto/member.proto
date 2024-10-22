@@ -1,0 +1,27 @@
+syntax = "proto3"; // 프로토콜 버전 3 사용
+
+package com.be.gitfolio.common.grpc; // 패키지 정의 (Java 패키지와 비슷)
+
+option java_package = "com.be.gitfolio.common.grpc"; // Java 코드 생성 시 사용할 패키지
+option java_outer_classname = "MemberServiceProto"; // Java 클래스명
+
+// 서비스 정의
+service MemberService {
+  // Member 정보를 조회하는 RPC 메서드 정의
+  rpc GetMemberById (MemberRequestById) returns (MemberResponseById);
+}
+
+// === memberId로 회원의 Github 아이디(nickname 필드) 조회 ===
+
+// 메시지 구조 정의
+message MemberRequestById {
+  string member_id = 1; // member_id 필드, 1번 필드에 string 데이터 타입
+}
+
+message MemberResponseById {
+  string member_id = 1;
+  string nickname = 2;
+}
+
+
+// ===

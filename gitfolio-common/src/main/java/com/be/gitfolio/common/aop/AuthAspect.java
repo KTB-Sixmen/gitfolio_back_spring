@@ -4,6 +4,7 @@ import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
-import java.util.Date;
 import java.util.Objects;
 
 @Component
@@ -43,6 +43,8 @@ public class AuthAspect {
             jwtUtil.isExpired(accessToken);
         } catch (ExpiredJwtException e) {
             throw new BaseException(ErrorCode.EXPIRED_TOKEN);
+        } catch (SignatureException e) {
+            throw new BaseException(ErrorCode.INVALID_SIGNATURE);
         }
 
         // 토큰이 access인지 검사

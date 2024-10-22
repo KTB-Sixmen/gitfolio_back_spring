@@ -8,6 +8,18 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ErrorCode {
 
+
+    /**
+     * 댓글 에러
+     */
+    COMMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "댓글이 존재하지 않습니다."),
+    INVALID_MEMBER_TO_UPDATE_COMMENT(HttpStatus.FORBIDDEN, "댓글 작성자만 수정할 수 있습니다."),
+
+    /**
+     * 이력서 에러
+     */
+    RESUME_NOT_FOUND(HttpStatus.NOT_FOUND, "이력서가 존재하지 않습니다."),
+
     /**
      * 인증 에러
      */
@@ -29,6 +41,7 @@ public enum ErrorCode {
     TOKEN_NOT_VALID(HttpStatus.UNAUTHORIZED, "토큰이 유효하지 않습니다."),
     TOKEN_CATEGORY_INCORRECT(HttpStatus.UNAUTHORIZED, "토큰의 종류가 맞지 않습니다."),
     TOKEN_NULL(HttpStatus.UNAUTHORIZED, "토큰이 null 입니다."),
+    INVALID_SIGNATURE(HttpStatus.UNAUTHORIZED, "토큰의 Signature이 유효하지 않습니다."),
 
 
     /**
@@ -44,9 +57,8 @@ public enum ErrorCode {
     BAD_REQUEST(HttpStatus.BAD_REQUEST, "잘못된 요청입니다"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "찾을 수 없습니다"),
     METHOD_NOT_ALLOWED(HttpStatus.METHOD_NOT_ALLOWED, "지원하지 않는 HTTP Method 요청입니다."),
-    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류입니다.");
-
-    ;
+    INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "내부 서버 오류입니다."),
+    ;;
 
     private final HttpStatus status;
     private final String message;

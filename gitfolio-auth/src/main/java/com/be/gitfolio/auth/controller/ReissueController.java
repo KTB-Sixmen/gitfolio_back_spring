@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
+
 @RestController
 @RequiredArgsConstructor
 public class ReissueController {
@@ -72,9 +74,6 @@ public class ReissueController {
             return new ResponseEntity<>("Token is NOT in Redis", HttpStatus.BAD_REQUEST);
         }
 
-
-
-
         //make new JWT
         String newAccess = jwtUtil.createJwt("access", username, role, memberId, accessTokenExpiry);
         String newRefresh = jwtUtil.createJwt("refresh", username, role, memberId, refreshTokenExpiry);
@@ -84,10 +83,13 @@ public class ReissueController {
         redisTokenRepository.saveRefreshToken(username, newRefresh, refreshTokenExpiry);
 
         // 쿠키와 헤더에 토큰 설정
-        response.setHeader("access", newAccess);
         response.addCookie(createCookie("refresh", newRefresh));
 
-        return new ResponseEntity<>(HttpStatus.OK);
+        // AccessToken을 body에 담아서 반환
+        HashMap<String, String> tokens = new HashMap<>();
+        tokens.put("access", newAccess);
+
+        return new ResponseEntity<>(tokens, HttpStatus.OK);
     }
 
     private Cookie createCookie(String key, String value) {
@@ -97,6 +99,7 @@ public class ReissueController {
         //cookie.setSecure(true);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
+
 
         return cookie;
     }
