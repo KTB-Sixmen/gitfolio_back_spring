@@ -70,8 +70,8 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         private String role;
         private String workTime;
         private String employmentStatus;
-        private String workStartedAt;
-        private String workEndedAt;
+        private String startedAt;
+        private String endedAt;
     }
 
     @Getter
@@ -83,8 +83,8 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         private String schoolName;
         private String major;
         private String graduationStatus;
-        private String enrollmentStartAt;
-        private String enrollmentEndedAt;
+        private String startAt;
+        private String endedAt;
     }
 
     @Getter
