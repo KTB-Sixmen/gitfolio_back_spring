@@ -4,10 +4,10 @@ spring:
     import: optional:file:.env[.properties]
   data:
     redis:
-      host: localhost
-      port: 6378
+      host: ${RESUME_REDIS_HOST}
+      port: ${RESUME_REDIS_PORT}
     mongodb:
-      uri: mongodb://localhost:27017/gitfolio
+      uri: mongodb://${RESUME_MONGO_DB_USERNAME}:${RESUME_MONGO_DB_PORT}/${RESUME_MONGO_DB_DATABASE}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${LIKE_MYSQL_DB_HOST}:${LIKE_MYSQL_DB_PORT}/${LIKE_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
