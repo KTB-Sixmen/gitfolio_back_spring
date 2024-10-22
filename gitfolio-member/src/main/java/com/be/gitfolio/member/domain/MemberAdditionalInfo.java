@@ -83,7 +83,7 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         private String schoolName;
         private String major;
         private String graduationStatus;
-        private String startAt;
+        private String startedAt;
         private String endedAt;
     }
 
