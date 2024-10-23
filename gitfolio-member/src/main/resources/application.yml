@@ -46,6 +46,10 @@ github:
     url: https://api.github.com
     token: ${GITHUB_API_TOKEN}
 
+jwt:
+  refreshToken:
+    expiry: 86400000
+
 server:
   port: 8081
 grpc:
