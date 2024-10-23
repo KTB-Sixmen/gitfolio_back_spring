@@ -66,6 +66,7 @@ public class ReissueController {
         }
 
         String username = jwtUtil.getUsername(refresh);
+        String nickname = jwtUtil.getNickname(refresh);
         String role = jwtUtil.getRole(refresh);
         Long memberId = jwtUtil.getMemberId(refresh);
 
@@ -75,8 +76,8 @@ public class ReissueController {
         }
 
         //make new JWT
-        String newAccess = jwtUtil.createJwt("access", username, role, memberId, accessTokenExpiry);
-        String newRefresh = jwtUtil.createJwt("refresh", username, role, memberId, refreshTokenExpiry);
+        String newAccess = jwtUtil.createJwt("access", username, nickname, role, memberId, accessTokenExpiry);
+        String newRefresh = jwtUtil.createJwt("refresh", username, nickname, role, memberId, refreshTokenExpiry);
 
         //Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
         redisTokenRepository.deleteRefreshToken(refresh);
@@ -87,7 +88,7 @@ public class ReissueController {
 
         // AccessToken을 body에 담아서 반환
         HashMap<String, String> tokens = new HashMap<>();
-        tokens.put("access", newAccess);
+        tokens.put("accessToken", newAccess);
 
         return new ResponseEntity<>(tokens, HttpStatus.OK);
     }
