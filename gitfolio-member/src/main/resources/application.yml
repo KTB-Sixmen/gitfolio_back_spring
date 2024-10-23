@@ -41,6 +41,11 @@ cloud:
       accessKey: ${S3_ACCESS_KEY}
       secretKey: ${S3_SECRET_KEY}
 
+github:
+  api:
+    url: https://api.github.com
+    token: ${GITHUB_API_TOKEN}
+
 server:
   port: 8081
 grpc:
