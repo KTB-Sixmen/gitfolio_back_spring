@@ -31,12 +31,15 @@ public class AuthAspect {
         HttpServletRequest request = Objects.requireNonNull(attributes, "attributes must not be null").getRequest();
 
         // 헤더에서 AccessToken 추출
-        String accessToken = request.getHeader("access");
+        String authorizationHeader = request.getHeader("Authorization");
 
-        // 토큰이 없거나 빈 값인지 검사
-        if (accessToken == null || accessToken.isEmpty()) {
+        // Authorization 헤더가 존재하는지, 그리고 Bearer로 시작하는지 확인
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new BaseException(ErrorCode.TOKEN_IS_MISSING);
         }
+
+        // Bearer를 제거하고 실제 accessToken만 추출
+        String accessToken = authorizationHeader.substring(7);
 
         // 토큰이 만료되었는지 검사
         try {
@@ -54,7 +57,9 @@ public class AuthAspect {
 
         // 토큰에서 사용자 정보 추출 후 request에 추가
         Long memberId = jwtUtil.getMemberId(accessToken);
+        String nickname = jwtUtil.getNickname(accessToken);
         request.setAttribute("memberId", memberId);
+        request.setAttribute("nickname", nickname);
         log.info("Authenticated Member ID : {}", memberId);
     }
 }
