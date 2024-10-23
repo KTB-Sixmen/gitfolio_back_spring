@@ -53,7 +53,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         redisTokenRepository.saveRefreshToken(username, refresh, refreshTokenExpiry);
 
         //응답 설정
-        response.addCookie(createCookie("refresh", refresh));
+        response.addCookie(createCookie("refreshToken", refresh));
         response.setStatus(HttpStatus.OK.value());
         response.sendRedirect(redirectUrl);
     }

@@ -14,6 +14,9 @@ public class JWTUtil {
 
     private final SecretKey secretKey;
 
+    @Value("${jwt.refreshToken.expiry}")
+    private Long refreshThresholdMs;
+
     public JWTUtil(@Value("${spring.jwt.secret}")String secret) {
         secretKey = new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), Jwts.SIG.HS256.key().build().getAlgorithm());
     }
@@ -40,6 +43,13 @@ public class JWTUtil {
 
     public Boolean isExpired(String token) {
         return Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration().before(new Date());
+    }
+
+    // refreshToken 재발급 여부 확인 (만료시간 절반보다 조금 남았는지 체크)
+    public Boolean isRefreshHaveToReissue(String token) {
+        Date expiration = Jwts.parser().verifyWith(secretKey).build().parseSignedClaims(token).getPayload().getExpiration();
+        long timeRemainingMs = expiration.getTime() - new Date().getTime();
+        return timeRemainingMs <= refreshThresholdMs / 2;
     }
 
     public String createJwt(String category, String username, String nickname, String role, Long memberId, Long expiredMs) {
