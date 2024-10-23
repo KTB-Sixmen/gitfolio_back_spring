@@ -6,12 +6,15 @@ import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.List;
 
 import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
 import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
@@ -19,10 +22,10 @@ import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/members")
+@Slf4j
 public class MemberController {
 
     private final MemberService memberService;
-
 
     /**
      * 회원 생성
@@ -65,13 +68,25 @@ public class MemberController {
      */
     @AuthRequired
     @PutMapping("/me")
-    public ResponseEntity<BaseResponse<String>> updateMemberBasicInfo(HttpServletRequest request,
-                                                                      @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
-                                                                      @RequestPart("memberAdditionalRequestDTO") MemberAdditionalRequestDTO memberAdditionalRequestDTO,
-                                                                      @RequestPart("imageFile") MultipartFile imageFile) throws IOException {
+    public ResponseEntity<BaseResponse<String>> updateMemberBasicInfo(
+            HttpServletRequest request,
+            @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
+            @RequestPart("memberAdditionalRequestDTO") MemberAdditionalRequestDTO memberAdditionalRequestDTO,
+            @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
 
         Long memberId = (Long) request.getAttribute("memberId");
         memberService.updateMemberInfo(memberId, memberUpdateRequestDTO, memberAdditionalRequestDTO, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("회원 기본 정보 수정이 완료되었습니다."));
+    }
+
+    /**
+     * 회원 레포 조회
+     */
+    @AuthRequired
+    @GetMapping("/myRepo")
+    public ResponseEntity<BaseResponse<List<MemberGithubRepositoryDTO>>> getUserRepositoriesWithLanguages(HttpServletRequest request) {
+        String username = String.valueOf(request.getAttribute("nickname"));
+        log.info("사용자 아이디 : {}", username);
+        return ResponseEntity.ok().body(new BaseResponse<>(memberService.getUserRepositoriesWithLanguages(username)));
     }
 }
