@@ -38,6 +38,7 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         //OAuth2User
         CustomOAuth2User customUserDetails = (CustomOAuth2User) authentication.getPrincipal();
         String username = customUserDetails.getUsername();
+        String nickname = customUserDetails.getName();
         Long memberId = customUserDetails.getMemberId();
 
         Collection<? extends GrantedAuthority> authorities = authentication.getAuthorities();
@@ -46,13 +47,13 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String role = auth.getAuthority();
 
         //토큰 생성
-        String refresh = jwtUtil.createJwt("refresh", username, role, memberId,refreshTokenExpiry);
+        String refresh = jwtUtil.createJwt("refresh", username, nickname, role, memberId,refreshTokenExpiry);
 
         //Refresh 토큰 저장
         redisTokenRepository.saveRefreshToken(username, refresh, refreshTokenExpiry);
 
         //응답 설정
-        response.addCookie(createCookie("refresh", refresh));
+        response.addCookie(createCookie("refreshToken", refresh));
         response.setStatus(HttpStatus.OK.value());
         response.sendRedirect(redirectUrl);
     }

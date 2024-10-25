@@ -2,8 +2,11 @@ package com.be.gitfolio.auth.controller;
 
 
 import com.be.gitfolio.auth.repository.RedisTokenRepository;
+import com.be.gitfolio.common.exception.BaseException;
+import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -38,7 +41,7 @@ public class ReissueController {
         Cookie[] cookies = request.getCookies();
         for (Cookie cookie : cookies) {
 
-            if (cookie.getName().equals("refresh")) {
+            if (cookie.getName().equals("refreshToken")) {
 
                 refresh = cookie.getValue();
             }
@@ -46,7 +49,7 @@ public class ReissueController {
 
         if (refresh == null) {
             //response status code
-            return new ResponseEntity<>("Refresh Token null", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Refresh Token null", HttpStatus.UNAUTHORIZED);
         }
 
         // Refresh 토큰 만료 확인
@@ -54,40 +57,48 @@ public class ReissueController {
             jwtUtil.isExpired(refresh);
         } catch (ExpiredJwtException e) {
             //response status code
-            return new ResponseEntity<>("Refresh Token Expired", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Refresh Token Expired", HttpStatus.UNAUTHORIZED);
+        } catch (SignatureException e) {
+            return new ResponseEntity<>("Refresh Signature Does Not Match", HttpStatus.UNAUTHORIZED);
         }
 
         // 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
         String category = jwtUtil.getCategory(refresh);
 
         if (!category.equals("refresh")) {
-            //response status code
-            return new ResponseEntity<>("Category is NOT Refresh", HttpStatus.BAD_REQUEST);
+            // response status code
+            return new ResponseEntity<>("Category is NOT Refresh", HttpStatus.UNAUTHORIZED);
         }
 
         String username = jwtUtil.getUsername(refresh);
+        String nickname = jwtUtil.getNickname(refresh);
         String role = jwtUtil.getRole(refresh);
         Long memberId = jwtUtil.getMemberId(refresh);
 
         // Redis에서 토큰 존재 여부 확인
         if (!redisTokenRepository.existsByRefreshToken(username)) {
-            return new ResponseEntity<>("Token is NOT in Redis", HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>("Token is NOT in Redis", HttpStatus.UNAUTHORIZED);
         }
 
-        //make new JWT
-        String newAccess = jwtUtil.createJwt("access", username, role, memberId, accessTokenExpiry);
-        String newRefresh = jwtUtil.createJwt("refresh", username, role, memberId, refreshTokenExpiry);
+        // make new JWT
+        String newAccess = jwtUtil.createJwt("access", username, nickname, role, memberId, accessTokenExpiry);
 
-        //Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
-        redisTokenRepository.deleteRefreshToken(refresh);
-        redisTokenRepository.saveRefreshToken(username, newRefresh, refreshTokenExpiry);
+        // refreshToken이 만료 기한의 절반보다 적게 남았을때만 재발급
+        if (jwtUtil.isRefreshHaveToReissue(refresh)) {
+            String newRefresh = jwtUtil.createJwt("refresh", username, nickname, role, memberId, refreshTokenExpiry);
 
-        // 쿠키와 헤더에 토큰 설정
-        response.addCookie(createCookie("refresh", newRefresh));
+            //Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
+            redisTokenRepository.deleteRefreshToken(refresh);
+            redisTokenRepository.saveRefreshToken(username, newRefresh, refreshTokenExpiry);
+
+            // 쿠키와 헤더에 토큰 설정
+            response.addCookie(createCookie("refreshToken", newRefresh));
+        }
+
 
         // AccessToken을 body에 담아서 반환
         HashMap<String, String> tokens = new HashMap<>();
-        tokens.put("access", newAccess);
+        tokens.put("accessToken", newAccess);
 
         return new ResponseEntity<>(tokens, HttpStatus.OK);
     }

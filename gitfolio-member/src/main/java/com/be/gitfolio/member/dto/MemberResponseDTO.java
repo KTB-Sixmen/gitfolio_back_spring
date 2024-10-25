@@ -53,4 +53,17 @@ public class MemberResponseDTO {
                     .build();
         }
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class MemberGithubRepositoryDTO {
+        private Long repoId;
+        private String repoName;
+        private String repoUrl;
+        private String topLanguage;
+        private String updatedAt;
+    }
+
 }
