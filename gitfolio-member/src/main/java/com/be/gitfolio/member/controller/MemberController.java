@@ -5,6 +5,7 @@ import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.units.qual.A;
@@ -70,7 +71,7 @@ public class MemberController {
     @PutMapping("/me")
     public ResponseEntity<BaseResponse<String>> updateMemberBasicInfo(
             HttpServletRequest request,
-            @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
+            @Valid @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
             @RequestPart("memberAdditionalRequestDTO") MemberAdditionalRequestDTO memberAdditionalRequestDTO,
             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
 
