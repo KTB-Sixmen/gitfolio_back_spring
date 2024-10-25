@@ -1,6 +1,12 @@
 package com.be.gitfolio.resume.domain;
 
 import com.be.gitfolio.common.config.BaseEntityMongo;
+import com.be.gitfolio.common.type.EmploymentStatus;
+import com.be.gitfolio.common.type.GraduationStatus;
+import com.be.gitfolio.common.type.SchoolType;
+import com.be.gitfolio.common.type.WorkType;
+import com.be.gitfolio.resume.dto.ResumeRequestDTO;
+import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -11,6 +17,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.List;
 
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
+import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 
 @Getter
 @Builder
@@ -22,6 +29,11 @@ public class Resume extends BaseEntityMongo {
     @Id
     private String id;  // 이력서 ID
     private String memberId;  // 회원 ID
+    private String memberName; // 회원 이름
+    private String avatarUrl; // 프로필 사진
+    private String phoneNumber; // 전화번호 TODO: 보안상 이슈가 없을까?
+    private String email; // 이메일 주소
+    private String position; // 포지션(직군)
     private List<String> techStack;  // 기술 스택
     private String aboutMe;  // 자기소개
     private List<String> tags;  // 태그 (회사명 등)
@@ -37,6 +49,14 @@ public class Resume extends BaseEntityMongo {
     public void updateView() {
         this.viewCount++;
     }
+
+    public void increaseLike() {
+        this.likeCount++;
+    }
+
+    public void decreaseLike() {
+        this.likeCount--;
+    }
     public void updateResume(UpdateResumeRequestDTO updateResumeDTO) {
         this.techStack = updateResumeDTO.getTechStack();
         this.aboutMe = updateResumeDTO.getAboutMe();
@@ -49,18 +69,23 @@ public class Resume extends BaseEntityMongo {
         this.certificates = updateResumeDTO.getCertificates();
     }
 
-    public static Resume of(String memberId, CreateResumeRequestDTO createResumeRequestDTO) {
+    public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO) {
         return Resume.builder()
-                .memberId(memberId)
-                .techStack(createResumeRequestDTO.getTechStack())
-                .aboutMe(createResumeRequestDTO.getAboutMe())
-                .tags(createResumeRequestDTO.getTags())
-                .workExperiences(createResumeRequestDTO.getWorkExperiences())
-                .projects(createResumeRequestDTO.getProjects())
-                .links(createResumeRequestDTO.getLinks())
-                .educations(createResumeRequestDTO.getEducations())
-                .activities(createResumeRequestDTO.getActivities())
-                .certificates(createResumeRequestDTO.getCertificates())
+                .memberId(memberInfoDTO.getMemberId())
+                .memberName(memberInfoDTO.getMemberName())
+                .avatarUrl(memberInfoDTO.getAvatarUrl())
+                .phoneNumber(memberInfoDTO.getPhoneNumber())
+                .email(memberInfoDTO.getEmail())
+                .position(memberInfoDTO.getPosition())
+                .techStack(aiResponseDTO.getTechStack())
+                .aboutMe(aiResponseDTO.getAboutMe())
+//                .tags(createResumeRequestDTO.getTags())
+                .workExperiences(memberInfoDTO.getWorkExperiences())
+                .projects(aiResponseDTO.getProjects())
+                .links(memberInfoDTO.getLinks())
+                .educations(memberInfoDTO.getEducations())
+                .activities(memberInfoDTO.getActivities())
+                .certificates(memberInfoDTO.getCertificates())
                 .likeCount(0)
                 .viewCount(0)
                 .build();
@@ -87,10 +112,10 @@ public class Resume extends BaseEntityMongo {
             private String companyName;
             private String departmentName;
             private String role;
-            private String workTime;
-            private String employmentStatus;
-            private String workStartedAt;
-            private String workEndedAt;
+            private WorkType workType;
+            private EmploymentStatus employmentStatus;
+            private String startedAt;
+            private String endedAt;
         }
 
         @Getter
@@ -98,12 +123,12 @@ public class Resume extends BaseEntityMongo {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class Education {
-            private String schoolType;
+            private SchoolType schoolType;
             private String schoolName;
             private String major;
-            private String graduationStatus;
-            private String enrollmentStartAt;
-            private String enrollmentEndedAt;
+            private GraduationStatus graduationStatus;
+            private String startedAt;
+            private String endedAt;
         }
 
         @Getter
