@@ -2,6 +2,7 @@ package com.be.gitfolio.common.exception;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,17 +27,34 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(e.getErrorCode()));
     }
 
+    /*
+     * Validation Exception
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationExceptions(
-            MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationExceptions(final MethodArgumentNotValidException e) {
         Map<String, String> errors = new HashMap<>();
-        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+        for (FieldError error : e.getBindingResult().getFieldErrors()) {
             errors.put(error.getField(), error.getDefaultMessage());
         }
+        log.info("handleMethodArgumentNotValidException: {}", e.getMessage());
         return ResponseEntity
-                .status(ErrorCode.BAD_INPUT.getStatus().value())
-                .body(new ErrorResponse(ErrorCode.BAD_INPUT, errors.toString()));
+                .status(ErrorCode.VALIDATION_ERROR.getStatus().value())
+                .body(new ErrorResponse(ErrorCode.VALIDATION_ERROR, errors.toString()));
     }
+
+    /*
+     * 잘못된 ENUM 타입
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleEnumException(
+            final HttpMessageNotReadableException e
+    ) {
+        log.error("handleHttpMessageNotReadableException: {}", e.getMessage());
+        return ResponseEntity
+                .status(ErrorCode.ENUM_MAPPING_ERROR.getStatus().value())
+                .body(new ErrorResponse(ErrorCode.ENUM_MAPPING_ERROR));
+    }
+
 
     /*
      * HTTP 405 Exception
