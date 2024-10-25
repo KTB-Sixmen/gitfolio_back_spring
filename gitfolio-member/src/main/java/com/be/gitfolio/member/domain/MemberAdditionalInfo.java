@@ -1,6 +1,10 @@
 package com.be.gitfolio.member.domain;
 
 import com.be.gitfolio.common.config.BaseEntityMongo;
+import com.be.gitfolio.common.type.EmploymentStatus;
+import com.be.gitfolio.common.type.GraduationStatus;
+import com.be.gitfolio.common.type.SchoolType;
+import com.be.gitfolio.common.type.WorkType;
 import com.be.gitfolio.member.dto.MemberRequestDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -68,8 +72,8 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         private String companyName;
         private String departmentName;
         private String role;
-        private String workTime;
-        private String employmentStatus;
+        private WorkType workType;
+        private EmploymentStatus employmentStatus;
         private String startedAt;
         private String endedAt;
     }
@@ -79,10 +83,10 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Education {
-        private String schoolType;
+        private SchoolType schoolType;
         private String schoolName;
         private String major;
-        private String graduationStatus;
+        private GraduationStatus graduationStatus;
         private String startedAt;
         private String endedAt;
     }
