@@ -35,11 +35,14 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         GithubResponse githubResponse = new GithubResponse(oAuth2User.getAttributes());
         String username = githubResponse.getGithubId();
 
+        // 회원 조회 및 신규 사용자 여부 판단
+        Mono<Long> memberIdMono = findMemberIdByUsername(username);
+        boolean isNewMember = memberIdMono.blockOptional().isEmpty();  // 회원 ID가 없으면 신규 사용자
+
         // 회원 조회 및 처리
-        return findMemberIdByUsername(username)
-                .switchIfEmpty(createMemberInMemberModule(createMemberSaveRequest(githubResponse)))
-                .map(memberId -> createCustomOAuth2User(memberId, githubResponse))
-                .block();  // Mono를 동기적으로 처리하여 OAuth2User 반환
+        return memberIdMono.switchIfEmpty(createMemberInMemberModule(createMemberSaveRequest(githubResponse)))
+                .map(memberId -> createCustomOAuth2User(memberId, githubResponse, isNewMember))
+                .block();
     }
 
     // 회원 정보 조회를 위한 WebClient 호출 메서드
@@ -83,7 +86,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     // CustomOAuth2User 생성 메서드
-    private CustomOAuth2User createCustomOAuth2User(Long memberId, GithubResponse githubResponse) {
+    private CustomOAuth2User createCustomOAuth2User(Long memberId, GithubResponse githubResponse, boolean isNewMember) {
         OAuth2UserDTO memberDTO = OAuth2UserDTO.builder()
                 .memberId(memberId)
                 .username(githubResponse.getGithubId())
@@ -91,6 +94,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .role("ROLE_USER")
                 .build();
 
-        return new CustomOAuth2User(memberDTO);
+        return new CustomOAuth2User(memberDTO, isNewMember);
     }
 }

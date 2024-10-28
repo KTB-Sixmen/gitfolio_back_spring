@@ -48,9 +48,9 @@ github:
 
 jwt:
   refreshToken:
-    expiry: 86400000
+    expiry: ${REFRESH_TOKEN_EXPIRY}
 
 server:
-  port: 8081
+  port: ${MEMBER_SERVER_PORT}
 grpc:
-  port: 9090
+  port: ${MEMBER_GRPC_PORT}

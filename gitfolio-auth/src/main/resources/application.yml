@@ -36,15 +36,17 @@ cloud:
       secretKey: ${S3_SECRET_KEY}
 
 server:
-  port: 8080
+  port: ${AUTH_SERVER_PORT}
 
 jwt:
   refreshToken:
-    expiry: 86400000
+    expiry: ${REFRESH_TOKEN_EXPIRY}
   accessToken:
-    expiry: 600000
-  redirectUrl: "http://localhost:5173/chat"
+    expiry: ${ACCESS_TOKEN_EXPIRY}
+  redirect:
+    mainPageUrl: ${REDIRECT_MAIN_URL}
+    onBoardingPageUrl: ${REDIRECT_ONBOARDING_URL}
 
 member:
   server:
-    url: http://localhost:8081
+    url: ${MEMBER_SERVER_URL}

@@ -2,6 +2,7 @@ package com.be.gitfolio.auth.dto;
 
 import com.be.gitfolio.auth.dto.MemberDTO;
 import com.be.gitfolio.auth.dto.MemberDTO.OAuth2UserDTO;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -14,6 +15,7 @@ import java.util.Map;
 public class CustomOAuth2User implements OAuth2User {
 
     private final OAuth2UserDTO memberDTO;
+    private final boolean isNewMember;
 
     @Override
     public Map<String, Object> getAttributes() {
@@ -45,5 +47,9 @@ public class CustomOAuth2User implements OAuth2User {
 
     public Long getMemberId() {
         return memberDTO.getMemberId();
+    }
+
+    public boolean getIsNewMember() {
+        return this.isNewMember;
     }
 }
