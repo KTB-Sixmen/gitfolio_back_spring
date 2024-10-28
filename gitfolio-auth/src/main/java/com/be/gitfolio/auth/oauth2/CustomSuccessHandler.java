@@ -29,8 +29,11 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     @Value("${jwt.refreshToken.expiry}")
     private Long refreshTokenExpiry;
 
-    @Value("${jwt.redirectUrl}")
-    private String redirectUrl;
+    @Value("${jwt.redirect.mainPageUrl}")
+    private String mainPageUrl;
+
+    @Value("${jwt.redirect.onBoardingPageUrl}")
+    private String onboardingPageUrl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -54,6 +57,10 @@ public class CustomSuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
 
         //응답 설정
         response.addCookie(createCookie("refreshToken", refresh));
+
+        // 신규 사용자 여부 확인
+        String redirectUrl = customUserDetails.getIsNewMember() ? onboardingPageUrl : mainPageUrl;
+
         response.setStatus(HttpStatus.OK.value());
         response.sendRedirect(redirectUrl);
     }
