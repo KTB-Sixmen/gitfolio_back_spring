@@ -43,11 +43,11 @@ cloud:
 
 jwt:
   refreshToken:
-    expiry: 86400000
+    expiry: ${REFRESH_TOKEN_EXPIRY}
 
 ai:
   server:
-    url: http://localhost:8000
+    url: ${AI_SERVER_URL}
 
 server:
-  port: 8082
+  port: ${RESUME_SERVER_PORT}
