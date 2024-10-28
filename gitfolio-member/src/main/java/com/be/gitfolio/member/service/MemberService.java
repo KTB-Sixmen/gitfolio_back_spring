@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -130,21 +131,69 @@ public class MemberService {
      * 레포지토리 목록과 각 레포지토리의 주 언어 정보를 가져오는 메서드
      */
     public List<MemberGithubRepositoryDTO> getUserRepositoriesWithLanguages(String username) {
+
+        // 1. 사용자 개인 레포지토리 조회
+        List<MemberGithubRepositoryDTO> userRepositories = new ArrayList<>(getRepositoriesForUser(username));
+
+        // 2. 사용자가 속한 조직 리스트 조회
+        List<String> organizations = getOrganizationsForUser(username);
+
+        // 3. 각 조직의 레포지토리 조회 및 추가
+        for (String org : organizations) {
+            userRepositories.addAll(getRepositoriesForOrganization(org));
+        }
+
+        return userRepositories;
+    }
+
+    // 사용자 개인 레포지토리를 조회하는 메서드
+    private List<MemberGithubRepositoryDTO> getRepositoriesForUser(String username) {
         return webClient.get()
                 .uri("/users/{username}/repos", username)
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
-                .bodyToFlux(Map.class)  // JSON 응답을 Map으로 받음
+                .bodyToFlux(Map.class)
                 .map(repo -> MemberGithubRepositoryDTO.builder()
-                            .repoName((String) repo.get("name"))
-                            .repoUrl((String) repo.get("html_url"))  // URL 필드는 "html_url"에 존재
-                            .repoId(Long.valueOf((Integer) repo.get("id")))
-                            .updatedAt((String) repo.get("updated_at"))
-                            .topLanguage((String) repo.get("language"))
-                            .build()
+                        .repoName((String) repo.get("name"))
+                        .repoUrl((String) repo.get("html_url"))
+                        .repoId(Long.valueOf((Integer) repo.get("id")))
+                        .updatedAt((String) repo.get("updated_at"))
+                        .topLanguage((String) repo.get("language"))
+                        .build()
                 )
                 .collectList()
-                .block();  // 블로킹 방식으로 List 반환
+                .block();
+    }
+
+    // 사용자가 속한 조직 리스트를 조회하는 메서드
+    private List<String> getOrganizationsForUser(String username) {
+        return webClient.get()
+                .uri("/users/{username}/orgs", username)
+                .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
+                .retrieve()
+                .bodyToFlux(Map.class)
+                .map(org -> (String) org.get("login"))  // 조직 이름(login)을 추출
+                .collectList()
+                .block();
+    }
+
+    // 조직의 레포지토리 목록을 조회하는 메서드
+    private List<MemberGithubRepositoryDTO> getRepositoriesForOrganization(String org) {
+        return webClient.get()
+                .uri("/orgs/{org}/repos", org)
+                .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
+                .retrieve()
+                .bodyToFlux(Map.class)
+                .map(repo -> MemberGithubRepositoryDTO.builder()
+                        .repoName((String) repo.get("name"))
+                        .repoUrl((String) repo.get("html_url"))
+                        .repoId(Long.valueOf((Integer) repo.get("id")))
+                        .updatedAt((String) repo.get("updated_at"))
+                        .topLanguage((String) repo.get("language"))
+                        .build()
+                )
+                .collectList()
+                .block();
     }
 
 
