@@ -2,12 +2,10 @@ package com.be.gitfolio.resume.controller;
 
 import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
-import com.be.gitfolio.resume.dto.ResumeRequestDTO;
-import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import com.be.gitfolio.resume.service.CommentService;
-import com.be.gitfolio.resume.service.LikeService;
 import com.be.gitfolio.resume.service.ResumeService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +22,6 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 public class ResumeController {
 
     private final ResumeService resumeService;
-    private final LikeService likeService;
     private final CommentService commentService;
 
     /**
@@ -33,7 +30,7 @@ public class ResumeController {
     @AuthRequired
     @PostMapping()
     public ResponseEntity<BaseResponse<String>> createResume(HttpServletRequest request,
-                                                             @RequestBody CreateResumeRequestDTO createResumeRequestDTO) {
+                                                             @Valid @RequestBody CreateResumeRequestDTO createResumeRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
         return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
                 HttpStatus.CREATED,
@@ -47,8 +44,25 @@ public class ResumeController {
      * 이력서 목록 조회
      */
     @GetMapping()
-    public ResponseEntity<BaseResponse<List<ResumeListDTO>>> getResumeList() {
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList()));
+    public ResponseEntity<BaseResponse<PaginationResponseDTO<ResumeListDTO>>> getResumeList(
+            @RequestParam(required = false) String tag,
+            @RequestParam(required = false) String position,
+            @RequestParam(required = false) String techStack,
+            @RequestParam(required = false) String schoolType,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "recent") String sortOrder
+    ) {
+        ResumeFilterDTO resumeFilterDTO = ResumeFilterDTO.builder()
+                .tag(tag)
+                .position(position)
+                .techStack(techStack)
+                .schoolType(schoolType)
+                .page(page)
+                .size(size)
+                .sortOrder(sortOrder)
+                .build();
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(resumeFilterDTO)));
     }
 
     /**
@@ -96,7 +110,8 @@ public class ResumeController {
      */
     @AuthRequired
     @PutMapping("/{resumeId}")
-    public ResponseEntity<BaseResponse<String>> updateResume(@PathVariable("resumeId") String resumeId, @RequestBody UpdateResumeRequestDTO updateResumeRequestDTO) {
+    public ResponseEntity<BaseResponse<String>> updateResume(@PathVariable("resumeId") String resumeId,
+                                                             @RequestBody UpdateResumeRequestDTO updateResumeRequestDTO) {
         resumeService.updateResume(resumeId, updateResumeRequestDTO);
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
@@ -106,9 +121,10 @@ public class ResumeController {
      */
     @AuthRequired
     @PostMapping("/{resumeId}/likes")
-    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId, HttpServletRequest request) {
+    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId,
+                                                           HttpServletRequest request) {
         String memberId = request.getAttribute("memberId").toString();
-        boolean liked = likeService.toggleLike(resumeId, Long.valueOf(memberId));
+        boolean liked = resumeService.toggleLike(resumeId, Long.valueOf(memberId));
         if (liked) {
             return ResponseEntity.ok().body(new BaseResponse<>("좋아요가 추가되었습니다."));
         } else {
@@ -123,7 +139,7 @@ public class ResumeController {
     @PostMapping("/{resumeId}/comments")
     public ResponseEntity<BaseResponse<Long>> createComment(@PathVariable("resumeId") String resumeId,
                                                             HttpServletRequest request,
-                                                            @RequestBody CommentRequestDTO commentRequestDTO) {
+                                                            @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
         return ResponseEntity.ok().body(new BaseResponse<>(commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)));
     }
@@ -135,7 +151,7 @@ public class ResumeController {
     @PatchMapping("/comments/{commentId}")
     public ResponseEntity<BaseResponse<String>> updateComment(@PathVariable("commentId") Long commentId,
                                                               HttpServletRequest request,
-                                                              @RequestBody CommentRequestDTO commentRequestDTO) {
+                                                              @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
         commentService.updateComment(commentId, Long.valueOf(memberId), commentRequestDTO);
         return ResponseEntity.ok().body(new BaseResponse<>("댓글이 수정되었습니다."));

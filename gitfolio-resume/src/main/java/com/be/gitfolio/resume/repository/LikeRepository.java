@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
     Optional<Like> findByResumeIdAndMemberId(String resumeId, Long memberId);
+
+    void deleteLikesByResumeId(String resumeId);
 }

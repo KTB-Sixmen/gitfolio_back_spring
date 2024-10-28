@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -37,9 +38,34 @@ public class ResumeResponseDTO {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
+    public static class PaginationResponseDTO<T> {
+        private int currentPage;
+        private int totalPages;
+        private long totalElements;
+        private int size;
+        private List<T> content;
+
+        public PaginationResponseDTO(Page<T> page) {
+            this.currentPage = page.getNumber();
+            this.totalPages = page.getTotalPages();
+            this.totalElements = page.getTotalElements();
+            this.size = page.getSize();
+            this.content = page.getContent();
+        }
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class ResumeDetailDTO {
         private String resumeId;
-        private Long memberId;
+        private Long memberId;  // 회원 ID
+        private String memberName; // 회원 이름
+        private String avatarUrl; // 프로필 사진
+        private String phoneNumber; // 전화번호
+        private String email; // 이메일 주소
+        private String position; // 포지션(직군)
         private List<String> techStack;  // 기술 스택
         private String aboutMe;  // 자기소개
         private List<String> tags;  // 태그 (회사명 등)
@@ -54,7 +80,12 @@ public class ResumeResponseDTO {
 
         public ResumeDetailDTO(Resume resume) {
             this.resumeId = resume.getId();
-            this.memberId = Long.parseLong(resume.getMemberId());
+            this.memberId = Long.valueOf(resume.getMemberId());
+            this.memberName = resume.getMemberName();
+            this.avatarUrl = resume.getAvatarUrl();
+            this.phoneNumber = resume.getPhoneNumber();
+            this.email = resume.getEmail();
+            this.position = resume.getPosition();
             this.techStack = resume.getTechStack();
             this.aboutMe = resume.getAboutMe();
             this.tags = resume.getTags();
@@ -76,7 +107,7 @@ public class ResumeResponseDTO {
     @NoArgsConstructor
     public static class AIResponseDTO {
         private List<Resume.Project> projects;  // 프로젝트
-        private List<String> tags;
+        private List<String> techStack;
         private String aboutMe;
     }
 
