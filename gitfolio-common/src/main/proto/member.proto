@@ -21,7 +21,7 @@ message MemberResponseById {
   string nickname = 2;
   string memberName = 3; // 회원 이름
   string avatarUrl = 4; // 프로필 사진
-  string phoneNumber = 5; // 전화번호 TODO: 보안상 이슈가 없을까?
+  string phoneNumber = 5; // 전화번호
   string email = 6; // 이메일 주소
   string position = 7; // 포지션(직군)
   repeated WorkExperience work_experiences = 8;  // WorkExperience 리스트
