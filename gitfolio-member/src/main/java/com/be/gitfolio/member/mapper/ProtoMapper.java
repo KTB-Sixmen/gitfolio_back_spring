@@ -5,15 +5,6 @@ import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 
 public class ProtoMapper {
 
-    public static MemberServiceProto.Activity toProto(MemberAdditionalInfo.Activity activity) {
-        return MemberServiceProto.Activity.newBuilder()
-                .setActivityName(activity.getActivityName())
-                .setActivityYear(activity.getActivityYear())
-                .setActivityDescription(activity.getActivityDescription())
-                .setActivityOrganization(activity.getActivityOrganization())
-                .build();
-    }
-
     public static MemberServiceProto.Certificate toProto(MemberAdditionalInfo.Certificate certificate) {
         return MemberServiceProto.Certificate.newBuilder()
                 .setCertificateName(certificate.getCertificateName())

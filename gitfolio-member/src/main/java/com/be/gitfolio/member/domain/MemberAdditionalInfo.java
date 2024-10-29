@@ -31,7 +31,6 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
     private List<WorkExperience> workExperiences;
     private List<Education> educations;
     private List<Certificate> certificates;
-    private List<Activity> activities;
     private List<Link> links;
 
     public static MemberAdditionalInfo from(Long memberId) {
@@ -40,7 +39,6 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
                 .workExperiences(Collections.emptyList())
                 .educations(Collections.emptyList())
                 .certificates(Collections.emptyList())
-                .activities(Collections.emptyList())
                 .links(Collections.emptyList())
                 .build();
     }
@@ -50,7 +48,6 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
                 .workExperiences(memberAdditionalRequestDTO.getWorkExperiences())
                 .educations(memberAdditionalRequestDTO.getEducations())
                 .certificates(memberAdditionalRequestDTO.getCertificates())
-                .activities(memberAdditionalRequestDTO.getActivities())
                 .links(memberAdditionalRequestDTO.getLinks())
                 .build();
     }
@@ -60,7 +57,6 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         this.workExperiences = memberAdditionalRequestDTO.getWorkExperiences();
         this.educations = memberAdditionalRequestDTO.getEducations();
         this.certificates = memberAdditionalRequestDTO.getCertificates();
-        this.activities = memberAdditionalRequestDTO.getActivities();
         this.links = memberAdditionalRequestDTO.getLinks();
     }
 
@@ -100,17 +96,6 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
         private String certificateGrade;
         private String certificatedAt;
         private String certificateOrganization;
-    }
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Activity {
-        private String activityName;
-        private int activityYear;
-        private String activityDescription;
-        private String activityOrganization;
     }
 
     @Getter

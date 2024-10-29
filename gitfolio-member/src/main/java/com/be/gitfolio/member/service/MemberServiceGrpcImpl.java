@@ -58,11 +58,6 @@ public class MemberServiceGrpcImpl extends MemberServiceGrpc.MemberServiceImplBa
                                     .map(ProtoMapper::toProto)
                                     .collect(Collectors.toList())
                     )
-                    .addAllActivities(
-                            memberAdditionalInfo.getActivities().stream()
-                                    .map(ProtoMapper::toProto)
-                                    .collect(Collectors.toList())
-                    )
                     .addAllLinks(
                             memberAdditionalInfo.getLinks().stream()
                             .map(ProtoMapper::toProto)

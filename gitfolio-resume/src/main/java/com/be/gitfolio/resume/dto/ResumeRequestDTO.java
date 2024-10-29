@@ -31,7 +31,6 @@ public class ResumeRequestDTO {
         private List<Resume.WorkExperience> workExperiences;  // 경력
         private List<Resume.Link> links;  // 개인 링크
         private List<Resume.Education> educations;  // 학력
-        private List<Resume.Activity> activities;  // 대외 활동
         private List<Resume.Certificate> certificates;  // 자격증
     }
 
@@ -69,7 +68,6 @@ public class ResumeRequestDTO {
         private List<Resume.Project> projects;  // 프로젝트
         private List<Resume.Link> links;  // 개인 링크
         private List<Resume.Education> educations;  // 학력
-        private List<Resume.Activity> activities;  // 대외 활동
         private List<Resume.Certificate> certificates;  // 자격증
     }
 

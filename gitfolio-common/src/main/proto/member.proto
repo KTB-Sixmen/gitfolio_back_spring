@@ -27,8 +27,7 @@ message MemberResponseById {
   repeated WorkExperience work_experiences = 8;  // WorkExperience 리스트
   repeated Education educations = 9;  // Education 리스트
   repeated Certificate certificates = 10;  // Certificate 리스트
-  repeated Activity activities = 11;  // Activity 리스트
-  repeated Link links = 12;  // Link 리스트
+  repeated Link links = 11;  // Link 리스트
 }
 
 // WorkExperience 메시지 정의
@@ -58,14 +57,6 @@ message Certificate {
   string certificate_grade = 2;
   string certificated_at = 3;
   string certificate_organization = 4;
-}
-
-// Activity 메시지 정의
-message Activity {
-  string activity_name = 1;
-  int32 activity_year = 2;
-  string activity_description = 3;
-  string activity_organization = 4;
 }
 
 // Link 메시지 정의

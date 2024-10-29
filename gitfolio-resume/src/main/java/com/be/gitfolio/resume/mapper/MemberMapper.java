@@ -9,17 +9,6 @@ import com.be.gitfolio.resume.domain.Resume.*;
 
 public class MemberMapper {
 
-
-    public static Activity toEntity(MemberServiceProto.Activity activityProto) {
-        return Activity.builder()
-                .activityName(activityProto.getActivityName())
-                .activityYear(activityProto.getActivityYear())
-                .activityDescription(activityProto.getActivityDescription())
-                .activityOrganization(activityProto.getActivityOrganization())
-                .build();
-    }
-
-
     public static Certificate toEntity(MemberServiceProto.Certificate certificateProto) {
         return Certificate.builder()
                 .certificateName(certificateProto.getCertificateName())

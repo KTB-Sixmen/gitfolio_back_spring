@@ -19,6 +19,7 @@ public class ResumeResponseDTO {
     public static class ResumeListDTO {
         private String resumeId;
         private Long memberId;
+        private String avatarUrl;
         private String aboutMe;
         private List<String> tags;
         private int likeCount;
@@ -27,6 +28,7 @@ public class ResumeResponseDTO {
         public ResumeListDTO(Resume resume) {
             this.resumeId = resume.getId();
             this.memberId = Long.parseLong(resume.getMemberId());
+            this.avatarUrl = resume.getAvatarUrl();
             this.aboutMe = resume.getAboutMe();
             this.tags = resume.getTags();
             this.likeCount = resume.getLikeCount();
@@ -63,7 +65,6 @@ public class ResumeResponseDTO {
         private Long memberId;  // 회원 ID
         private String memberName; // 회원 이름
         private String avatarUrl; // 프로필 사진
-        private String phoneNumber; // 전화번호
         private String email; // 이메일 주소
         private String position; // 포지션(직군)
         private List<String> techStack;  // 기술 스택
@@ -73,7 +74,6 @@ public class ResumeResponseDTO {
         private List<Resume.Project> projects;  // 프로젝트
         private List<Resume.Link> links;  // 개인 링크
         private List<Resume.Education> educations;  // 학력
-        private List<Resume.Activity> activities;  // 대외 활동
         private List<Resume.Certificate> certificates;  // 자격증
         private int likeCount;  // 좋아요 수
         private int viewCount;  // 조회수
@@ -83,7 +83,6 @@ public class ResumeResponseDTO {
             this.memberId = Long.valueOf(resume.getMemberId());
             this.memberName = resume.getMemberName();
             this.avatarUrl = resume.getAvatarUrl();
-            this.phoneNumber = resume.getPhoneNumber();
             this.email = resume.getEmail();
             this.position = resume.getPosition();
             this.techStack = resume.getTechStack();
@@ -93,7 +92,6 @@ public class ResumeResponseDTO {
             this.projects = resume.getProjects();
             this.links = resume.getLinks();
             this.educations = resume.getEducations();
-            this.activities = resume.getActivities();
             this.certificates = resume.getCertificates();
             this.likeCount = resume.getLikeCount();
             this.viewCount = resume.getViewCount();

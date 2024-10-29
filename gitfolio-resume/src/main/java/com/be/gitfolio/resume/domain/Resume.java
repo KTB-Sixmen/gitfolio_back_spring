@@ -41,7 +41,6 @@ public class Resume extends BaseEntityMongo {
     private List<Project> projects;  // 프로젝트
     private List<Link> links;  // 개인 링크
     private List<Education> educations;  // 학력
-    private List<Activity> activities;  // 대외 활동
     private List<Certificate> certificates;  // 자격증
     private int likeCount;  // 좋아요 수
     private int viewCount;  // 조회수
@@ -65,7 +64,6 @@ public class Resume extends BaseEntityMongo {
         this.projects = updateResumeDTO.getProjects();
         this.links = updateResumeDTO.getLinks();
         this.educations = updateResumeDTO.getEducations();
-        this.activities = updateResumeDTO.getActivities();
         this.certificates = updateResumeDTO.getCertificates();
     }
 
@@ -84,7 +82,6 @@ public class Resume extends BaseEntityMongo {
                 .projects(aiResponseDTO.getProjects())
                 .links(memberInfoDTO.getLinks())
                 .educations(memberInfoDTO.getEducations())
-                .activities(memberInfoDTO.getActivities())
                 .certificates(memberInfoDTO.getCertificates())
                 .likeCount(0)
                 .viewCount(0)
@@ -140,17 +137,6 @@ public class Resume extends BaseEntityMongo {
             private String certificateGrade;
             private String certificatedAt;
             private String certificateOrganization;
-        }
-
-        @Getter
-        @Builder
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class Activity {
-            private String activityName;
-            private int activityYear;
-            private String activityDescription;
-            private String activityOrganization;
         }
 
         @Getter
