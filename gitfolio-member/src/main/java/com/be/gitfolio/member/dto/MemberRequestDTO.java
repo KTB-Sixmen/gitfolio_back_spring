@@ -58,7 +58,6 @@ public class MemberRequestDTO {
         private List<MemberAdditionalInfo.WorkExperience> workExperiences;
         private List<MemberAdditionalInfo.Education> educations;
         private List<MemberAdditionalInfo.Certificate> certificates;
-        private List<MemberAdditionalInfo.Activity> activities;
         private List<MemberAdditionalInfo.Link> links;
     }
 

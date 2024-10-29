@@ -206,7 +206,6 @@ public class ResumeService {
                 .workExperiences(toEntityList(memberResponse.getWorkExperiencesList(), MemberMapper::toEntity))
                 .links(toEntityList(memberResponse.getLinksList(), MemberMapper::toEntity))
                 .educations(toEntityList(memberResponse.getEducationsList(), MemberMapper::toEntity))
-                .activities(toEntityList(memberResponse.getActivitiesList(), MemberMapper::toEntity))
                 .certificates(toEntityList(memberResponse.getCertificatesList(), MemberMapper::toEntity))
                 .build();
     }

@@ -31,7 +31,6 @@ public class MemberResponseDTO {
         private List<MemberAdditionalInfo.WorkExperience> workExperiences;
         private List<MemberAdditionalInfo.Education> educations;
         private List<MemberAdditionalInfo.Certificate> certificates;
-        private List<MemberAdditionalInfo.Activity> activities;
         private List<MemberAdditionalInfo.Link> links;
 
         public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo) {
@@ -48,7 +47,6 @@ public class MemberResponseDTO {
                     .workExperiences(memberAdditionalInfo.getWorkExperiences())
                     .educations(memberAdditionalInfo.getEducations())
                     .certificates(memberAdditionalInfo.getCertificates())
-                    .activities(memberAdditionalInfo.getActivities())
                     .links(memberAdditionalInfo.getLinks())
                     .build();
         }
