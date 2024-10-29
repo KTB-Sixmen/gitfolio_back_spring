@@ -20,6 +20,7 @@ public class ResumeResponseDTO {
         private String resumeId;
         private Long memberId;
         private String avatarUrl;
+        private String position;
         private String aboutMe;
         private List<String> tags;
         private int likeCount;
@@ -29,6 +30,7 @@ public class ResumeResponseDTO {
             this.resumeId = resume.getId();
             this.memberId = Long.parseLong(resume.getMemberId());
             this.avatarUrl = resume.getAvatarUrl();
+            this.position = resume.getPosition();
             this.aboutMe = resume.getAboutMe();
             this.tags = resume.getTags();
             this.likeCount = resume.getLikeCount();
