@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface MemberAdditionalInfoRepository extends MongoRepository<MemberAdditionalInfo, String> {
     Optional<MemberAdditionalInfo> findByMemberId(String memberId);
+
+    void deleteByMemberId(String memberId);
 }

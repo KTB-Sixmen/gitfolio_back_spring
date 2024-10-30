@@ -128,7 +128,7 @@ public class MemberService {
     }
 
     /**
-     * 레포지토리 목록과 각 레포지토리의 주 언어 정보를 가져오는 메서드
+     * 회원 레포 조회
      */
     public List<MemberGithubRepositoryDTO> getUserRepositoriesWithLanguages(String username) {
 
@@ -144,6 +144,15 @@ public class MemberService {
         }
 
         return userRepositories;
+    }
+
+    /**
+     * 회원 탈퇴
+     */
+    @Transactional
+    public void deleteMember(Long memberId) {
+        memberRepository.deleteById(memberId);
+        memberAdditionalInfoRepository.deleteByMemberId(String.valueOf(memberId));
     }
 
     // 사용자 개인 레포지토리를 조회하는 메서드
@@ -195,7 +204,4 @@ public class MemberService {
                 .collectList()
                 .block();
     }
-
-
-
 }

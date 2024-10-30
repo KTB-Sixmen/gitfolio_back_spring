@@ -90,4 +90,15 @@ public class MemberController {
         log.info("사용자 아이디 : {}", username);
         return ResponseEntity.ok().body(new BaseResponse<>(memberService.getUserRepositoriesWithLanguages(username)));
     }
+
+    /**
+     * 회원 탈퇴
+     */
+    @AuthRequired
+    @DeleteMapping("/me")
+    public ResponseEntity<BaseResponse<String>> deleteMember(HttpServletRequest request) {
+        Long memberId = (Long) request.getAttribute("memberId");
+        memberService.deleteMember(memberId);
+        return ResponseEntity.ok().body(new BaseResponse<>("회원 삭제가 완료되었습니다."));
+    }
 }
