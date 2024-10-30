@@ -39,7 +39,7 @@ server:
   port: ${PAYMENT_SERVER_PORT}
 
 kakaopay:
-  secretKey: DEVBB2C40CC45C5ED075256726CB6856FB95FF37
+  secretKey: ${KAKAOPAY_SECRET_KEY}
   cid: TC0ONETIME
 
 payment:
