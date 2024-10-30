@@ -1,0 +1,47 @@
+spring:
+  # .env import
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${PAYMENT_MYSQL_DB_HOST}:${PAYMENT_MYSQL_DB_PORT}/${PAYMENT_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
+    username: ${PAYMENT_MYSQL_DB_USERNAME}
+    password: ${PAYMENT_MYSQL_DB_PASSWORD}
+
+  jpa:
+    database-platform: org.hibernate.dialect.MySQLDialect
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: true
+        show_sql: true
+
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+jwt:
+  refreshToken:
+    expiry: ${REFRESH_TOKEN_EXPIRY}
+
+cloud:
+  aws:
+    s3:
+      bucket: gitfolio
+    stack.auto: false
+    region.static: ap-northeast-2
+    credentials:
+      accessKey: ${S3_ACCESS_KEY}
+      secretKey: ${S3_SECRET_KEY}
+
+server:
+  port: ${PAYMENT_SERVER_PORT}
+
+kakaopay:
+  secretKey: ${KAKAOPAY_SECRET_KEY}
+  cid: TC0ONETIME
+
+payment:
+  server:
+    url: ${PAYMENT_SERVER_URL}

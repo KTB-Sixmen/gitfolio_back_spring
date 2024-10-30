@@ -9,6 +9,18 @@ option java_outer_classname = "MemberServiceProto"; // Java 클래스명
 service MemberService {
   // Member 정보를 조회하는 RPC 메서드 정의
   rpc GetMemberById (MemberRequestById) returns (MemberResponseById);
+  // Member의 사용 플랜을 update하는 메서드
+  rpc UpdateMemberPlan (UpdatePlanRequest) returns (UpdatePlanResponse);
+}
+
+message UpdatePlanRequest {
+  string member_id = 1;
+  string paid_plan = 2; // 플랜 이름 혹은 식별자
+}
+
+message UpdatePlanResponse {
+  bool success = 1;
+  string message = 2;
 }
 
 // 메시지 구조 정의

@@ -28,4 +28,12 @@ public class MemberGrpcClient {
                 .build();
         return memberStub.getMemberById(request);
     }
+
+    public UpdatePlanResponse updateMemberPlan(String memberId, String paidPlan) {
+        UpdatePlanRequest request = UpdatePlanRequest.newBuilder()
+                .setMemberId(memberId)
+                .setPaidPlan(paidPlan)
+                .build();
+        return memberStub.updateMemberPlan(request);
+    }
 }
