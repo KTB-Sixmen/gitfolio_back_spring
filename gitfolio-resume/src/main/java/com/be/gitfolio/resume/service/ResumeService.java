@@ -3,6 +3,7 @@ package com.be.gitfolio.resume.service;
 import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
+import com.be.gitfolio.common.jwt.JWTUtil;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.mapper.MemberMapper;
@@ -21,6 +22,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
@@ -39,6 +41,7 @@ public class ResumeService {
     private final CommentRepository commentRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final WebClient webClient;
+    private final JWTUtil jwtUtil;
 
     public ResumeService(MemberGrpcClient memberGrpcClient,
                          ResumeRepository resumeRepository,
@@ -46,13 +49,15 @@ public class ResumeService {
                          CommentRepository commentRepository,
                          RedisTemplate<String, String> redisTemplate,
                          @Value("${ai.server.url}") String url,
-                         WebClient.Builder webClientBuilder) {
+                         WebClient.Builder webClientBuilder,
+                         JWTUtil jwtUtil) {
         this.memberGrpcClient = memberGrpcClient;
         this.resumeRepository = resumeRepository;
         this.likeRepository = likeRepository;
         this.commentRepository = commentRepository;
         this.redisTemplate = redisTemplate;
         this.webClient = webClientBuilder.baseUrl(url).build();
+        this.jwtUtil = jwtUtil;
     }
 
     /**
@@ -91,23 +96,54 @@ public class ResumeService {
     /**
      * 이력서 목록 조회
      */
-    public PaginationResponseDTO<ResumeListDTO> getResumeList(ResumeFilterDTO resumeFilterDTO) {
+    public PaginationResponseDTO<ResumeListDTO> getResumeList(String token, ResumeFilterDTO resumeFilterDTO) {
+        Long memberId = extractMemberIdFromToken(token);
+
         Pageable pageable = PageRequest.of(resumeFilterDTO.getPage(), resumeFilterDTO.getSize());
-        Page<ResumeListDTO> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, pageable).map(ResumeListDTO::new);
+
+        // 좋아요 누른 이력서 ID 목록 조회
+        Set<String> likedResumeIds = likeRepository.findLikedResumeIdsByMemberId(memberId);
+
+        Page<ResumeListDTO> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, pageable)
+                .map(resume -> {
+                    ResumeListDTO resumeDTO = new ResumeListDTO(resume);
+                    resumeDTO.updateIsLiked(likedResumeIds.contains(resume.getId()));
+                    return resumeDTO;
+                });
 
         return new PaginationResponseDTO<>(resumePage);
+    }
+
+    // Optional한 memberId 처리 함수
+    private Long extractMemberIdFromToken(String token) {
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+        try {
+            String accessToken = token.substring(7);
+            return jwtUtil.getMemberId(accessToken);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /**
      * 이력서 상세 조회
      */
     @Transactional
-    public ResumeDetailDTO getResumeDetail(String resumeId,String clientIp) {
+    public ResumeDetailDTO getResumeDetail(String token, String resumeId,String clientIp) {
+        Long memberId = extractMemberIdFromToken(token);
+
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
         incrementViewCount(resume, clientIp);
         resumeRepository.save(resume);
-        return new ResumeDetailDTO(resume);
+
+        boolean isLiked = false;
+        if (memberId != null) {
+            isLiked = likeRepository.existsByMemberIdAndResumeId(memberId, resumeId);
+        }
+        return new ResumeDetailDTO(resume, isLiked);
     }
 
     /**

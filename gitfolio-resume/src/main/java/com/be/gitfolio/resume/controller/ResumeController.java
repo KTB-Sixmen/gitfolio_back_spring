@@ -51,7 +51,8 @@ public class ResumeController {
             @RequestParam(required = false) String schoolType,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "recent") String sortOrder
+            @RequestParam(defaultValue = "recent") String sortOrder,
+            @RequestHeader(value = "Authorization", required = false) String token
     ) {
         ResumeFilterDTO resumeFilterDTO = ResumeFilterDTO.builder()
                 .tag(tag)
@@ -62,7 +63,7 @@ public class ResumeController {
                 .size(size)
                 .sortOrder(sortOrder)
                 .build();
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(resumeFilterDTO)));
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(token, resumeFilterDTO)));
     }
 
     /**
@@ -70,9 +71,10 @@ public class ResumeController {
      */
     @GetMapping("/{resumeId}")
     public ResponseEntity<BaseResponse<ResumeDetailDTO>> getResumeDetail(@PathVariable("resumeId") String resumeId,
+                                                                         @RequestHeader(value = "Authorization", required = false) String token,
                                                                          HttpServletRequest request) {
         String clientIp = getClientIp(request);
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeDetail(resumeId, clientIp)));
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeDetail(token, resumeId, clientIp)));
     }
 
     // 클라이언트 IP 가져오는 유틸리티 메서드

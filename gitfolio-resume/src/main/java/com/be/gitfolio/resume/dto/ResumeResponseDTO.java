@@ -2,6 +2,7 @@ package com.be.gitfolio.resume.dto;
 
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,6 +26,8 @@ public class ResumeResponseDTO {
         private List<String> tags;
         private int likeCount;
         private int viewCount;
+        @JsonProperty("isLiked")
+        private boolean isLiked;
 
         public ResumeListDTO(Resume resume) {
             this.resumeId = resume.getId();
@@ -35,6 +38,10 @@ public class ResumeResponseDTO {
             this.tags = resume.getTags();
             this.likeCount = resume.getLikeCount();
             this.viewCount = resume.getViewCount();
+        }
+
+        public void updateIsLiked(boolean isLiked) {
+            this.isLiked = isLiked;
         }
     }
 
@@ -79,8 +86,10 @@ public class ResumeResponseDTO {
         private List<Resume.Certificate> certificates;  // 자격증
         private int likeCount;  // 좋아요 수
         private int viewCount;  // 조회수
+        @JsonProperty("isLiked")
+        private boolean isLiked; // 좋아요 여부
 
-        public ResumeDetailDTO(Resume resume) {
+        public ResumeDetailDTO(Resume resume, boolean isLiked) {
             this.resumeId = resume.getId();
             this.memberId = Long.valueOf(resume.getMemberId());
             this.memberName = resume.getMemberName();
@@ -97,10 +106,9 @@ public class ResumeResponseDTO {
             this.certificates = resume.getCertificates();
             this.likeCount = resume.getLikeCount();
             this.viewCount = resume.getViewCount();
+            this.isLiked = isLiked;
         }
     }
-
-    // TODO: AI 쪽 만들어지면 사용해야함!
     @Getter
     @Builder
     @AllArgsConstructor
