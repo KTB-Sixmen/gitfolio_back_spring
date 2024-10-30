@@ -1,6 +1,7 @@
 package com.be.gitfolio.member.domain;
 
 import com.be.gitfolio.common.config.BaseEntityMySQL;
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.dto.MemberRequestDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -38,12 +39,20 @@ public class Member extends BaseEntityMySQL {
 
     private String position;
 
+    @Enumerated(EnumType.STRING)
+    private PaidPlan paidPlan;
+
+    public void updatePlan(PaidPlan paidPlan) {
+        this.paidPlan = paidPlan;
+    }
+
     public static Member from(MemberCreateRequestDTO dto) {
         return Member.builder()
                 .username(dto.getUsername())
                 .nickname(dto.getNickname())
                 .role(dto.getRole())
                 .avatarUrl(dto.getAvatarUrl())
+                .paidPlan(PaidPlan.FREE)
                 .build();
     }
 
