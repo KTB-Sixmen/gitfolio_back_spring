@@ -101,14 +101,14 @@ public class ResumeService {
 
         Pageable pageable = PageRequest.of(resumeFilterDTO.getPage(), resumeFilterDTO.getSize());
 
-        // 좋아요 누른 이력서 ID 목록 조회
-        Set<String> likedResumeIds = likeRepository.findLikedResumeIdsByMemberId(memberId);
-
         Page<ResumeListDTO> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, pageable)
                 .map(resume -> {
-                    ResumeListDTO resumeDTO = new ResumeListDTO(resume);
-                    resumeDTO.updateIsLiked(likedResumeIds.contains(resume.getId()));
-                    return resumeDTO;
+                    Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), memberId);
+                    if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
+                        return new ResumeListDTO(resume, false);
+                    } else {
+                        return new ResumeListDTO(resume, true);
+                    }
                 });
 
         return new PaginationResponseDTO<>(resumePage);
@@ -139,11 +139,12 @@ public class ResumeService {
         incrementViewCount(resume, clientIp);
         resumeRepository.save(resume);
 
-        boolean isLiked = false;
-        if (memberId != null) {
-            isLiked = likeRepository.existsByMemberIdAndResumeId(memberId, resumeId);
+        Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), memberId);
+        if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
+            return new ResumeDetailDTO(resume, false);
+        } else {
+            return new ResumeDetailDTO(resume, true);
         }
-        return new ResumeDetailDTO(resume, isLiked);
     }
 
     /**
@@ -153,7 +154,14 @@ public class ResumeService {
         List<Resume> resumes = resumeRepository.findAllByMemberId(memberId);
 
         return resumes.stream()
-                .map(ResumeListDTO::new)
+                .map(resume -> {
+                    Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), Long.valueOf(memberId));
+                    if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
+                        return new ResumeListDTO(resume, false);
+                    } else {
+                        return new ResumeListDTO(resume, true);
+                    }
+                })
                 .toList();
     }
 

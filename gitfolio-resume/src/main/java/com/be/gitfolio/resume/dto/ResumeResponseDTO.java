@@ -27,10 +27,11 @@ public class ResumeResponseDTO {
         private List<String> tags;
         private int likeCount;
         private int viewCount;
-        @JsonProperty("isLiked")
-        private boolean isLiked;
 
-        public ResumeListDTO(Resume resume) {
+        @JsonProperty("isLiked")
+        private boolean liked;
+
+        public ResumeListDTO(Resume resume, boolean liked) {
             this.resumeId = resume.getId();
             this.memberId = Long.parseLong(resume.getMemberId());
             this.avatarUrl = resume.getAvatarUrl();
@@ -39,10 +40,7 @@ public class ResumeResponseDTO {
             this.tags = resume.getTags();
             this.likeCount = resume.getLikeCount();
             this.viewCount = resume.getViewCount();
-        }
-
-        public void updateIsLiked(boolean isLiked) {
-            this.isLiked = isLiked;
+            this.liked = liked;
         }
     }
 
@@ -88,9 +86,9 @@ public class ResumeResponseDTO {
         private int likeCount;  // 좋아요 수
         private int viewCount;  // 조회수
         @JsonProperty("isLiked")
-        private boolean isLiked; // 좋아요 여부
+        private boolean liked; // 좋아요 여부
 
-        public ResumeDetailDTO(Resume resume, boolean isLiked) {
+        public ResumeDetailDTO(Resume resume, boolean liked) {
             this.resumeId = resume.getId();
             this.memberId = Long.valueOf(resume.getMemberId());
             this.memberName = resume.getMemberName();
@@ -107,7 +105,7 @@ public class ResumeResponseDTO {
             this.certificates = resume.getCertificates();
             this.likeCount = resume.getLikeCount();
             this.viewCount = resume.getViewCount();
-            this.isLiked = isLiked;
+            this.liked = liked;
         }
     }
     @Getter
