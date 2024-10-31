@@ -23,4 +23,9 @@ public class GithubResponse {
     public String getAvatarUrl() {
         return (String) attribute.get("avatar_url");
     }
+
+    // 사용자 별도 설정 이름
+    public String getGithubName() {
+        return (String) attribute.get("name");
+    }
 }

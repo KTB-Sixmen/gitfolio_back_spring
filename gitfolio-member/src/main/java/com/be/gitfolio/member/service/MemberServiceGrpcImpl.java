@@ -81,6 +81,7 @@ public class MemberServiceGrpcImpl extends MemberServiceGrpc.MemberServiceImplBa
                     .setMemberId(String.valueOf(member.getId()))
                     .setNickname(member.getNickname())
                     .setMemberName(member.getName())
+                    .setGithubName(member.getGithubName())
                     .setAvatarUrl(member.getAvatarUrl())
                     .setPhoneNumber(member.getPhoneNumber())
                     .setEmail(member.getEmail())

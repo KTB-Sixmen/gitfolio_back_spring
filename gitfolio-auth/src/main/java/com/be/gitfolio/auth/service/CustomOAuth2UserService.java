@@ -82,6 +82,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .nickname(githubResponse.getName())
                 .role("ROLE_USER")
                 .avatarUrl(githubResponse.getAvatarUrl())
+                .githubName(githubResponse.getGithubName())
                 .build();
     }
 

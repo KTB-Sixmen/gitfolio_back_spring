@@ -50,6 +50,7 @@ public class ResumeRequestDTO {
     @NoArgsConstructor
     public static class AIRequestDTO {
         private String githubID;    // 회원 깃허브 아이디(nickname 필드)
+        private String githubName;  // 회원 깃허브 이름(설정 안하면 null)
         private String personalRepo;    // 개인레포(깃허브 자기 소개페이지?)
         private List<String> selectedRepo;  // 이력서 생성에 사용할 레포 목록
         private String requirements;    // 요구사항(강조사항)
