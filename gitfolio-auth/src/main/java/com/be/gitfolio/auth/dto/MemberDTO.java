@@ -17,6 +17,7 @@ public class MemberDTO {
         private String nickname;
         private String username;
         private String avatarUrl;
+        private String githubName;
     }
 
     @Getter

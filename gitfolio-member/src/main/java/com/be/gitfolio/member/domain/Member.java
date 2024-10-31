@@ -29,6 +29,8 @@ public class Member extends BaseEntityMySQL {
 
     private String name;
 
+    private String githubName;
+
     private String role;
 
     private String avatarUrl;
@@ -50,6 +52,7 @@ public class Member extends BaseEntityMySQL {
         return Member.builder()
                 .username(dto.getUsername())
                 .nickname(dto.getNickname())
+                .githubName(dto.getGithubName())
                 .role(dto.getRole())
                 .avatarUrl(dto.getAvatarUrl())
                 .paidPlan(PaidPlan.FREE)

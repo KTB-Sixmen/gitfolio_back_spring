@@ -75,10 +75,12 @@ public class ResumeService {
 
         AIRequestDTO aiRequestDTO = AIRequestDTO.builder()
                 .githubID(memberResponse.getNickname())
+                .githubName(memberResponse.getGithubName())
                 .personalRepo(personalRepo)
                 .selectedRepo(createResumeRequestDTO.getSelectedRepo())
                 .requirements(createResumeRequestDTO.getRequirements())
                 .build();
+        log.info("GithubName : {}", memberResponse.getGithubName());
 
 
         AIResponseDTO aiResponseDTO = webClient.post()
