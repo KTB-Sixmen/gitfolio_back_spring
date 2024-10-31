@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class ResumeResponseDTO {
@@ -127,13 +128,21 @@ public class ResumeResponseDTO {
         private Long id;
         private String resumeId;
         private Long memberId;
+        private String nickname;
+        private String avatarUrl;
         private String content;
+        private LocalDateTime createdAt;
+        private LocalDateTime updatedAt;
 
-        public CommentResponseDTO(Comment comment) {
+        public CommentResponseDTO(Comment comment, String nickname, String avatarUrl) {
             this.id = comment.getId();
             this.resumeId = comment.getResumeId();
             this.memberId = comment.getMemberId();
+            this.nickname = nickname;
+            this.avatarUrl = avatarUrl;
             this.content = comment.getContent();
+            this.createdAt = comment.getCreatedAt();
+            this.updatedAt = comment.getUpdatedAt();
         }
     }
 
