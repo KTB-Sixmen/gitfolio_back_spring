@@ -17,10 +17,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
 import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
@@ -142,6 +143,13 @@ public class MemberService {
         for (String org : organizations) {
             userRepositories.addAll(getRepositoriesForOrganization(org));
         }
+
+        // 4. updatedAt 기준으로 정렬
+        userRepositories.sort(Comparator.comparing(
+                repo -> Instant.parse(repo.getUpdatedAt()),
+                Comparator.reverseOrder()
+        ));
+
 
         return userRepositories;
     }
