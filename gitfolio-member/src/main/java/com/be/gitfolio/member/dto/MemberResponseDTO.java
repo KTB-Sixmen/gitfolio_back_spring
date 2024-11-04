@@ -1,5 +1,6 @@
 package com.be.gitfolio.member.dto;
 
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import lombok.AllArgsConstructor;
@@ -27,7 +28,7 @@ public class MemberResponseDTO {
         private String avatarUrl;
         private String phoneNumber;
         private String email;
-        private String position;
+        private PositionType position;
 
         private List<MemberAdditionalInfo.WorkExperience> workExperiences;
         private List<MemberAdditionalInfo.Education> educations;
@@ -37,7 +38,7 @@ public class MemberResponseDTO {
         public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo) {
             return MemberDetailDTO.builder()
                     .memberId(member.getId())
-                    .memberAdditionalInfoId(memberAdditionalInfo.getMemberId())
+                    .memberAdditionalInfoId(memberAdditionalInfo.getId())
                     .nickname(member.getNickname())
                     .name(member.getName())
                     .username(member.getUsername())

@@ -2,6 +2,7 @@ package com.be.gitfolio.member.domain;
 
 import com.be.gitfolio.common.config.BaseEntityMySQL;
 import com.be.gitfolio.common.type.PaidPlan;
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.dto.MemberRequestDTO;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -39,7 +40,8 @@ public class Member extends BaseEntityMySQL {
 
     private String email;
 
-    private String position;
+    @Enumerated(EnumType.STRING)
+    private PositionType position;
 
     @Enumerated(EnumType.STRING)
     private PaidPlan paidPlan;
