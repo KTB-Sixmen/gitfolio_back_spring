@@ -1,9 +1,10 @@
 bootJar {
     enabled = true
+    mainClass = 'com.be.gitfolio.payment.GitfolioPaymentApplication'
 }
 
 jar {
-    enabled = true
+    enabled = false
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
@@ -18,6 +19,3 @@ dependencies {
     implementation project(":gitfolio-common")
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}
