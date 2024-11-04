@@ -9,6 +9,12 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     /**
+     * 알림 에러
+     */
+    NO_NOTIFICATION_INFO(HttpStatus.NOT_FOUND, "알림 정보가 존재하지 않습니다."),
+    INVALID_MEMBER_TO_READ_NOTIFICATION(HttpStatus.FORBIDDEN, "알림 수신자만 읽을 수 있습니다."),
+
+    /**
      * 결제 에러
      */
     PAY_CANCELED(HttpStatus.OK, "결제가 취소되었습니다."),
