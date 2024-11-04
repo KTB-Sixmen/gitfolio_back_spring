@@ -1,0 +1,77 @@
+volumes:
+  gradle-cache:
+  build-output:
+
+services:
+  builder:
+    platform: linux/arm64
+    build:
+      context: ./
+      dockerfile: dockerfile
+      target: builder
+    volumes:
+      - gradle-cache:/root/.gradle
+      - build-output:/gitfolio_back/build
+    image: aida0/gitfolio_builder:test
+    profiles:
+      - build
+
+  auth:
+    platform: linux/arm64
+    build:
+      context: ./gitfolio-auth
+      dockerfile: dockerfile
+    depends_on:
+      - builder
+    image: aida0/gitfolio_auth:test
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+    profiles:
+      - node1
+
+  member:
+    platform: linux/arm64
+    build:
+      context: ./gitfolio-member
+      dockerfile: dockerfile
+    depends_on:
+      - builder
+    image: aida0/gitfolio_member:test
+    ports:
+      - target: 8081
+        published: 81
+        protocol: tcp
+    profiles:
+      - node1
+
+  payment:
+    platform: linux/arm64
+    build:
+      context: ./gitfolio-payment
+      dockerfile: dockerfile
+    depends_on:
+      - builder
+    image: aida0/gitfolio_payment:test
+    ports:
+      - target: 8082
+        published: 82
+        protocol: tcp
+    profiles:
+      - node2
+
+  resume:
+    platform: linux/arm64
+    build:
+      context: ./gitfolio-resume
+      dockerfile: dockerfile
+    depends_on:
+      - builder
+    image: aida0/gitfolio_resume:test
+    ports:
+      - target: 8083
+        published: 83
+        protocol: tcp
+    profiles:
+      - node2

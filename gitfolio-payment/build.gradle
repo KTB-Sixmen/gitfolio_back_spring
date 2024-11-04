@@ -1,5 +1,6 @@
 bootJar {
     enabled = true
+    mainClass = 'com.be.gitfolio.payment.GitfolioPaymentApplication'
 }
 
 jar {
