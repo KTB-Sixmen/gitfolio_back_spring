@@ -1,0 +1,20 @@
+bootJar {
+    enabled = true
+    mainClass = 'com.be.gitfolio.chat.GitfolioChatApplication'
+}
+
+jar {
+    enabled = false
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+dependencies {
+    // MongoDB 관련 의존성
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // 공통 모듈 추가
+    implementation project(":gitfolio-common")
+}

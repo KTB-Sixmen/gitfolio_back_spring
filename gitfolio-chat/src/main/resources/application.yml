@@ -1,0 +1,27 @@
+spring:
+  # .env import
+  config:
+    import: optional:file:.env[.properties]
+  data:
+    mongodb:
+      uri: mongodb://${CHAT_MONGO_DB_USERNAME}:${CHAT_MONGO_DB_PORT}/${CHAT_MONGO_DB_DATABASE}
+
+  jwt:
+    secret: ${JWT_SECRET_KEY}
+
+cloud:
+  aws:
+    s3:
+      bucket: gitfolio
+    stack.auto: false
+    region.static: ap-northeast-2
+    credentials:
+      accessKey: ${S3_ACCESS_KEY}
+      secretKey: ${S3_SECRET_KEY}
+
+jwt:
+  refreshToken:
+    expiry: ${REFRESH_TOKEN_EXPIRY}
+
+server:
+  port: ${CHAT_SERVER_PORT}
