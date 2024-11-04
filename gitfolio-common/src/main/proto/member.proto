@@ -31,10 +31,10 @@ message MemberRequestById {
 message MemberResponseById {
   string member_id = 1;
   string nickname = 2;
-  string memberName = 3; // 회원 이름
-  string githubName = 4; // 회원 별도 설정 이름
-  string avatarUrl = 5; // 프로필 사진
-  string phoneNumber = 6; // 전화번호
+  string member_name = 3; // 회원 이름
+  string github_name = 4; // 회원 별도 설정 이름
+  string avatar_url = 5; // 프로필 사진
+  string phone_number = 6; // 전화번호
   string email = 7; // 이메일 주소
   string position = 8; // 포지션(직군)
   repeated WorkExperience work_experiences = 9;  // WorkExperience 리스트
