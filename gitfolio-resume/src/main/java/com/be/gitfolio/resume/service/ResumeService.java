@@ -4,12 +4,17 @@ import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
+import com.be.gitfolio.common.type.NotificationType;
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
+import com.be.gitfolio.resume.event.ResumeEventPublisher;
+import com.be.gitfolio.resume.mapper.MemberInfoMapper;
 import com.be.gitfolio.resume.mapper.MemberMapper;
 import com.be.gitfolio.resume.repository.CommentRepository;
 import com.be.gitfolio.resume.repository.LikeRepository;
 import com.be.gitfolio.resume.repository.ResumeRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -31,6 +36,7 @@ import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
 public class ResumeService {
@@ -40,25 +46,10 @@ public class ResumeService {
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    private final WebClient webClient;
+    private final WebClient aiWebClient;
     private final JWTUtil jwtUtil;
-
-    public ResumeService(MemberGrpcClient memberGrpcClient,
-                         ResumeRepository resumeRepository,
-                         LikeRepository likeRepository,
-                         CommentRepository commentRepository,
-                         RedisTemplate<String, String> redisTemplate,
-                         @Value("${ai.server.url}") String url,
-                         WebClient.Builder webClientBuilder,
-                         JWTUtil jwtUtil) {
-        this.memberGrpcClient = memberGrpcClient;
-        this.resumeRepository = resumeRepository;
-        this.likeRepository = likeRepository;
-        this.commentRepository = commentRepository;
-        this.redisTemplate = redisTemplate;
-        this.webClient = webClientBuilder.baseUrl(url).build();
-        this.jwtUtil = jwtUtil;
-    }
+    private final ResumeEventPublisher resumeEventPublisher;
+    private final MemberInfoMapper memberInfoMapper;
 
     /**
      * 이력서 생성 요청
@@ -71,19 +62,13 @@ public class ResumeService {
         String personalRepo = "https://github.com/" + memberResponse.getNickname();
 
         // proto -> MemberInfoDTO
-        MemberInfoDTO memberInfoDTO = convertToMemberInfoDTO(memberResponse);
+        MemberInfoDTO memberInfoDTO = memberInfoMapper.toMemberInfoDTO(memberResponse);
 
-        AIRequestDTO aiRequestDTO = AIRequestDTO.builder()
-                .githubID(memberResponse.getNickname())
-                .githubName(memberResponse.getGithubName())
-                .personalRepo(personalRepo)
-                .selectedRepo(createResumeRequestDTO.getSelectedRepo())
-                .requirements(createResumeRequestDTO.getRequirements())
-                .build();
+        // AI에 요청할 DTO 생성
+        AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberResponse, personalRepo, createResumeRequestDTO);
         log.info("GithubName : {}", memberResponse.getGithubName());
 
-
-        AIResponseDTO aiResponseDTO = webClient.post()
+        AIResponseDTO aiResponseDTO = aiWebClient.post()
                 .uri("/api/resumes")
                 .bodyValue(aiRequestDTO)
                 .retrieve()
@@ -218,6 +203,7 @@ public class ResumeService {
                     existingLike.updateStatus();
                     if (Boolean.TRUE.equals(existingLike.getStatus())) {
                         resume.increaseLike();
+                        resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
                     } else {
                         resume.decreaseLike();
                     }
@@ -231,6 +217,7 @@ public class ResumeService {
                             .build();
                     resume.increaseLike();
                     likeRepository.save(newLike);
+                    resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
                     return true; // 새로운 좋아요 추가됨
                 });
 
@@ -239,24 +226,5 @@ public class ResumeService {
         existingLikeOpt.ifPresent(likeRepository::save);
 
         return isLikeAdded;
-    }
-
-    private MemberInfoDTO convertToMemberInfoDTO(MemberResponseById memberResponse) {
-        return MemberInfoDTO.builder()
-                .memberId(memberResponse.getMemberId())
-                .memberName(memberResponse.getMemberName())
-                .avatarUrl(memberResponse.getAvatarUrl())
-                .phoneNumber(memberResponse.getPhoneNumber())
-                .email(memberResponse.getEmail())
-                .position(memberResponse.getPosition())
-                .workExperiences(toEntityList(memberResponse.getWorkExperiencesList(), MemberMapper::toEntity))
-                .links(toEntityList(memberResponse.getLinksList(), MemberMapper::toEntity))
-                .educations(toEntityList(memberResponse.getEducationsList(), MemberMapper::toEntity))
-                .certificates(toEntityList(memberResponse.getCertificatesList(), MemberMapper::toEntity))
-                .build();
-    }
-
-    private <T, R> List<R> toEntityList(List<T> sourceList, Function<T, R> mapper) {
-        return sourceList.stream().map(mapper).toList();
     }
 }
