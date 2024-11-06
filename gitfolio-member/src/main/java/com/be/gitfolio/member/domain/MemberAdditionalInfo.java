@@ -45,19 +45,19 @@ public class MemberAdditionalInfo extends BaseEntityMongo {
     public static MemberAdditionalInfo of(Long memberId, MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
         return MemberAdditionalInfo.builder()
                 .memberId(memberId.toString())
-                .workExperiences(memberAdditionalRequestDTO.getWorkExperiences())
-                .educations(memberAdditionalRequestDTO.getEducations())
-                .certificates(memberAdditionalRequestDTO.getCertificates())
-                .links(memberAdditionalRequestDTO.getLinks())
+                .workExperiences(memberAdditionalRequestDTO.workExperiences())
+                .educations(memberAdditionalRequestDTO.educations())
+                .certificates(memberAdditionalRequestDTO.certificates())
+                .links(memberAdditionalRequestDTO.links())
                 .build();
     }
 
 
     public void updateMemberAdditionalInfo(MemberAdditionalRequestDTO memberAdditionalRequestDTO) {
-        this.workExperiences = memberAdditionalRequestDTO.getWorkExperiences();
-        this.educations = memberAdditionalRequestDTO.getEducations();
-        this.certificates = memberAdditionalRequestDTO.getCertificates();
-        this.links = memberAdditionalRequestDTO.getLinks();
+        this.workExperiences = memberAdditionalRequestDTO.workExperiences();
+        this.educations = memberAdditionalRequestDTO.educations();
+        this.certificates = memberAdditionalRequestDTO.certificates();
+        this.links = memberAdditionalRequestDTO.links();
     }
 
     @Getter

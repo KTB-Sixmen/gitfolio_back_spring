@@ -138,7 +138,7 @@ public class MemberService {
 
         // 4. updatedAt 기준으로 정렬
         userRepositories.sort(Comparator.comparing(
-                repo -> Instant.parse(repo.getUpdatedAt()),
+                repo -> Instant.parse(repo.updatedAt()),
                 Comparator.reverseOrder()
         ));
 
@@ -162,14 +162,7 @@ public class MemberService {
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
-                .map(repo -> MemberGithubRepositoryDTO.builder()
-                        .repoName((String) repo.get("name"))
-                        .repoUrl((String) repo.get("html_url"))
-                        .repoId(Long.valueOf((Integer) repo.get("id")))
-                        .updatedAt((String) repo.get("updated_at"))
-                        .topLanguage((String) repo.get("language"))
-                        .build()
-                )
+                .map(MemberGithubRepositoryDTO::from)
                 .collectList()
                 .block();
     }
@@ -193,14 +186,7 @@ public class MemberService {
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
-                .map(repo -> MemberGithubRepositoryDTO.builder()
-                        .repoName((String) repo.get("name"))
-                        .repoUrl((String) repo.get("html_url"))
-                        .repoId(Long.valueOf((Integer) repo.get("id")))
-                        .updatedAt((String) repo.get("updated_at"))
-                        .topLanguage((String) repo.get("language"))
-                        .build()
-                )
+                .map(MemberGithubRepositoryDTO::from)
                 .collectList()
                 .block();
     }

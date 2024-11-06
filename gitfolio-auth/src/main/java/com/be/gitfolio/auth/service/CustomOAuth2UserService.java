@@ -75,23 +75,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private MemberSaveRequestDTO createMemberSaveRequest(GithubResponse githubResponse) {
         // GithubResponse 값 확인
         log.info("GitHub Response: Username={}, Name={}, AvatarUrl={}", githubResponse.getGithubId(), githubResponse.getName(), githubResponse.getAvatarUrl());
-        return MemberSaveRequestDTO.builder()
-                .username(githubResponse.getGithubId())
-                .nickname(githubResponse.getName())
-                .role("ROLE_USER")
-                .avatarUrl(githubResponse.getAvatarUrl())
-                .githubName(githubResponse.getGithubName())
-                .build();
+        return MemberSaveRequestDTO.from(githubResponse);
     }
 
     // CustomOAuth2User 생성 메서드
     private CustomOAuth2User createCustomOAuth2User(Long memberId, GithubResponse githubResponse, boolean isNewMember) {
-        OAuth2UserDTO memberDTO = OAuth2UserDTO.builder()
-                .memberId(memberId)
-                .username(githubResponse.getGithubId())
-                .nickname(githubResponse.getName())
-                .role("ROLE_USER")
-                .build();
+        OAuth2UserDTO memberDTO = new OAuth2UserDTO(
+                memberId,
+                "ROLE_USER",
+                githubResponse.getName(),
+                githubResponse.getGithubId()
+        );
 
         return new CustomOAuth2User(memberDTO, isNewMember);
     }

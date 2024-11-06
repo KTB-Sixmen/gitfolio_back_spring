@@ -54,31 +54,31 @@ public class Resume extends BaseEntityMongo {
         this.likeCount--;
     }
     public void updateResume(UpdateResumeRequestDTO updateResumeDTO) {
-        this.techStack = updateResumeDTO.getTechStack();
-        this.aboutMe = updateResumeDTO.getAboutMe();
-        this.tags = updateResumeDTO.getTags();
-        this.workExperiences = updateResumeDTO.getWorkExperiences();
-        this.projects = updateResumeDTO.getProjects();
-        this.links = updateResumeDTO.getLinks();
-        this.educations = updateResumeDTO.getEducations();
-        this.certificates = updateResumeDTO.getCertificates();
+        this.techStack = updateResumeDTO.techStack();
+        this.aboutMe = updateResumeDTO.aboutMe();
+        this.tags = updateResumeDTO.tags();
+        this.workExperiences = updateResumeDTO.workExperiences();
+        this.projects = updateResumeDTO.projects();
+        this.links = updateResumeDTO.links();
+        this.educations = updateResumeDTO.educations();
+        this.certificates = updateResumeDTO.certificates();
     }
 
     public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO) {
         return Resume.builder()
-                .memberId(memberInfoDTO.getMemberId())
-                .memberName(memberInfoDTO.getMemberName())
-                .avatarUrl(memberInfoDTO.getAvatarUrl())
-                .phoneNumber(memberInfoDTO.getPhoneNumber())
-                .email(memberInfoDTO.getEmail())
-                .position(memberInfoDTO.getPosition())
-                .techStack(aiResponseDTO.getTechStack())
-                .aboutMe(aiResponseDTO.getAboutMe())
-                .workExperiences(memberInfoDTO.getWorkExperiences())
-                .projects(aiResponseDTO.getProjects())
-                .links(memberInfoDTO.getLinks())
-                .educations(memberInfoDTO.getEducations())
-                .certificates(memberInfoDTO.getCertificates())
+                .memberId(memberInfoDTO.memberId())
+                .memberName(memberInfoDTO.memberName())
+                .avatarUrl(memberInfoDTO.avatarUrl())
+                .phoneNumber(memberInfoDTO.phoneNumber())
+                .email(memberInfoDTO.email())
+                .position(memberInfoDTO.position())
+                .techStack(aiResponseDTO.techStack())
+                .aboutMe(aiResponseDTO.aboutMe())
+                .workExperiences(memberInfoDTO.workExperiences())
+                .projects(aiResponseDTO.projects())
+                .links(memberInfoDTO.links())
+                .educations(memberInfoDTO.educations())
+                .certificates(memberInfoDTO.certificates())
                 .likeCount(0)
                 .viewCount(0)
                 .build();

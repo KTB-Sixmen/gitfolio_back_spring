@@ -87,11 +87,12 @@ public class JWTFilter extends OncePerRequestFilter {
         Long memberId = jwtUtil.getMemberId(accessToken);
 
         //userDTO를 생성하여 값 set
-        OAuth2UserDTO memberDTO = OAuth2UserDTO.builder()
-                .username(username)
-                .role(role)
-                .memberId(memberId)
-                .build();
+        OAuth2UserDTO memberDTO = new OAuth2UserDTO(
+                memberId,
+                role,
+                null,
+                username
+        );
 
         //UserDetails에 회원 정보 객체 담기
         CustomOAuth2User customOAuth2User = new CustomOAuth2User(memberDTO, false);

@@ -29,4 +29,12 @@ public class Like extends BaseEntityMySQL {
     public void updateStatus() {
         this.status = !this.status;
     }
+
+    public static Like of(String resumeId, Long memberId) {
+        return Like.builder()
+                .resumeId(resumeId)
+                .memberId(memberId)
+                .status(Boolean.TRUE)
+                .build();
+    }
 }

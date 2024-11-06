@@ -86,7 +86,7 @@ public class ResumeService {
     public PaginationResponseDTO<ResumeListDTO> getResumeList(String token, ResumeFilterDTO resumeFilterDTO) {
         Long memberId = extractMemberIdFromToken(token);
 
-        Pageable pageable = PageRequest.of(resumeFilterDTO.getPage(), resumeFilterDTO.getSize());
+        Pageable pageable = PageRequest.of(resumeFilterDTO.page(), resumeFilterDTO.size());
 
         Page<ResumeListDTO> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, pageable)
                 .map(resume -> {
@@ -203,6 +203,7 @@ public class ResumeService {
                     existingLike.updateStatus();
                     if (Boolean.TRUE.equals(existingLike.getStatus())) {
                         resume.increaseLike();
+                        // 이벤트 발행
                         resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
                     } else {
                         resume.decreaseLike();
@@ -210,13 +211,10 @@ public class ResumeService {
                     return false; // 좋아요 취소됨
                 })
                 .orElseGet(() -> {
-                    Like newLike = Like.builder()
-                            .resumeId(resumeId)
-                            .memberId(memberId)
-                            .status(Boolean.TRUE)
-                            .build();
+                    Like newLike = Like.of(resumeId, memberId);
                     resume.increaseLike();
                     likeRepository.save(newLike);
+                    // 이벤트 발행
                     resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
                     return true; // 새로운 좋아요 추가됨
                 });

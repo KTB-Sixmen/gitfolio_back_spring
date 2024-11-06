@@ -52,11 +52,11 @@ public class Member extends BaseEntityMySQL {
 
     public static Member from(MemberCreateRequestDTO dto) {
         return Member.builder()
-                .username(dto.getUsername())
-                .nickname(dto.getNickname())
-                .githubName(dto.getGithubName())
-                .role(dto.getRole())
-                .avatarUrl(dto.getAvatarUrl())
+                .username(dto.username())
+                .nickname(dto.nickname())
+                .githubName(dto.githubName())
+                .role(dto.role())
+                .avatarUrl(dto.avatarUrl())
                 .paidPlan(PaidPlan.FREE)
                 .build();
     }
@@ -66,11 +66,11 @@ public class Member extends BaseEntityMySQL {
      * 회원 기본정보 수정
      */
     public void updateMember(MemberUpdateRequestDTO memberUpdateRequestDTO, String avatarUrl) {
-        this.name = memberUpdateRequestDTO.getName();
+        this.name = memberUpdateRequestDTO.name();
         this.avatarUrl = avatarUrl;
-        this.phoneNumber = memberUpdateRequestDTO.getPhoneNumber();
-        this.email = memberUpdateRequestDTO.getEmail();
-        this.position = memberUpdateRequestDTO.getPosition();
+        this.phoneNumber = memberUpdateRequestDTO.phoneNumber();
+        this.email = memberUpdateRequestDTO.email();
+        this.position = memberUpdateRequestDTO.position();
     }
 
 }
