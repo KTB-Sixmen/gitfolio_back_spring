@@ -19,6 +19,7 @@ services:
       dockerfile: dockerfile
       target: runner
     image: aida0/gitfolio_auth:test
+    container_name: gitfolio_auth
     ports:
       - target: 8080
         published: 80
@@ -36,6 +37,7 @@ services:
       dockerfile: dockerfile
       target: runner
     image: aida0/gitfolio_member:test
+    container_name: gitfolio_member
     ports:
       - target: 8080
         published: 80
@@ -53,6 +55,7 @@ services:
       dockerfile: dockerfile
       target: runner
     image: aida0/gitfolio_payment:test
+    container_name: gitfolio_payment
     ports:
       - target: 8080
         published: 80
@@ -70,6 +73,7 @@ services:
       dockerfile: dockerfile
       target: runner
     image: aida0/gitfolio_resume:test
+    container_name: gitfolio_resume
     ports:
       - target: 8080
         published: 80
