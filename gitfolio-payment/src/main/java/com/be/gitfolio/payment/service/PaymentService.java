@@ -58,7 +58,7 @@ public class PaymentService {
      */
     @Transactional
     public KakaoReadyResponse kakaoPayReady(Long memberId, PaidPlanRequest paidPlanRequest) {
-        Map<String, Object> parameters = createPaymentParameters(memberId, paidPlanRequest.getPaidPlan());
+        Map<String, Object> parameters = createPaymentParameters(memberId, paidPlanRequest.paidPlan());
 
         // 카카오페이 결제 준비 API 호출
         kakaoReady = sendKakaoPaymentRequest(
@@ -70,12 +70,7 @@ public class PaymentService {
         Payment payment = Payment.of(memberId, paidPlanRequest, kakaoReady);
         paymentRepository.save(payment);
 
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.builder()
-                .paymentId(payment.getId())
-                .status(PaymentStatus.PENDING)
-                .changedAt(LocalDateTime.now())
-                .reason("결제 준비")
-                .build();
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.ready(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
 
         return kakaoReady;
@@ -88,22 +83,16 @@ public class PaymentService {
     public KakaoApproveResponse approveResponse(Long memberId, String pgToken) {
         KakaoApproveResponse kakaoApproveResponse = confirmKakaoPayment(memberId, pgToken);
 
-        Payment payment = paymentRepository.findByTransactionId(kakaoApproveResponse.getTid())
+        Payment payment = paymentRepository.findByTransactionId(kakaoApproveResponse.tid())
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_TRANSACTION_INFO));
-        payment.updatePaymentType(kakaoApproveResponse.getPayment_method_type());
-        payment.updateCardInfo(kakaoApproveResponse.getCard_info());
-        payment.updateStatus(PaymentStatus.APPROVED);
+        // 결제 상세 정보 추가 및 상태 변경
+        payment.updatePaymentDetails(kakaoApproveResponse, PaymentStatus.APPROVED);
         paymentRepository.save(payment);
-
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.builder()
-                .paymentId(payment.getId())
-                .status(PaymentStatus.APPROVED)
-                .changedAt(LocalDateTime.now())
-                .reason("결제 승인")
-                .build();
+        // 결제 상태 변경 히스토리 저장
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.approve(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
 
-        memberGrpcClient.updateMemberPlan(kakaoApproveResponse.getPartner_user_id(), kakaoApproveResponse.getItem_name());
+        memberGrpcClient.updateMemberPlan(kakaoApproveResponse.partner_user_id(), kakaoApproveResponse.item_name());
 
         return kakaoApproveResponse;
     }
@@ -116,12 +105,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findByMemberIdAndPaidPlan(memberId, paidPlan)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_TRANSACTION_INFO));
 
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.builder()
-                .paymentId(payment.getId())
-                .status(PaymentStatus.CANCELED)
-                .changedAt(LocalDateTime.now())
-                .reason("결제 취소")
-                .build();
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.cancel(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
     }
 
@@ -133,12 +117,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findByMemberIdAndPaidPlan(memberId, paidPlan)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_TRANSACTION_INFO));
 
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.builder()
-                .paymentId(payment.getId())
-                .status(PaymentStatus.FAILED)
-                .changedAt(LocalDateTime.now())
-                .reason("결제 실패")
-                .build();
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.fail(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
     }
 
@@ -163,7 +142,7 @@ public class PaymentService {
     private KakaoApproveResponse confirmKakaoPayment(Long memberId, String pgToken) {
         Map<String, String> parameters = new HashMap<>();
         parameters.put("cid", payProperties.getCid());
-        parameters.put("tid", kakaoReady.getTid());
+        parameters.put("tid", kakaoReady.tid());
         parameters.put("partner_order_id", "1011");
         parameters.put("partner_user_id", String.valueOf(memberId));
         parameters.put("pg_token", pgToken);
