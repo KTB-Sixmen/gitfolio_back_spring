@@ -45,7 +45,7 @@ public class CommentService {
         Comment comment = Comment.builder()
                 .resumeId(resumeId)
                 .memberId(memberId)
-                .content(commentRequestDTO.getContent())
+                .content(commentRequestDTO.content())
                 .build();
         Comment savedComment = commentRepository.save(comment);
 
@@ -65,7 +65,7 @@ public class CommentService {
             throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_COMMENT);
         }
 
-        comment.updateContent(commentRequestDTO.getContent());
+        comment.updateContent(commentRequestDTO.content());
         commentRepository.save(comment);
     }
 

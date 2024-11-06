@@ -54,15 +54,16 @@ public class ResumeController {
             @RequestParam(defaultValue = "recent") String sortOrder,
             @RequestHeader(value = "Authorization", required = false) String token
     ) {
-        ResumeFilterDTO resumeFilterDTO = ResumeFilterDTO.builder()
-                .tag(tag)
-                .position(position)
-                .techStack(techStack)
-                .schoolType(schoolType)
-                .page(page)
-                .size(size)
-                .sortOrder(sortOrder)
-                .build();
+        ResumeFilterDTO resumeFilterDTO = new ResumeFilterDTO(
+                tag,
+                position,
+                techStack,
+                schoolType,
+                sortOrder,
+                page,
+                size
+        );
+
         return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(token, resumeFilterDTO)));
     }
 
