@@ -4,10 +4,14 @@ import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.grpc.MemberServiceProto;
+import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Comment;
+import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.dto.ResumeResponseDTO;
+import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.repository.CommentRepository;
+import com.be.gitfolio.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,20 +29,28 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 @Slf4j
 public class CommentService {
 
+    private final ResumeRepository resumeRepository;
     private final CommentRepository commentRepository;
     private final MemberGrpcClient memberGrpcClient;
+    private final ResumeEventPublisher resumeEventPublisher;
 
     /**
      * 댓글 작성
      */
     @Transactional
     public Long createComment(String resumeId, Long memberId, CommentRequestDTO commentRequestDTO) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
         Comment comment = Comment.builder()
                 .resumeId(resumeId)
                 .memberId(memberId)
                 .content(commentRequestDTO.getContent())
                 .build();
-        return commentRepository.save(comment).getId();
+        Comment savedComment = commentRepository.save(comment);
+
+        resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+        return savedComment.getId();
     }
 
     /**

@@ -1,9 +1,10 @@
 bootJar {
-    enabled = false
+    enabled = true
+    mainClass = 'com.be.gitfolio.auth.GitfolioAuthApplication'
 }
 
 jar {
-    enabled = true
+    enabled = false
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
@@ -30,6 +31,3 @@ dependencies {
     implementation project(":gitfolio-common")
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-}

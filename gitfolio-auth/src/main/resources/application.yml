@@ -10,7 +10,7 @@ spring:
             client-name: GitHub
             client-id: ${GITHUB_CLIENT_ID}
             client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: "http://localhost:8080/login/oauth2/code/github"
+            redirect-uri: ${GITHUB_REDIRECT_URI}
             authorization-grant-type: authorization_code
             scope: read:user
   datasource:
@@ -50,3 +50,12 @@ jwt:
 member:
   server:
     url: ${MEMBER_SERVER_URL}
+github:
+  api:
+    url: https://api.github.com
+kakao:
+  api:
+    url: ${KAKAO_API_URL}
+ai:
+  server:
+    url: ${AI_SERVER_URL}

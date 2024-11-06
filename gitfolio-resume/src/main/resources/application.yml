@@ -25,7 +25,7 @@ spring:
         show_sql: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_PORT1}, ${KAFKA_PORT2}, ${KAFKA_PORT3}
+    bootstrap-servers: ${KAFKA_HOST1}:${KAFKA_PORT1}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
@@ -47,6 +47,16 @@ jwt:
   refreshToken:
     expiry: ${REFRESH_TOKEN_EXPIRY}
 
+github:
+  api:
+    url: https://api.github.com
+    token: ${GITHUB_API_TOKEN}
+member:
+  server:
+    url: ${MEMBER_SERVER_URL}
+kakao:
+  api:
+    url: ${KAKAO_API_URL}
 ai:
   server:
     url: ${AI_SERVER_URL}

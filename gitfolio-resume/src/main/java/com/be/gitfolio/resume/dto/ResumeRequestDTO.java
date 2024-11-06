@@ -1,13 +1,14 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.grpc.MemberServiceProto;
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Resume;
 import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
+
+import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
 
 public class ResumeRequestDTO {
 
@@ -15,6 +16,7 @@ public class ResumeRequestDTO {
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
+    @ToString
     public static class MemberInfoDTO {
         @NotBlank
         private String memberId;  // 회원 ID
@@ -27,7 +29,7 @@ public class ResumeRequestDTO {
         @Email(message = "올바른 이메일 형식이어야 합니다.")
         private String email;
         @NotBlank
-        private String position;
+        private PositionType position;
         private List<Resume.WorkExperience> workExperiences;  // 경력
         private List<Resume.Link> links;  // 개인 링크
         private List<Resume.Education> educations;  // 학력
@@ -54,6 +56,16 @@ public class ResumeRequestDTO {
         private String personalRepo;    // 개인레포(깃허브 자기 소개페이지?)
         private List<String> selectedRepo;  // 이력서 생성에 사용할 레포 목록
         private String requirements;    // 요구사항(강조사항)
+
+        public static AIRequestDTO of(MemberResponseById memberResponse, String personalRepo, CreateResumeRequestDTO createResumeRequestDTO) {
+            return AIRequestDTO.builder()
+                    .githubID(memberResponse.getNickname())
+                    .githubName(memberResponse.getGithubName())
+                    .personalRepo(personalRepo)
+                    .selectedRepo(createResumeRequestDTO.getSelectedRepo())
+                    .requirements(createResumeRequestDTO.getRequirements())
+                    .build();
+        }
     }
 
 

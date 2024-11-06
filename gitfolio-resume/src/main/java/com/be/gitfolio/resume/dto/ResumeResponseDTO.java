@@ -1,5 +1,6 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -22,7 +23,7 @@ public class ResumeResponseDTO {
         private String resumeId;
         private Long memberId;
         private String avatarUrl;
-        private String position;
+        private PositionType position;
         private String aboutMe;
         private List<String> tags;
         private int likeCount;
@@ -74,7 +75,7 @@ public class ResumeResponseDTO {
         private String memberName; // 회원 이름
         private String avatarUrl; // 프로필 사진
         private String email; // 이메일 주소
-        private String position; // 포지션(직군)
+        private PositionType position; // 포지션(직군)
         private List<String> techStack;  // 기술 스택
         private String aboutMe;  // 자기소개
         private List<String> tags;  // 태그 (회사명 등)

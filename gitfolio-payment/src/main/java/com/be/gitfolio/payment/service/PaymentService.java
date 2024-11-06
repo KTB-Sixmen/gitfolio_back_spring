@@ -20,6 +20,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentStatusHistoryRepository paymentStatusHistoryRepository;
     private final KakaoPayProperties payProperties;
+    private final WebClient kakaoWebClient;
     private KakaoReadyResponse kakaoReady;
 
     private HttpHeaders getHeaders() {
@@ -57,12 +59,11 @@ public class PaymentService {
     @Transactional
     public KakaoReadyResponse kakaoPayReady(Long memberId, PaidPlanRequest paidPlanRequest) {
         Map<String, Object> parameters = createPaymentParameters(memberId, paidPlanRequest.getPaidPlan());
-        HttpEntity<Map<String, Object>> requestEntity = new HttpEntity<>(parameters, this.getHeaders());
 
         // 카카오페이 결제 준비 API 호출
         kakaoReady = sendKakaoPaymentRequest(
                 "https://open-api.kakaopay.com/online/v1/payment/ready",
-                requestEntity,
+                parameters,
                 KakaoReadyResponse.class
         );
 
@@ -167,18 +168,21 @@ public class PaymentService {
         parameters.put("partner_user_id", String.valueOf(memberId));
         parameters.put("pg_token", pgToken);
 
-        HttpEntity<Map<String, String>> requestEntity = new HttpEntity<>(parameters, getHeaders());
-
         return sendKakaoPaymentRequest(
                 "https://open-api.kakaopay.com/online/v1/payment/approve",
-                requestEntity,
+                parameters,
                 KakaoApproveResponse.class
         );
     }
 
     // 카카오페이 API 요청 전송
-    private <T> T sendKakaoPaymentRequest(String url, HttpEntity<?> requestEntity, Class<T> responseType) {
-        RestTemplate restTemplate = new RestTemplate();
-        return restTemplate.postForObject(url, requestEntity, responseType);
+    private <T> T sendKakaoPaymentRequest(String url, Map<String, ?> parameters, Class<T> responseType) {
+        return kakaoWebClient.post()
+                .uri(url)
+                .headers(headers -> headers.addAll(getHeaders()))
+                .bodyValue(parameters)
+                .retrieve()
+                .bodyToMono(responseType)
+                .block(); // 비동기 방식 사용 시 block() 제거 가능
     }
 }

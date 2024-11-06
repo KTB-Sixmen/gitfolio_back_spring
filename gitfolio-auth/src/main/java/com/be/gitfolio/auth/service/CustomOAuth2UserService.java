@@ -4,6 +4,7 @@ import com.be.gitfolio.auth.dto.CustomOAuth2User;
 import com.be.gitfolio.auth.dto.GithubResponse;
 import com.be.gitfolio.auth.dto.MemberDTO;
 import com.be.gitfolio.common.config.BaseResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -18,14 +19,11 @@ import reactor.core.publisher.Mono;
 import static com.be.gitfolio.auth.dto.MemberDTO.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final WebClient webClient;
-
-    public CustomOAuth2UserService(@Value("${member.server.url}") String memberServerUrl, WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(memberServerUrl).build();
-    }
+    private final WebClient memberWebClient;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -47,7 +45,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 회원 정보 조회를 위한 WebClient 호출 메서드
     private Mono<Long> findMemberIdByUsername(String username) {
-        return webClient.get()
+        return memberWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/members")
                         .queryParam("username", username)
@@ -65,7 +63,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 회원 가입을 위한 WebClient 호출 메서드
     private Mono<Long> createMemberInMemberModule(MemberSaveRequestDTO memberSaveRequestDTO) {
-        return webClient.post()
+        return memberWebClient.post()
                 .uri("/api/members")
                 .bodyValue(memberSaveRequestDTO)
                 .retrieve()
