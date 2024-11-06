@@ -11,8 +11,6 @@ import java.util.Set;
 @Repository
 public interface LikeRepository extends JpaRepository<Like, Long> {
     Optional<Like> findByResumeIdAndMemberId(String resumeId, Long memberId);
-    @Query("SELECT l.resumeId FROM Like l WHERE l.memberId = :memberId")
-    Set<String> findLikedResumeIdsByMemberId(Long memberId);
-    boolean existsByMemberIdAndResumeId(Long memberId, String resumeId);
+
     void deleteLikesByResumeId(String resumeId);
 }
