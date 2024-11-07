@@ -8,6 +8,22 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - module: gitfolio-auth
+            port: 8080
+            service_name: auth
+          - module: gitfolio-member
+            port: 8081
+            service_name: member
+          - module: gitfolio-payment
+            port: 8083
+            service_name: payment
+          - module: gitfolio-resume
+            port: 8082
+            service_name: resume
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,33 +37,16 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # Builder 이미지 빌드 및 캐시 활용
-      - name: Build and push builder image
+      - name: Build and push service image
         uses: docker/build-push-action@v4
         with:
-          context: .
-          file: ./dockerfile
-          target: builder
+          context: ./${{ matrix.module }}
+          file: ./${{ matrix.module }}/dockerfile
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest
-          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest
-          cache-to: type=inline
-
-      # 각 서비스별 이미지 빌드 및 푸시
-      - name: Build and push service images
-        run: |
-          services=("auth" "member" "payment" "resume")
-          for service in "${services[@]}"; do
-            docker build \
-              --platform linux/amd64 \
-              --build-arg BUILDER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest \
-              -f ./gitfolio-${service}/dockerfile \
-              --target runner \
-              -t ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${service}:latest \
-              ./gitfolio-${service}
-            docker push ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${service}:latest
-          done
+          tags: aida0/gitfolio_${{ matrix.service_name }}:test
+          build-args: |
+            BUILDER_IMAGE=aida0/gitfolio_builder:test
 
   deploy:
     needs: build-and-push
@@ -57,15 +56,19 @@ jobs:
         include:
           - module: gitfolio-auth
             port: 8080
+            service_name: auth
             instance_tag: "Gitfolio BE auth"
           - module: gitfolio-member
             port: 8081
+            service_name: member
             instance_tag: "Gitfolio BE member"
           - module: gitfolio-payment
             port: 8083
+            service_name: payment
             instance_tag: "Gitfolio BE payment"
           - module: gitfolio-resume
             port: 8082
+            service_name: resume
             instance_tag: "Gitfolio BE resume"
 
     steps:
@@ -103,14 +106,14 @@ jobs:
             --parameters command="\
               sudo -i && \
               docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
-              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest && \
-              docker stop ${{ matrix.module }} || true && \
-              docker rm ${{ matrix.module }} || true && \
+              docker pull aida0/gitfolio_${{ matrix.service_name }}:test && \
+              docker stop gitfolio_${{ matrix.service_name }} || true && \
+              docker rm gitfolio_${{ matrix.service_name }} || true && \
               docker run -d \
-                --name ${{ matrix.module }} \
+                --name gitfolio_${{ matrix.service_name }} \
                 -p ${{ matrix.port }}:8080 \
-                -e MEMBER_SERVER_URL=http://\${MEMBER_PRIVATE_IP}:8081 \
-                -e AUTH_SERVER_URL=http://\${AUTH_PRIVATE_IP}:8080 \
-                -e RESUME_SERVER_URL=http://\${RESUME_PRIVATE_IP}:8082 \
-                -e PAYMENT_SERVER_URL=http://\${PAYMENT_PRIVATE_IP}:8083 \
-                ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${matrix.module#gitfolio-}:latest"
+                -e MEMBER_SERVER_URL=https://\${MEMBER_PRIVATE_IP}:8081 \
+                -e AUTH_SERVER_URL=https://\${AUTH_PRIVATE_IP}:8080 \
+                -e RESUME_SERVER_URL=https://\${RESUME_PRIVATE_IP}:8082 \
+                -e PAYMENT_SERVER_URL=https://\${PAYMENT_PRIVATE_IP}:8083 \
+                aida0/gitfolio_${{ matrix.service_name }}:test"
