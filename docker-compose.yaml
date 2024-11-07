@@ -1,89 +1,148 @@
-services:
-  builder:
-    platform: linux/amd64
-    build:
-      context: ./
-      dockerfile: dockerfile
-      target: builder
-    volumes:
-      - gradle-cache:/root/.gradle
-      - build-output:/gitfolio_back/build
-    image: aida0/gitfolio_builder:test
-    profiles:
-      - build
+name: Backend MSA CI/CD Pipeline
 
-  auth:
-    platform: linux/amd64
-    build:
-      context: ./gitfolio-auth
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_auth:test
-    container_name: gitfolio_auth
-    ports:
-      - target: 8080
-        published: 80
-        protocol: tcp
-      - target: 8080
-        published: 443
-        protocol: tcp
-    profiles:
-      - run
+on:
+  push:
+    branches:
+      - 48-Develop브랜치-푸시시-CI/CD-구현
 
-  member:
-    platform: linux/amd64
-    build:
-      context: ./gitfolio-member
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_member:test
-    container_name: gitfolio_member
-    ports:
-      - target: 8080
-        published: 80
-        protocol: tcp
-      - target: 8080
-        published: 443
-        protocol: tcp
-    profiles:
-      - run
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - module: gitfolio-auth
+            port: 8080
+            service_tag: back
+            name_tag: "Gitfolio BE auth"
+            env_tag: dev
+          - module: gitfolio-member
+            port: 8081
+            service_tag: back
+            name_tag: "Gitfolio BE member"
+            env_tag: dev
+          - module: gitfolio-payment
+            port: 8083
+            service_tag: back
+            name_tag: "Gitfolio BE payment"
+            env_tag: dev
+          - module: gitfolio-resume
+            port: 8082
+            service_tag: back
+            name_tag: "Gitfolio BE resume"
+            env_tag: dev
 
-  payment:
-    platform: linux/amd64
-    build:
-      context: ./gitfolio-payment
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_payment:test
-    container_name: gitfolio_payment
-    ports:
-      - target: 8080
-        published: 80
-        protocol: tcp
-      - target: 8080
-        published: 443
-        protocol: tcp
-    profiles:
-      - run
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-  resume:
-    platform: linux/amd64
-    build:
-      context: ./gitfolio-resume
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_resume:test
-    container_name: gitfolio_resume
-    ports:
-      - target: 8080
-        published: 80
-        protocol: tcp
-      - target: 8080
-        published: 443
-        protocol: tcp
-    profiles:
-      - run
+      - name: Set up JDK 17 (Amazon Corretto)
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'corretto'
 
-volumes:
-  gradle-cache:
-  build-output:
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Validate Gradle wrapper
+        uses: gradle/wrapper-validation-action@v1
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build with Gradle (skip tests)
+        run: ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build -x test
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./${{ matrix.module }}
+          file: ./${{ matrix.module }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest
+          build-args: |
+            JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - module: gitfolio-auth
+            port: 8080
+            instance_tag: "Gitfolio BE auth"
+          - module: gitfolio-member
+            port: 8081
+            instance_tag: "Gitfolio BE member"
+          - module: gitfolio-payment
+            port: 8083
+            instance_tag: "Gitfolio BE payment"
+          - module: gitfolio-resume
+            port: 8082
+            instance_tag: "Gitfolio BE resume"
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Get EC2 instance ID
+        id: get-instance
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:Service,Values=back" \
+              "Name=tag:Module,Values=member" \
+              "Name=tag:Name,Values=${{ matrix.instance_tag }}" \
+              "Name=tag:Environment,Values=dev" \
+              "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].InstanceId" \
+            --output text)
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+      - name: Install Session Manager Plugin
+        run: |
+          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+          sudo dpkg -i session-manager-plugin.deb
+
+      - name: Deploy to EC2 using SSM
+        run: |
+          aws ssm start-session \
+            --target "${{ steps.get-instance.outputs.instance_id }}" \
+            --document-name AWS-StartInteractiveCommand \
+            --parameters command="\
+              sudo -i && \
+              docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
+              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest && \
+              docker stop ${{ matrix.module }} || true && \
+              docker rm ${{ matrix.module }} || true && \
+              docker run -d \
+                --name ${{ matrix.module }} \
+                -p ${{ matrix.port }}:${{ matrix.port }} \
+                -e MEMBER_SERVER_URL=http://${MEMBER_PRIVATE_IP}:8081 \
+                -e AUTH_SERVER_URL=http://${AUTH_PRIVATE_IP}:8080 \
+                -e RESUME_SERVER_URL=http://${RESUME_PRIVATE_IP}:8082 \
+                -e PAYMENT_SERVER_URL=http://${PAYMENT_PRIVATE_IP}:8083 \
+                ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest"
