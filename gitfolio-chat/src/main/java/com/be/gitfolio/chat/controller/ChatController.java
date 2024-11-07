@@ -21,7 +21,6 @@ import static com.be.gitfolio.chat.dto.MessageResponseDTO.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/chat")
-@CrossOrigin(origins = "http://localhost:5173")
 @Slf4j
 public class ChatController {
 
