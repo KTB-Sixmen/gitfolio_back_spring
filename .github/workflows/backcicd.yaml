@@ -8,45 +8,9 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - module: gitfolio-auth
-            port: 8080  # 수정: 8081 -> 8080 (AUTH_SERVER_PORT와 일치)
-            service_tag: back
-            name_tag: "Gitfolio BE auth"
-            env_tag: dev
-          - module: gitfolio-member
-            port: 8081  # 유지: 8081 (MEMBER_SERVER_PORT와 일치)
-            service_tag: back
-            name_tag: "Gitfolio BE member"
-            env_tag: dev
-          - module: gitfolio-payment
-            port: 8083  # 유지: 8083 (PAYMENT_SERVER_PORT와 일치)
-            service_tag: back
-            name_tag: "Gitfolio BE payment"
-            env_tag: dev
-          - module: gitfolio-resume
-            port: 8082  # 수정: 8084 -> 8082 (RESUME_SERVER_PORT와 일치)
-            service_tag: back
-            name_tag: "Gitfolio BE resume"
-            env_tag: dev
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Set up JDK 17 (Amazon Corretto)
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'corretto'
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build module
-        run: ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -57,16 +21,33 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      - name: Build and Push Docker Image
+      # Builder 이미지 빌드 및 캐시 활용
+      - name: Build and push builder image
         uses: docker/build-push-action@v4
         with:
-          context: ./${{ matrix.module }}
-          file: ./${{ matrix.module }}/Dockerfile
+          context: .
+          file: ./dockerfile
+          target: builder
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest
-          build-args: |
-            JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest
+          cache-to: type=inline
+
+      # 각 서비스별 이미지 빌드 및 푸시
+      - name: Build and push service images
+        run: |
+          services=("auth" "member" "payment" "resume")
+          for service in "${services[@]}"; do
+            docker build \
+              --platform linux/amd64 \
+              --build-arg BUILDER_IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_builder:latest \
+              -f ./gitfolio-${service}/dockerfile \
+              --target runner \
+              -t ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${service}:latest \
+              ./gitfolio-${service}
+            docker push ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${service}:latest
+          done
 
   deploy:
     needs: build-and-push
@@ -75,16 +56,16 @@ jobs:
       matrix:
         include:
           - module: gitfolio-auth
-            port: 8081
+            port: 8080
             instance_tag: "Gitfolio BE auth"
           - module: gitfolio-member
-            port: 8082
+            port: 8081
             instance_tag: "Gitfolio BE member"
           - module: gitfolio-payment
             port: 8083
             instance_tag: "Gitfolio BE payment"
           - module: gitfolio-resume
-            port: 8084
+            port: 8082
             instance_tag: "Gitfolio BE resume"
 
     steps:
@@ -100,10 +81,10 @@ jobs:
         run: |
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters \
-              "Name=tag:Service,Values=${{ matrix.service_tag }}" \
+              "Name=tag:Service,Values=back" \
               "Name=tag:Module,Values=member" \
-              "Name=tag:Name,Values=${{ matrix.name_tag }}" \
-              "Name=tag:Environment,Values=${{ matrix.env_tag }}" \
+              "Name=tag:Name,Values=${{ matrix.instance_tag }}" \
+              "Name=tag:Environment,Values=dev" \
               "Name=instance-state-name,Values=running" \
             --query "Reservations[*].Instances[*].InstanceId" \
             --output text)
@@ -127,5 +108,9 @@ jobs:
               docker rm ${{ matrix.module }} || true && \
               docker run -d \
                 --name ${{ matrix.module }} \
-                -p ${{ matrix.port }}:${{ matrix.port }} \
-                ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:latest"
+                -p ${{ matrix.port }}:8080 \
+                -e MEMBER_SERVER_URL=http://\${MEMBER_PRIVATE_IP}:8081 \
+                -e AUTH_SERVER_URL=http://\${AUTH_PRIVATE_IP}:8080 \
+                -e RESUME_SERVER_URL=http://\${RESUME_PRIVATE_IP}:8082 \
+                -e PAYMENT_SERVER_URL=http://\${PAYMENT_PRIVATE_IP}:8083 \
+                ${{ secrets.DOCKERHUB_USERNAME }}/gitfolio_${matrix.module#gitfolio-}:latest"
