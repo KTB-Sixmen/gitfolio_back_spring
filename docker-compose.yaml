@@ -40,10 +40,10 @@ services:
     container_name: gitfolio_member
     ports:
       - target: 8080
-        published: 80
+        published: 81
         protocol: tcp
       - target: 8080
-        published: 443
+        published: 444
         protocol: tcp
     profiles:
       - run
@@ -76,10 +76,10 @@ services:
     container_name: gitfolio_resume
     ports:
       - target: 8080
-        published: 80
+        published: 81
         protocol: tcp
       - target: 8080
-        published: 443
+        published: 444
         protocol: tcp
     profiles:
       - run
