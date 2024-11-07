@@ -44,7 +44,7 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
         // 정렬 기준
         if (resumeFilterDTO.sortOrder() != null) {
             switch (resumeFilterDTO.sortOrder()) {
-                case "recent" -> query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+                case "recent" -> query.with(Sort.by(Sort.Direction.DESC, "updatedAt"));
                 case "like" -> query.with(Sort.by(Sort.Direction.DESC, "likeCount"));
                 case "view" -> query.with(Sort.by(Sort.Direction.DESC, "viewCount"));
                 default -> {
