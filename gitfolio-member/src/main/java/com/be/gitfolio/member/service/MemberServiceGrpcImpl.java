@@ -13,6 +13,7 @@ import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
 import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.lognet.springboot.grpc.GRpcService;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +25,7 @@ import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
 @GRpcService
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
+@Slf4j
 public class MemberServiceGrpcImpl extends MemberServiceGrpc.MemberServiceImplBase {
 
     private final MemberRepository memberRepository;
@@ -73,49 +75,24 @@ public class MemberServiceGrpcImpl extends MemberServiceGrpc.MemberServiceImplBa
         Optional<Member> memberOpt = memberRepository.findById(Long.valueOf(memberId));
         Optional<MemberAdditionalInfo> memberAdditionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(memberId);
 
-        if (memberOpt.isPresent() && memberAdditionalInfoOpt.isPresent()) {
-            Member member = memberOpt.get();
-            MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoOpt.get();
+        try {
+            if (memberOpt.isPresent() && memberAdditionalInfoOpt.isPresent()) {
+                MemberResponseById response = ProtoMapperUtil.toProto(memberOpt.get(), memberAdditionalInfoOpt.get());
 
-            MemberResponseById response = MemberResponseById.newBuilder()
-                    .setMemberId(String.valueOf(member.getId()))
-                    .setNickname(member.getNickname())
-                    .setMemberName(member.getName())
-                    .setGithubName(member.getGithubName())
-                    .setAvatarUrl(member.getAvatarUrl())
-                    .setPhoneNumber(member.getPhoneNumber())
-                    .setEmail(member.getEmail())
-                    .setPosition(member.getPosition())
-                    .addAllWorkExperiences(
-                            memberAdditionalInfo.getWorkExperiences().stream()
-                                    .map(ProtoMapper::toProto)
-                                    .toList()
-                    )
-                    .addAllEducations(
-                            memberAdditionalInfo.getEducations().stream()
-                                    .map(ProtoMapper::toProto)
-                                    .toList()
-                    )
-                    .addAllCertificates(
-                            memberAdditionalInfo.getCertificates().stream()
-                                    .map(ProtoMapper::toProto)
-                                    .toList()
-                    )
-                    .addAllLinks(
-                            memberAdditionalInfo.getLinks().stream()
-                                    .map(ProtoMapper::toProto)
-                                    .toList()
-                    )
-                    .build();
-
-            responseObserver.onNext(response);
-            responseObserver.onCompleted();
-        } else {
-            StatusRuntimeException statusException = Status.NOT_FOUND
-                    .withDescription("Member Not Found with ID:" + memberId)
-                    .asRuntimeException();
-            responseObserver.onError(statusException);
+                responseObserver.onNext(response);
+                responseObserver.onCompleted();
+            } else {
+                StatusRuntimeException statusException = Status.NOT_FOUND
+                        .withDescription("Member Not Found with ID:" + memberId)
+                        .asRuntimeException();
+                responseObserver.onError(statusException);
+            }
+        } catch (Exception e) {
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Internal server error: " + e.getMessage())
+                    .asRuntimeException());
         }
+
 
 
     }

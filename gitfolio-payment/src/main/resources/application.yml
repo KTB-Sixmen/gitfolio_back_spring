@@ -29,6 +29,7 @@ cloud:
   aws:
     s3:
       bucket: gitfolio
+      url-prefix: ${S3_URL_PREFIX}
     stack.auto: false
     region.static: ap-northeast-2
     credentials:
@@ -45,3 +46,17 @@ kakaopay:
 payment:
   server:
     url: ${PAYMENT_SERVER_URL}
+
+github:
+  api:
+    url: https://api.github.com
+    token: ${GITHUB_API_TOKEN}
+member:
+  server:
+    url: ${MEMBER_SERVER_URL}
+kakao:
+  api:
+    url: ${KAKAO_API_URL}
+ai:
+  server:
+    url: ${AI_SERVER_URL}

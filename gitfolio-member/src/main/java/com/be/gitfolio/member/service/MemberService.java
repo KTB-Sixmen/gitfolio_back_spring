@@ -7,26 +7,23 @@ import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import com.be.gitfolio.member.repository.MemberAdditionalInfoRepository;
 import com.be.gitfolio.member.repository.MemberRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
 import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 @Transactional(readOnly = true)
 public class MemberService {
@@ -38,17 +35,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final MemberAdditionalInfoRepository memberAdditionalInfoRepository;
     private final S3Service s3Service;
-    private final WebClient webClient;
-
-    public MemberService(MemberRepository memberRepository,
-                         MemberAdditionalInfoRepository memberAdditionalInfoRepository,
-                         S3Service s3Service,
-                         @Value("${github.api.url}") String url, WebClient.Builder webClientBuilder) {
-        this.memberRepository = memberRepository;
-        this.memberAdditionalInfoRepository = memberAdditionalInfoRepository;
-        this.s3Service = s3Service;
-        this.webClient = webClientBuilder.baseUrl(url).build();
-    }
+    private final WebClient githubWebClient;
 
     /**
      * 회원 생성
@@ -88,8 +75,14 @@ public class MemberService {
         MemberAdditionalInfo additionalInfo = additionalInfoOpt
                 .orElseGet(() -> MemberAdditionalInfo.from(member.getId()));
 
+        // s3에 저장된 파일이면 prefix 붙여서 제공
+        String avatarUrl = member.getAvatarUrl();
+        if (!avatarUrl.contains("avatars.githubusercontent.com")) {
+            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
+        }
+
         // DTO에 MySQL과 MongoDB 데이터를 함께 담아 반환
-        return MemberDetailDTO.of(member, additionalInfo);
+        return MemberDetailDTO.of(member, additionalInfo, avatarUrl);
     }
 
     /**
@@ -146,7 +139,7 @@ public class MemberService {
 
         // 4. updatedAt 기준으로 정렬
         userRepositories.sort(Comparator.comparing(
-                repo -> Instant.parse(repo.getUpdatedAt()),
+                repo -> Instant.parse(repo.updatedAt()),
                 Comparator.reverseOrder()
         ));
 
@@ -165,26 +158,19 @@ public class MemberService {
 
     // 사용자 개인 레포지토리를 조회하는 메서드
     private List<MemberGithubRepositoryDTO> getRepositoriesForUser(String username) {
-        return webClient.get()
+        return githubWebClient.get()
                 .uri("/users/{username}/repos", username)
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
-                .map(repo -> MemberGithubRepositoryDTO.builder()
-                        .repoName((String) repo.get("name"))
-                        .repoUrl((String) repo.get("html_url"))
-                        .repoId(Long.valueOf((Integer) repo.get("id")))
-                        .updatedAt((String) repo.get("updated_at"))
-                        .topLanguage((String) repo.get("language"))
-                        .build()
-                )
+                .map(MemberGithubRepositoryDTO::from)
                 .collectList()
                 .block();
     }
 
     // 사용자가 속한 조직 리스트를 조회하는 메서드
     private List<String> getOrganizationsForUser(String username) {
-        return webClient.get()
+        return githubWebClient.get()
                 .uri("/users/{username}/orgs", username)
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
@@ -196,19 +182,12 @@ public class MemberService {
 
     // 조직의 레포지토리 목록을 조회하는 메서드
     private List<MemberGithubRepositoryDTO> getRepositoriesForOrganization(String org) {
-        return webClient.get()
+        return githubWebClient.get()
                 .uri("/orgs/{org}/repos", org)
                 .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
-                .map(repo -> MemberGithubRepositoryDTO.builder()
-                        .repoName((String) repo.get("name"))
-                        .repoUrl((String) repo.get("html_url"))
-                        .repoId(Long.valueOf((Integer) repo.get("id")))
-                        .updatedAt((String) repo.get("updated_at"))
-                        .topLanguage((String) repo.get("language"))
-                        .build()
-                )
+                .map(MemberGithubRepositoryDTO::from)
                 .collectList()
                 .block();
     }

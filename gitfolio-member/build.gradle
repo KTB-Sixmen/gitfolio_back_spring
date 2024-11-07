@@ -4,12 +4,17 @@ bootJar {
 }
 
 jar {
-	enabled = true
+	enabled = false
 }
 
 tasks.register("prepareKotlinBuildScriptModel"){}
 
 dependencies {
+
+	// MapStruct 의존성
+	implementation 'org.mapstruct:mapstruct:1.5.3.Final'
+	annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
+	annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
 
 	// gRPC 관련 의존성
 	implementation 'io.grpc:grpc-netty-shaded:1.45.1'
@@ -36,8 +41,4 @@ dependencies {
 
 	// 공통 모듈 추가
 	implementation project(":gitfolio-common")
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
 }

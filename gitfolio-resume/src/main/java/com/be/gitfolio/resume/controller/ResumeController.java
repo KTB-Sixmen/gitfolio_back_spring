@@ -10,7 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
@@ -54,15 +56,16 @@ public class ResumeController {
             @RequestParam(defaultValue = "recent") String sortOrder,
             @RequestHeader(value = "Authorization", required = false) String token
     ) {
-        ResumeFilterDTO resumeFilterDTO = ResumeFilterDTO.builder()
-                .tag(tag)
-                .position(position)
-                .techStack(techStack)
-                .schoolType(schoolType)
-                .page(page)
-                .size(size)
-                .sortOrder(sortOrder)
-                .build();
+        ResumeFilterDTO resumeFilterDTO = new ResumeFilterDTO(
+                tag,
+                position,
+                techStack,
+                schoolType,
+                sortOrder,
+                page,
+                size
+        );
+
         return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(token, resumeFilterDTO)));
     }
 
@@ -112,9 +115,13 @@ public class ResumeController {
      */
     @AuthRequired
     @PutMapping("/{resumeId}")
-    public ResponseEntity<BaseResponse<String>> updateResume(@PathVariable("resumeId") String resumeId,
-                                                             @RequestBody UpdateResumeRequestDTO updateResumeRequestDTO) {
-        resumeService.updateResume(resumeId, updateResumeRequestDTO);
+    public ResponseEntity<BaseResponse<String>> updateResume(HttpServletRequest request,
+                                                             @PathVariable("resumeId") String resumeId,
+                                                             @RequestPart("updateResumeRequestDTO") UpdateResumeRequestDTO updateResumeRequestDTO,
+                                                             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
+
+        String memberId = request.getAttribute("memberId").toString();
+        resumeService.updateResume(memberId,resumeId, updateResumeRequestDTO, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
 
