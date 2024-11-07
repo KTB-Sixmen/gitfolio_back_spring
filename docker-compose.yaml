@@ -1,0 +1,89 @@
+services:
+  builder:
+    platform: linux/amd64
+    build:
+      context: ./
+      dockerfile: dockerfile
+      target: builder
+    volumes:
+      - gradle-cache:/root/.gradle
+      - build-output:/gitfolio_back/build
+    image: aida0/gitfolio_builder:test
+    profiles:
+      - build
+
+  auth:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-auth
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_auth:test
+    container_name: gitfolio_auth
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
+  member:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-member
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_member:test
+    container_name: gitfolio_member
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
+  payment:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-payment
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_payment:test
+    container_name: gitfolio_payment
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
+  resume:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-resume
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_resume:test
+    container_name: gitfolio_resume
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
+volumes:
+  gradle-cache:
+  build-output:

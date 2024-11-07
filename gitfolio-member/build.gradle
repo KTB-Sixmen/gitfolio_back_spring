@@ -1,5 +1,6 @@
 bootJar {
-	enabled = false
+	enabled = true
+	mainClass = 'com.be.gitfolio.member.GitfolioMemberApplication'
 }
 
 jar {
