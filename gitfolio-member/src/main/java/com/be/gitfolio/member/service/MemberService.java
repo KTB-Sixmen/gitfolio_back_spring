@@ -10,18 +10,13 @@ import com.be.gitfolio.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
@@ -80,8 +75,14 @@ public class MemberService {
         MemberAdditionalInfo additionalInfo = additionalInfoOpt
                 .orElseGet(() -> MemberAdditionalInfo.from(member.getId()));
 
+        // s3에 저장된 파일이면 prefix 붙여서 제공
+        String avatarUrl = member.getAvatarUrl();
+        if (!avatarUrl.contains("avatars.githubusercontent.com")) {
+            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
+        }
+
         // DTO에 MySQL과 MongoDB 데이터를 함께 담아 반환
-        return MemberDetailDTO.of(member, additionalInfo);
+        return MemberDetailDTO.of(member, additionalInfo, avatarUrl);
     }
 
     /**
