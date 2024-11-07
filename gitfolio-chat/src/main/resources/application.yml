@@ -5,9 +5,23 @@ spring:
   data:
     mongodb:
       uri: mongodb://${CHAT_MONGO_DB_USERNAME}:${CHAT_MONGO_DB_PORT}/${CHAT_MONGO_DB_DATABASE}
+      auto-index-creation: true
 
   jwt:
     secret: ${JWT_SECRET_KEY}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST1}:${KAFKA_PORT1}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: chat-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
 
 cloud:
   aws:
@@ -25,3 +39,16 @@ jwt:
 
 server:
   port: ${CHAT_SERVER_PORT}
+
+github:
+  api:
+    url: https://api.github.com
+member:
+  server:
+    url: ${MEMBER_SERVER_URL}
+kakao:
+  api:
+    url: ${KAKAO_API_URL}
+ai:
+  server:
+    url: ${AI_SERVER_URL}
