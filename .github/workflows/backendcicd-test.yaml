@@ -21,105 +21,102 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
 
+      - name: Create env file
+        run: |
+          echo "${{ secrets.ENV_TEST }}" > .env.test
+          source .env.test
+
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build module
-        run: ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
+        run: |
+          source .env.test
+          ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v1
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.ENV_TEST }}
+        run: |
+          source .env.test
+          docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
 
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v2
-        with:
-          context: ./${{ matrix.module }}
-          file: ./${{ matrix.module }}/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:test
-          build-args: |
-            JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.ENV_TEST }}
+        run: |
+          source .env.test
+          docker buildx build \
+            --platform linux/amd64 \
+            --push \
+            -t ${DOCKERHUB_USERNAME_TEST}/${{ matrix.module }}:test \
+            -f ./${{ matrix.module }}/Dockerfile \
+            --build-arg JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar \
+            ./${{ matrix.module }}
 
   deploy:
     runs-on: ubuntu-latest
     needs: build-and-push
     steps:
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.EC2_HOST_TEST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script: |
-            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
-            modules=(gitfolio-auth gitfolio-member gitfolio-payment gitfolio-resume)
-            for module in "${modules[@]}"; do
-              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
-              docker stop ${module}_test || true
-              docker rm ${module}_test || true
-              case $module in
-                gitfolio-auth)
-                  docker run -d \
-                    --name ${module}_test \
-                    -p 8081:8081 \
-                    -e SPRING_PROFILES_ACTIVE=test \
-                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
-                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
-                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
-                    -e JWT_SECRET_KEY_TEST=${{ secrets.JWT_SECRET_KEY_TEST }} \
-                    -e REDIS_HOST_TEST=${{ secrets.REDIS_HOST_TEST }} \
-                    -e REDIS_PORT_TEST=${{ secrets.REDIS_PORT_TEST }} \
-                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
-                    -e AUTH_SERVER_URL_TEST=${{ secrets.AUTH_SERVER_URL_TEST }} \
-                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
-                  ;;
-                gitfolio-member)
-                  docker run -d \
-                    --name ${module}_test \
-                    -p 8082:8082 \
-                    -e SPRING_PROFILES_ACTIVE=test \
-                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
-                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
-                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
-                    -e S3_ACCESS_KEY_TEST=${{ secrets.S3_ACCESS_KEY_TEST }} \
-                    -e S3_SECRET_KEY_TEST=${{ secrets.S3_SECRET_KEY_TEST }} \
-                    -e S3_BUCKET_TEST=${{ secrets.S3_BUCKET_TEST }} \
-                    -e AUTH_SERVER_URL_TEST=${{ secrets.AUTH_SERVER_URL_TEST }} \
-                    -e GITHUB_CLIENT_ID_TEST=${{ secrets.GITHUB_CLIENT_ID_TEST }} \
-                    -e GITHUB_CLIENT_SECRET_TEST=${{ secrets.GITHUB_CLIENT_SECRET_TEST }} \
-                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
-                  ;;
-                gitfolio-payment)
-                  docker run -d \
-                    --name ${module}_test \
-                    -p 8083:8083 \
-                    -e SPRING_PROFILES_ACTIVE=test \
-                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
-                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
-                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
-                    -e TOSS_CLIENT_KEY_TEST=${{ secrets.TOSS_CLIENT_KEY_TEST }} \
-                    -e TOSS_SECRET_KEY_TEST=${{ secrets.TOSS_SECRET_KEY_TEST }} \
-                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
-                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
-                  ;;
-                gitfolio-resume)
-                  docker run -d \
-                    --name ${module}_test \
-                    -p 8084:8084 \
-                    -e SPRING_PROFILES_ACTIVE=test \
-                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
-                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
-                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
-                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
-                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
-                  ;;
-              esac
-            done
+        run: |
+          echo "${{ secrets.ENV_TEST }}" > env.test
+          source env.test
+          
+          # SSH 키 파일 생성
+          echo "${EC2_SSH_KEY_TEST}" > ssh_key.pem
+          chmod 600 ssh_key.pem
+          
+          # EC2에 환경변수 파일 전송
+          scp -i ssh_key.pem -o StrictHostKeyChecking=no env.test ${EC2_USER_TEST}@${EC2_HOST_TEST}:~/.env.test
+          
+          # 배포 스크립트 실행
+          ssh -i ssh_key.pem -o StrictHostKeyChecking=no ${EC2_USER_TEST}@${EC2_HOST_TEST} '
+            source ~/.env.test
+          
+            # Docker Login
+            docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
+          
+            # Auth Service
+            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-auth:test
+            docker stop gitfolio-auth_test || true
+            docker rm gitfolio-auth_test || true
+            docker run -d \
+              --name gitfolio-auth_test \
+              --env-file ~/.env.test \
+              -p ${AUTH_SERVER_PORT}:${AUTH_SERVER_PORT} \
+              ${DOCKERHUB_USERNAME_TEST}/gitfolio-auth:test
+          
+            # Member Service
+            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-member:test
+            docker stop gitfolio-member_test || true
+            docker rm gitfolio-member_test || true
+            docker run -d \
+              --name gitfolio-member_test \
+              --env-file ~/.env.test \
+              -p ${MEMBER_SERVER_PORT}:${MEMBER_SERVER_PORT} \
+              ${DOCKERHUB_USERNAME_TEST}/gitfolio-member:test
+          
+            # Payment Service
+            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-payment:test
+            docker stop gitfolio-payment_test || true
+            docker rm gitfolio-payment_test || true
+            docker run -d \
+              --name gitfolio-payment_test \
+              --env-file ~/.env.test \
+              -p ${PAYMENT_SERVER_PORT}:${PAYMENT_SERVER_PORT} \
+              ${DOCKERHUB_USERNAME_TEST}/gitfolio-payment:test
+          
+            # Resume Service
+            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-resume:test
+            docker stop gitfolio-resume_test || true
+            docker rm gitfolio-resume_test || true
+            docker run -d \
+              --name gitfolio-resume_test \
+              --env-file ~/.env.test \
+              -p ${RESUME_SERVER_PORT}:${RESUME_SERVER_PORT} \
+              ${DOCKERHUB_USERNAME_TEST}/gitfolio-resume:test
+          '
