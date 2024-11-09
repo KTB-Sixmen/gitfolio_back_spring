@@ -21,7 +21,7 @@ jobs:
           java-version: '17'
           distribution: 'corretto'
           cache: 'gradle'  # Gradle 캐싱 추가
-
+      #          distribution: 'temurin'
       - name: Create env file
         run: |
           echo "${{ secrets.ENV_TEST }}" > .env.test
