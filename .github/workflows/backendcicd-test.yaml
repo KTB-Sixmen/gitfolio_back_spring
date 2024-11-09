@@ -15,11 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up JDK 17 (Amazon Corretto)
-        uses: actions/setup-java@v2
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3  # v2 대신 v3 사용
         with:
           java-version: '17'
           distribution: 'corretto'
+          cache: 'gradle'  # Gradle 캐싱 추가
 
       - name: Create env file
         run: |
