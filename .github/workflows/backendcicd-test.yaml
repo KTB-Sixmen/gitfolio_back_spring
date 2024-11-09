@@ -1,0 +1,125 @@
+name: Test CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - 48-Develop브랜치-푸시시-CI/CD-구현
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [gitfolio-auth, gitfolio-member, gitfolio-payment, gitfolio-resume]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17 (Amazon Corretto)
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'corretto'
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Build module
+        run: ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./${{ matrix.module }}
+          file: ./${{ matrix.module }}/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/${{ matrix.module }}:test
+          build-args: |
+            JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST_TEST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+            modules=(gitfolio-auth gitfolio-member gitfolio-payment gitfolio-resume)
+            for module in "${modules[@]}"; do
+              docker pull ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
+              docker stop ${module}_test || true
+              docker rm ${module}_test || true
+              case $module in
+                gitfolio-auth)
+                  docker run -d \
+                    --name ${module}_test \
+                    -p 8081:8081 \
+                    -e SPRING_PROFILES_ACTIVE=test \
+                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
+                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
+                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
+                    -e JWT_SECRET_KEY_TEST=${{ secrets.JWT_SECRET_KEY_TEST }} \
+                    -e REDIS_HOST_TEST=${{ secrets.REDIS_HOST_TEST }} \
+                    -e REDIS_PORT_TEST=${{ secrets.REDIS_PORT_TEST }} \
+                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
+                    -e AUTH_SERVER_URL_TEST=${{ secrets.AUTH_SERVER_URL_TEST }} \
+                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
+                  ;;
+                gitfolio-member)
+                  docker run -d \
+                    --name ${module}_test \
+                    -p 8082:8082 \
+                    -e SPRING_PROFILES_ACTIVE=test \
+                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
+                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
+                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
+                    -e S3_ACCESS_KEY_TEST=${{ secrets.S3_ACCESS_KEY_TEST }} \
+                    -e S3_SECRET_KEY_TEST=${{ secrets.S3_SECRET_KEY_TEST }} \
+                    -e S3_BUCKET_TEST=${{ secrets.S3_BUCKET_TEST }} \
+                    -e AUTH_SERVER_URL_TEST=${{ secrets.AUTH_SERVER_URL_TEST }} \
+                    -e GITHUB_CLIENT_ID_TEST=${{ secrets.GITHUB_CLIENT_ID_TEST }} \
+                    -e GITHUB_CLIENT_SECRET_TEST=${{ secrets.GITHUB_CLIENT_SECRET_TEST }} \
+                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
+                  ;;
+                gitfolio-payment)
+                  docker run -d \
+                    --name ${module}_test \
+                    -p 8083:8083 \
+                    -e SPRING_PROFILES_ACTIVE=test \
+                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
+                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
+                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
+                    -e TOSS_CLIENT_KEY_TEST=${{ secrets.TOSS_CLIENT_KEY_TEST }} \
+                    -e TOSS_SECRET_KEY_TEST=${{ secrets.TOSS_SECRET_KEY_TEST }} \
+                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
+                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
+                  ;;
+                gitfolio-resume)
+                  docker run -d \
+                    --name ${module}_test \
+                    -p 8084:8084 \
+                    -e SPRING_PROFILES_ACTIVE=test \
+                    -e DB_URL_TEST=${{ secrets.DB_URL_TEST }} \
+                    -e DB_USERNAME_TEST=${{ secrets.DB_USERNAME_TEST }} \
+                    -e DB_PASSWORD_TEST=${{ secrets.DB_PASSWORD_TEST }} \
+                    -e MEMBER_SERVER_URL_TEST=${{ secrets.MEMBER_SERVER_URL_TEST }} \
+                    ${{ secrets.DOCKERHUB_USERNAME }}/${module}:test
+                  ;;
+              esac
+            done

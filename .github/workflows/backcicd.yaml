@@ -14,15 +14,23 @@ jobs:
           - module: gitfolio-auth
             port: 8080
             service_name: auth
+            instance_name: "Gitfolio BE1"
+            instance_index: "1"
           - module: gitfolio-member
             port: 8081
             service_name: member
+            instance_name: "Gitfolio BE1"
+            instance_index: "1"
           - module: gitfolio-payment
             port: 8083
             service_name: payment
+            instance_name: "Gitfolio BE2"
+            instance_index: "2"
           - module: gitfolio-resume
             port: 8082
             service_name: resume
+            instance_name: "Gitfolio BE2"
+            instance_index: "2"
 
     steps:
       - name: Checkout code
@@ -57,19 +65,23 @@ jobs:
           - module: gitfolio-auth
             port: 8080
             service_name: auth
-            instance_tag: "Gitfolio BE auth"
+            instance_name: "Gitfolio BE1"
+            instance_index: "1"
           - module: gitfolio-member
             port: 8081
             service_name: member
-            instance_tag: "Gitfolio BE member"
+            instance_name: "Gitfolio BE1"
+            instance_index: "1"
           - module: gitfolio-payment
             port: 8083
             service_name: payment
-            instance_tag: "Gitfolio BE payment"
+            instance_name: "Gitfolio BE2"
+            instance_index: "2"
           - module: gitfolio-resume
             port: 8082
             service_name: resume
-            instance_tag: "Gitfolio BE resume"
+            instance_name: "Gitfolio BE2"
+            instance_index: "2"
 
     steps:
       - name: Configure AWS credentials
@@ -85,9 +97,9 @@ jobs:
           INSTANCE_ID=$(aws ec2 describe-instances \
             --filters \
               "Name=tag:Service,Values=back" \
-              "Name=tag:Module,Values=member" \
-              "Name=tag:Name,Values=${{ matrix.instance_tag }}" \
               "Name=tag:Environment,Values=dev" \
+              "Name=tag:Name,Values=${{ matrix.instance_name }}" \
+              "Name=tag:Index,Values=${{ matrix.instance_index }}" \
               "Name=instance-state-name,Values=running" \
             --query "Reservations[*].Instances[*].InstanceId" \
             --output text)
