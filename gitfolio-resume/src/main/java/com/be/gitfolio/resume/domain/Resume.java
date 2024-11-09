@@ -53,7 +53,8 @@ public class Resume extends BaseEntityMongo {
     public void decreaseLike() {
         this.likeCount--;
     }
-    public void updateResume(UpdateResumeRequestDTO updateResumeDTO) {
+    public void updateResume(UpdateResumeRequestDTO updateResumeDTO, String avatarUrl) {
+        this.avatarUrl = avatarUrl;
         this.techStack = updateResumeDTO.techStack();
         this.aboutMe = updateResumeDTO.aboutMe();
         this.tags = updateResumeDTO.tags();

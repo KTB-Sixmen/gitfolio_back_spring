@@ -3,14 +3,10 @@ package com.be.gitfolio.member.dto;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+
 
 
 public class MemberResponseDTO {
@@ -30,14 +26,14 @@ public class MemberResponseDTO {
             List<MemberAdditionalInfo.Certificate> certificates,
             List<MemberAdditionalInfo.Link> links
     ) {
-        public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo) {
+        public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo, String avatarFullUrl) {
             return new MemberDetailDTO(
                     member.getId(),
                     memberAdditionalInfo.getId(),
                     member.getNickname(),
                     member.getName(),
                     member.getUsername(),
-                    member.getAvatarUrl(),
+                    avatarFullUrl,
                     member.getPhoneNumber(),
                     member.getEmail(),
                     member.getPosition(),

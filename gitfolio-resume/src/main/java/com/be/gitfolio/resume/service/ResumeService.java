@@ -4,6 +4,7 @@ import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
+import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Like;
@@ -20,11 +21,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -50,6 +54,7 @@ public class ResumeService {
     private final JWTUtil jwtUtil;
     private final ResumeEventPublisher resumeEventPublisher;
     private final MemberInfoMapper memberInfoMapper;
+    private final S3Service s3Service;
 
     /**
      * 이력서 생성 요청
@@ -91,11 +96,15 @@ public class ResumeService {
         Page<ResumeListDTO> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, pageable)
                 .map(resume -> {
                     Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), memberId);
-                    if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
-                        return new ResumeListDTO(resume, false);
-                    } else {
-                        return new ResumeListDTO(resume, true);
+                    boolean isLiked = likeOpt.isPresent() && likeOpt.get().getStatus().equals(Boolean.TRUE);
+
+                    // Avatar URL 가공
+                    String avatarUrl = resume.getAvatarUrl();
+                    if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
+                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
                     }
+
+                    return new ResumeListDTO(resume, isLiked, avatarUrl);
                 });
 
         return new PaginationResponseDTO<>(resumePage);
@@ -127,27 +136,35 @@ public class ResumeService {
         resumeRepository.save(resume);
 
         Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), memberId);
-        if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
-            return new ResumeDetailDTO(resume, false);
-        } else {
-            return new ResumeDetailDTO(resume, true);
+        boolean isLiked = likeOpt.isPresent() && likeOpt.get().getStatus().equals(Boolean.TRUE);
+
+        // Avatar URL 가공
+        String avatarUrl = resume.getAvatarUrl();
+        if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
+            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
         }
+
+        return new ResumeDetailDTO(resume, isLiked, avatarUrl);
     }
 
     /**
      * 내 이력서 목록 조회
      */
     public List<ResumeListDTO> getMyResumeList(String memberId) {
-        List<Resume> resumes = resumeRepository.findAllByMemberId(memberId);
+        List<Resume> resumes = resumeRepository.findAllByMemberId(memberId, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         return resumes.stream()
                 .map(resume -> {
                     Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), Long.valueOf(memberId));
-                    if (likeOpt.isEmpty() || likeOpt.get().getStatus().equals(Boolean.FALSE)) {
-                        return new ResumeListDTO(resume, false);
-                    } else {
-                        return new ResumeListDTO(resume, true);
+                    boolean isLiked = likeOpt.isPresent() && likeOpt.get().getStatus();
+
+                    // Avatar URL 가공
+                    String avatarUrl = resume.getAvatarUrl();
+                    if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
+                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
                     }
+
+                    return new ResumeListDTO(resume, isLiked, avatarUrl);
                 })
                 .toList();
     }
@@ -166,10 +183,26 @@ public class ResumeService {
      * 이력서 직접 수정
      */
     @Transactional
-    public void updateResume(String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO) {
+    public void updateResume(String memberId, String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO, MultipartFile imageFile) throws IOException {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
-        resume.updateResume(updateResumeRequestDTO);
+
+        // 이력서 생성한 사람이 본인인지 확인
+        if (!resume.getMemberId().equals(memberId)) {
+            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
+        }
+
+        String avatarUrl = resume.getAvatarUrl();
+
+        if (imageFile != null && !imageFile.isEmpty()) {
+            if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
+                s3Service.deleteFile(avatarUrl);
+            }
+
+            avatarUrl = s3Service.uploadFile(imageFile);
+        }
+
+        resume.updateResume(updateResumeRequestDTO, avatarUrl);
         resumeRepository.save(resume);
     }
 

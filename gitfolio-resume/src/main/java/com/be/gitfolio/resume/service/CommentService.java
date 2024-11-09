@@ -4,6 +4,7 @@ import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.grpc.MemberServiceProto;
+import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
@@ -33,6 +34,7 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final MemberGrpcClient memberGrpcClient;
     private final ResumeEventPublisher resumeEventPublisher;
+    private final S3Service s3Service;
 
     /**
      * 댓글 작성
@@ -92,7 +94,12 @@ public class CommentService {
         return comments.stream()
                 .map(comment -> {
                     MemberServiceProto.MemberResponseById memberResponse = memberGrpcClient.getMember(String.valueOf(comment.getMemberId()));
-                    return new CommentResponseDTO(comment, memberResponse.getNickname(), memberResponse.getAvatarUrl());
+                    // Avatar URL 가공
+                    String avatarUrl = memberResponse.getAvatarUrl();
+                    if (!avatarUrl.contains("avatars.githubusercontent.com")) {
+                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
+                    }
+                    return new CommentResponseDTO(comment, memberResponse.getNickname(), avatarUrl);
                 })
                 .toList();
     }

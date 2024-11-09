@@ -20,6 +20,8 @@ public class S3Service {
 
     @Value("${cloud.aws.s3.bucket}")
     private String bucket;
+    @Value("${cloud.aws.s3.url-prefix}")
+    private String s3UrlPrefix;
 
     /**
      * 이미지 파일 업로드
@@ -64,6 +66,13 @@ public class S3Service {
     private String extractExt(String originalFilename) {
         int post = originalFilename.lastIndexOf(".");
         return originalFilename.substring(post + 1);
+    }
+
+    /**
+     * S3 URL prefix 포함한 경로 생성 메서드
+     */
+    public String getFullFileUrl(String filename) {
+        return s3UrlPrefix + filename;
     }
 }
 

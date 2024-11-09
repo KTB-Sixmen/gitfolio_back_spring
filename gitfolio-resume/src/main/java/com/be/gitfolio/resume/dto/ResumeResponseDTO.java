@@ -4,6 +4,7 @@ import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -20,18 +21,20 @@ public class ResumeResponseDTO {
             List<String> tags,
             int likeCount,
             int viewCount,
+            LocalDateTime updatedAt,
             @JsonProperty("isLiked") boolean liked
     ) {
-        public ResumeListDTO(Resume resume, boolean liked) {
+        public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
                     Long.parseLong(resume.getMemberId()),
-                    resume.getAvatarUrl(),
+                    avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
                     resume.getTags(),
                     resume.getLikeCount(),
                     resume.getViewCount(),
+                    resume.getUpdatedAt(),
                     liked
             );
         }
@@ -72,14 +75,15 @@ public class ResumeResponseDTO {
             List<Resume.Certificate> certificates,
             int likeCount,
             int viewCount,
-            @JsonProperty("isLiked") boolean liked
+            @JsonProperty("isLiked") boolean liked,
+            LocalDateTime updatedAt
     ) {
-        public ResumeDetailDTO(Resume resume, boolean liked) {
+        public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
                     Long.valueOf(resume.getMemberId()),
                     resume.getMemberName(),
-                    resume.getAvatarUrl(),
+                    avatarFullUrl,
                     resume.getEmail(),
                     resume.getPosition(),
                     resume.getTechStack(),
@@ -92,7 +96,8 @@ public class ResumeResponseDTO {
                     resume.getCertificates(),
                     resume.getLikeCount(),
                     resume.getViewCount(),
-                    liked
+                    liked,
+                    resume.getUpdatedAt()
             );
         }
     }
@@ -113,13 +118,13 @@ public class ResumeResponseDTO {
             LocalDateTime createdAt,
             LocalDateTime updatedAt
     ) {
-        public CommentResponseDTO(Comment comment, String nickname, String avatarUrl) {
+        public CommentResponseDTO(Comment comment, String nickname, String avatarFullUrl) {
             this(
                     comment.getId(),
                     comment.getResumeId(),
                     comment.getMemberId(),
                     nickname,
-                    avatarUrl,
+                    avatarFullUrl,
                     comment.getContent(),
                     comment.getCreatedAt(),
                     comment.getUpdatedAt()
