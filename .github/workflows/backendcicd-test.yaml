@@ -35,16 +35,19 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build module
-        env:
-          ENV_TEST: ${{ secrets.ENV_TEST }}
         run: |
-          echo "$ENV_TEST" | while IFS= read -r line || [[ -n "$line" ]]; do
-            if [[ $line != *"PRIVATE KEY"* ]]; then
-              echo "export $line" >> .env.test
-            fi
-          done
           source .env.test
           ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to Docker Hub
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.ENV_TEST }}
+        run: |
+          source .env.test
+          docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
 
       - name: Build and Push Docker Image
         env:
