@@ -3,7 +3,7 @@ name: Backend MSA CI/CD Pipeline
 on:
   push:
     branches:
-      - 48-Develop브랜치-푸시시-CI/CD-구현
+      - develop
 
 jobs:
   build-and-push:
