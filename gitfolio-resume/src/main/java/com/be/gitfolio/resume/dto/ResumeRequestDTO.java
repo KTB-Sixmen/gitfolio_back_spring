@@ -67,6 +67,7 @@ public class ResumeRequestDTO {
             String techStack, // 기술 스택별
             String schoolType, // 학력별
             String sortOrder, // 정렬기준
+            Boolean liked, // 좋아요 필터링
             @Min(0) int page,
             @Min(0) int size
     ) {
