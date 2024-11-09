@@ -10,131 +10,78 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [gitfolio-auth, gitfolio-member, gitfolio-payment, gitfolio-resume]
+        include:
+          - module: gitfolio-auth
+            port: 8080
+            service_name: auth
+          - module: gitfolio-member
+            port: 8081
+            service_name: member
+          - module: gitfolio-payment
+            port: 8083
+            service_name: payment
+          - module: gitfolio-resume
+            port: 8082
+            service_name: resume
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v3
-        with:
-          java-version: '17'
-          distribution: 'corretto'
-          cache: 'gradle'
-
-      - name: Create env file and SSH key
-        run: |
-          # 환경변수 파일 생성
-          echo "${{ secrets.ENV_TEST }}" > .env
-          # 환경변수 등록
-          while IFS='=' read -r key value; do
-            # 주석과 빈 줄 무시
-            if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
-              # 값에서 따옴표 제거하고 export
-              cleaned_value=$(echo $value | tr -d '"')
-              echo "export $key=$cleaned_value" >> $GITHUB_ENV
-            fi
-          done < .env
-
-          # SSH 키 파일 별도 생성
-          echo "${{ secrets.EC2_SSH_KEY_TEST }}" > ssh_key.pem
-          chmod 600 ssh_key.pem
-
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-
-      - name: Build module
-        run: |
-          ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Log in to Docker Hub
-        run: docker login -u ${{ env.DOCKERHUB_USERNAME_TEST }} -p ${{ env.DOCKERHUB_PASSWORD_TEST }}
-
-      - name: Build and Push Docker Image
+      - name: Create env file
         run: |
-          docker buildx build \
-            --platform linux/amd64 \
-            --push \
-            -t ${{ env.DOCKERHUB_USERNAME_TEST }}/${{ matrix.module }}:test \
-            -f ./${{ matrix.module }}/Dockerfile \
-            --build-arg JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar \
-            ./${{ matrix.module }}
+          echo "${{ secrets.ENV_TEST }}" > .env.test
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME_TEST }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD_TEST }}
+
+      - name: Build and push service image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./${{ matrix.module }}
+          file: ./${{ matrix.module }}/dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME_TEST }}/gitfolio_${{ matrix.service_name }}:test
+          build-args: |
+            BUILDER_IMAGE=${{ secrets.DOCKERHUB_USERNAME_TEST }}/gitfolio_builder:test
 
   deploy:
-    runs-on: ubuntu-latest
     needs: build-and-push
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to EC2
         run: |
           # 환경변수 파일 생성
-          echo "${{ secrets.ENV_TEST }}" > .env
-          # 환경변수 등록
-          while IFS='=' read -r key value; do
-            if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
-              cleaned_value=$(echo $value | tr -d '"')
-              echo "export $key=$cleaned_value" >> $GITHUB_ENV
-            fi
-          done < .env
+          echo "${{ secrets.ENV_TEST }}" > .env.test
           
           # SSH 키 파일 생성
           echo "${{ secrets.EC2_SSH_KEY_TEST }}" > ssh_key.pem
           chmod 600 ssh_key.pem
           
           # EC2에 환경변수 파일 전송
-          scp -i ssh_key.pem -o StrictHostKeyChecking=no .env ${EC2_USER_TEST}@${EC2_HOST_TEST}:~/.env.test
+          scp -i ssh_key.pem -o StrictHostKeyChecking=no .env.test ${EC2_USER_TEST}@${EC2_HOST_TEST}:~/.env.test
           
           # 배포 스크립트 실행
           ssh -i ssh_key.pem -o StrictHostKeyChecking=no ${EC2_USER_TEST}@${EC2_HOST_TEST} '
-            # 환경변수 등록
-            while IFS="=" read -r key value; do
-              if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
-                export $key=$value
-              fi
-            done < ~/.env.test
+            source ~/.env.test
           
             # Docker Login
             docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
           
-            # Auth Service
-            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-auth:test
-            docker stop gitfolio-auth_test || true
-            docker rm gitfolio-auth_test || true
-            docker run -d \
-              --name gitfolio-auth_test \
-              --env-file ~/.env.test \
-              -p ${AUTH_SERVER_PORT}:${AUTH_SERVER_PORT} \
-              ${DOCKERHUB_USERNAME_TEST}/gitfolio-auth:test
-          
-            # Member Service
-            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-member:test
-            docker stop gitfolio-member_test || true
-            docker rm gitfolio-member_test || true
-            docker run -d \
-              --name gitfolio-member_test \
-              --env-file ~/.env.test \
-              -p ${MEMBER_SERVER_PORT}:${MEMBER_SERVER_PORT} \
-              ${DOCKERHUB_USERNAME_TEST}/gitfolio-member:test
-          
-            # Payment Service
-            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-payment:test
-            docker stop gitfolio-payment_test || true
-            docker rm gitfolio-payment_test || true
-            docker run -d \
-              --name gitfolio-payment_test \
-              --env-file ~/.env.test \
-              -p ${PAYMENT_SERVER_PORT}:${PAYMENT_SERVER_PORT} \
-              ${DOCKERHUB_USERNAME_TEST}/gitfolio-payment:test
-          
-            # Resume Service
-            docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio-resume:test
-            docker stop gitfolio-resume_test || true
-            docker rm gitfolio-resume_test || true
-            docker run -d \
-              --name gitfolio-resume_test \
-              --env-file ~/.env.test \
-              -p ${RESUME_SERVER_PORT}:${RESUME_SERVER_PORT} \
-              ${DOCKERHUB_USERNAME_TEST}/gitfolio-resume:test
+            for service in auth member payment resume; do
+              docker pull ${DOCKERHUB_USERNAME_TEST}/gitfolio_${service}:test
+              docker stop gitfolio_${service}_test || true
+              docker rm gitfolio_${service}_test || true
+              docker run -d \
+                --name gitfolio_${service}_test \
+                --env-file ~/.env.test \
+                -p $(eval echo \$${service^^}_SERVER_PORT):8080 \
+                ${DOCKERHUB_USERNAME_TEST}/gitfolio_${service}:test
+            done
           '
