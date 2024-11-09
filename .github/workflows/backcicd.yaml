@@ -115,16 +115,6 @@ jobs:
           aws ssm start-session \
             --target "${{ steps.get-instance.outputs.instance_id }}" \
             --document-name "AWS-StartInteractiveCommand" \
-            --parameters '{"command":["sudo -i && \
-              docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
-              docker pull aida0/gitfolio_${{ matrix.service_name }}:test && \
-              docker stop gitfolio_${{ matrix.service_name }} || true && \
-              docker rm gitfolio_${{ matrix.service_name }} || true && \
-              docker run -d \
-                --name gitfolio_${{ matrix.service_name }} \
-                -p ${{ matrix.port }}:8080 \
-                -e MEMBER_SERVER_URL=https://\${MEMBER_PRIVATE_IP}:8081 \
-                -e AUTH_SERVER_URL=https://\${AUTH_PRIVATE_IP}:8080 \
-                -e RESUME_SERVER_URL=https://\${RESUME_PRIVATE_IP}:8082 \
-                -e PAYMENT_SERVER_URL=https://\${PAYMENT_PRIVATE_IP}:8083 \
-                aida0/gitfolio_${{ matrix.service_name }}:test"]}'
+            --parameters '{
+              "command": ["sudo -i && docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && docker pull aida0/gitfolio_${{ matrix.service_name }}:test && docker stop gitfolio_${{ matrix.service_name }} || true && docker rm gitfolio_${{ matrix.service_name }} || true && docker run -d --name gitfolio_${{ matrix.service_name }} -p ${{ matrix.port }}:8080 -e MEMBER_SERVER_URL=https://${MEMBER_PRIVATE_IP}:8081 -e AUTH_SERVER_URL=https://${AUTH_PRIVATE_IP}:8080 -e RESUME_SERVER_URL=https://${RESUME_PRIVATE_IP}:8082 -e PAYMENT_SERVER_URL=https://${PAYMENT_PRIVATE_IP}:8083 aida0/gitfolio_${{ matrix.service_name }}:test"]
+            }'
