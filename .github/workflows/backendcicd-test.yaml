@@ -16,16 +16,25 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3  # v2 대신 v3 사용
+        uses: actions/setup-java@v3
         with:
           java-version: '17'
           distribution: 'corretto'
-          cache: 'gradle'  # Gradle 캐싱 추가
-      #          distribution: 'temurin'
+          cache: 'gradle'
+
       - name: Create env file and SSH key
         run: |
-          # 환경변수 파일 생성 (SSH 키 제외)
-          echo "${{ secrets.ENV_TEST }}" | grep -v "PRIVATE" > .env.test
+          # 환경변수 파일 생성
+          echo "${{ secrets.ENV_TEST }}" > .env
+          # 환경변수 등록
+          while IFS='=' read -r key value; do
+            # 주석과 빈 줄 무시
+            if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
+              # 값에서 따옴표 제거하고 export
+              cleaned_value=$(echo $value | tr -d '"')
+              echo "export $key=$cleaned_value" >> $GITHUB_ENV
+            fi
+          done < .env
 
           # SSH 키 파일 별도 생성
           echo "${{ secrets.EC2_SSH_KEY_TEST }}" > ssh_key.pem
@@ -36,28 +45,20 @@ jobs:
 
       - name: Build module
         run: |
-          source .env.test
           ./gradlew :${{ matrix.module }}:clean :${{ matrix.module }}:build
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
       - name: Log in to Docker Hub
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.ENV_TEST }}
-        run: |
-          source .env.test
-          docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
+        run: docker login -u ${{ env.DOCKERHUB_USERNAME_TEST }} -p ${{ env.DOCKERHUB_PASSWORD_TEST }}
 
       - name: Build and Push Docker Image
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.ENV_TEST }}
         run: |
-          source .env.test
           docker buildx build \
             --platform linux/amd64 \
             --push \
-            -t ${DOCKERHUB_USERNAME_TEST}/${{ matrix.module }}:test \
+            -t ${{ env.DOCKERHUB_USERNAME_TEST }}/${{ matrix.module }}:test \
             -f ./${{ matrix.module }}/Dockerfile \
             --build-arg JAR_FILE=build/libs/${{ matrix.module }}-0.0.1-SNAPSHOT.jar \
             ./${{ matrix.module }}
@@ -68,19 +69,31 @@ jobs:
     steps:
       - name: Deploy to EC2
         run: |
-          echo "${{ secrets.ENV_TEST }}" > env.test
-          source env.test
+          # 환경변수 파일 생성
+          echo "${{ secrets.ENV_TEST }}" > .env
+          # 환경변수 등록
+          while IFS='=' read -r key value; do
+            if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
+              cleaned_value=$(echo $value | tr -d '"')
+              echo "export $key=$cleaned_value" >> $GITHUB_ENV
+            fi
+          done < .env
           
           # SSH 키 파일 생성
-          echo "${EC2_SSH_KEY_TEST}" > ssh_key.pem
+          echo "${{ secrets.EC2_SSH_KEY_TEST }}" > ssh_key.pem
           chmod 600 ssh_key.pem
           
           # EC2에 환경변수 파일 전송
-          scp -i ssh_key.pem -o StrictHostKeyChecking=no env.test ${EC2_USER_TEST}@${EC2_HOST_TEST}:~/.env.test
+          scp -i ssh_key.pem -o StrictHostKeyChecking=no .env ${EC2_USER_TEST}@${EC2_HOST_TEST}:~/.env.test
           
           # 배포 스크립트 실행
           ssh -i ssh_key.pem -o StrictHostKeyChecking=no ${EC2_USER_TEST}@${EC2_HOST_TEST} '
-            source ~/.env.test
+            # 환경변수 등록
+            while IFS="=" read -r key value; do
+              if [[ ! $key =~ ^#.* ]] && [[ -n $key ]]; then
+                export $key=$value
+              fi
+            done < ~/.env.test
           
             # Docker Login
             docker login -u ${DOCKERHUB_USERNAME_TEST} -p ${DOCKERHUB_PASSWORD_TEST}
