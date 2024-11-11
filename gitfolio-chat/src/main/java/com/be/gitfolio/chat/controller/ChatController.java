@@ -20,7 +20,7 @@ import static com.be.gitfolio.chat.dto.MessageResponseDTO.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chats")
 @Slf4j
 public class ChatController {
 
