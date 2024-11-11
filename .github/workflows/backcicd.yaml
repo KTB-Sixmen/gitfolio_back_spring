@@ -122,14 +122,4 @@ jobs:
           aws ssm start-session \
             --target "${{ steps.get-instance.outputs.instance_id }}" \
             --document-name "AWS-StartInteractiveCommand" \
-            --parameters '{
-              "command": ["sudo -i && \
-                docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
-                docker pull aida0/gitfolio_${{ matrix.service_name }}:test && \
-                docker stop gitfolio_${{ matrix.service_name }} || true && \
-                docker rm gitfolio_${{ matrix.service_name }} || true && \
-                docker run -d --name gitfolio_${{ matrix.service_name }} \
-                  -p ${{ matrix.port }}:8080 \
-                  --env-file .env \
-                  aida0/gitfolio_${{ matrix.service_name }}:test"]
-            }'
+            --parameters "{\"command\":[\"sudo -i && docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && docker pull aida0/gitfolio_${{ matrix.service_name }}:test && docker stop gitfolio_${{ matrix.service_name }} || true && docker rm gitfolio_${{ matrix.service_name }} || true && docker run -d --name gitfolio_${{ matrix.service_name }} -p ${{ matrix.port }}:8080 --env-file .env aida0/gitfolio_${{ matrix.service_name }}:test\"]}"
