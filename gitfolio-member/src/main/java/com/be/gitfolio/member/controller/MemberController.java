@@ -29,6 +29,14 @@ public class MemberController {
     private final MemberService memberService;
 
     /**
+     * 사용자 정보 조회(내부통신용)
+     */
+    @GetMapping("/{memberId}")
+    public MemberDetailDTO getMemberDetail(@PathVariable("memberId") Long memberId) {
+        return memberService.getMemberDetails(memberId);
+    }
+
+    /**
      * 회원 생성
      */
     @PostMapping
