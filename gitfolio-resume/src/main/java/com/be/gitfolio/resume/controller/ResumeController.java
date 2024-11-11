@@ -4,14 +4,19 @@ import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.resume.service.CommentService;
 import com.be.gitfolio.resume.service.ResumeService;
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
@@ -52,17 +57,20 @@ public class ResumeController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "recent") String sortOrder,
+            @RequestParam(required = false) Boolean liked,
             @RequestHeader(value = "Authorization", required = false) String token
     ) {
-        ResumeFilterDTO resumeFilterDTO = ResumeFilterDTO.builder()
-                .tag(tag)
-                .position(position)
-                .techStack(techStack)
-                .schoolType(schoolType)
-                .page(page)
-                .size(size)
-                .sortOrder(sortOrder)
-                .build();
+        ResumeFilterDTO resumeFilterDTO = new ResumeFilterDTO(
+                tag,
+                position,
+                techStack,
+                schoolType,
+                sortOrder,
+                liked,
+                page,
+                size
+        );
+
         return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeList(token, resumeFilterDTO)));
     }
 
@@ -112,9 +120,13 @@ public class ResumeController {
      */
     @AuthRequired
     @PutMapping("/{resumeId}")
-    public ResponseEntity<BaseResponse<String>> updateResume(@PathVariable("resumeId") String resumeId,
-                                                             @RequestBody UpdateResumeRequestDTO updateResumeRequestDTO) {
-        resumeService.updateResume(resumeId, updateResumeRequestDTO);
+    public ResponseEntity<BaseResponse<String>> updateResume(HttpServletRequest request,
+                                                             @PathVariable("resumeId") String resumeId,
+                                                             @RequestPart("updateResumeRequestDTO") UpdateResumeRequestDTO updateResumeRequestDTO,
+                                                             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
+
+        String memberId = request.getAttribute("memberId").toString();
+        resumeService.updateResume(memberId,resumeId, updateResumeRequestDTO, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
 
@@ -133,6 +145,25 @@ public class ResumeController {
             return ResponseEntity.ok().body(new BaseResponse<>("좋아요 상태가 변경되었습니다."));
         }
     }
+
+    /**
+     * 좋아요 기능 동시성 테스트용
+     */
+//    @PostMapping("{resumeId}/members/{memberId}/likes")
+//    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId,
+//                                                           @PathVariable("memberId") Long memberId) {
+//        try {
+//            boolean liked = resumeService.toggleLike(resumeId, memberId);
+//            if (liked) {
+//                return ResponseEntity.ok().body(new BaseResponse<>("좋아요가 추가되었습니다."));
+//            } else {
+//                return ResponseEntity.ok().body(new BaseResponse<>("좋아요 상태가 변경되었습니다."));
+//            }
+//        } catch (OptimisticLockException e) {
+//            return ResponseEntity.status(HttpStatus.CONFLICT)
+//                    .body(new BaseResponse<>("동시에 많은 요청이 발생했습니다. 다시 시도해 주세요."));
+//        }
+//    }
 
     /**
      * 댓글 작성

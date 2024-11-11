@@ -1,68 +1,65 @@
 package com.be.gitfolio.member.dto;
 
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+
 
 
 public class MemberResponseDTO {
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MemberDetailDTO {
-        private Long memberId;
-        private String memberAdditionalInfoId;
-
-        private String nickname;
-        private String name;
-        private String username;
-        private String avatarUrl;
-        private String phoneNumber;
-        private String email;
-        private String position;
-
-        private List<MemberAdditionalInfo.WorkExperience> workExperiences;
-        private List<MemberAdditionalInfo.Education> educations;
-        private List<MemberAdditionalInfo.Certificate> certificates;
-        private List<MemberAdditionalInfo.Link> links;
-
-        public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo) {
-            return MemberDetailDTO.builder()
-                    .memberId(member.getId())
-                    .memberAdditionalInfoId(memberAdditionalInfo.getMemberId())
-                    .nickname(member.getNickname())
-                    .name(member.getName())
-                    .username(member.getUsername())
-                    .avatarUrl(member.getAvatarUrl())
-                    .phoneNumber(member.getPhoneNumber())
-                    .email(member.getEmail())
-                    .position(member.getPosition())
-                    .workExperiences(memberAdditionalInfo.getWorkExperiences())
-                    .educations(memberAdditionalInfo.getEducations())
-                    .certificates(memberAdditionalInfo.getCertificates())
-                    .links(memberAdditionalInfo.getLinks())
-                    .build();
+    public record MemberDetailDTO(
+            Long memberId,
+            String memberAdditionalInfoId,
+            String nickname,
+            String name,
+            String username,
+            String avatarUrl,
+            String phoneNumber,
+            String email,
+            PositionType position,
+            List<MemberAdditionalInfo.WorkExperience> workExperiences,
+            List<MemberAdditionalInfo.Education> educations,
+            List<MemberAdditionalInfo.Certificate> certificates,
+            List<MemberAdditionalInfo.Link> links
+    ) {
+        public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo, String avatarFullUrl) {
+            return new MemberDetailDTO(
+                    member.getId(),
+                    memberAdditionalInfo.getId(),
+                    member.getNickname(),
+                    member.getName(),
+                    member.getUsername(),
+                    avatarFullUrl,
+                    member.getPhoneNumber(),
+                    member.getEmail(),
+                    member.getPosition(),
+                    memberAdditionalInfo.getWorkExperiences(),
+                    memberAdditionalInfo.getEducations(),
+                    memberAdditionalInfo.getCertificates(),
+                    memberAdditionalInfo.getLinks()
+            );
         }
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class MemberGithubRepositoryDTO {
-        private Long repoId;
-        private String repoName;
-        private String repoUrl;
-        private String topLanguage;
-        private String updatedAt;
+    public record MemberGithubRepositoryDTO(
+            Long repoId,
+            String repoName,
+            String repoUrl,
+            String topLanguage,
+            String updatedAt
+    ) {
+        public static MemberGithubRepositoryDTO from(Map<String, Object> repo) {
+            return new MemberGithubRepositoryDTO(
+                    Long.valueOf((Integer) repo.get("id")),
+                    (String) repo.get("name"),
+                    (String) repo.get("html_url"),
+                    (String) repo.get("language"),
+                    (String) repo.get("updated_at")
+            );
+        }
     }
-
 }

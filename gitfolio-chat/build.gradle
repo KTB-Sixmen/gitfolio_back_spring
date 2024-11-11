@@ -1,0 +1,29 @@
+bootJar {
+    enabled = true
+    mainClass = 'com.be.gitfolio.chat.GitfolioChatApplication'
+}
+
+jar {
+    enabled = false
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+dependencies {
+
+    // Spring WebFlux 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-webflux'
+
+    // mongoDB reactive 의존성 추가
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
+
+
+    // Kafka 의존성
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // 공통 모듈 추가
+    implementation project(":gitfolio-common")
+}

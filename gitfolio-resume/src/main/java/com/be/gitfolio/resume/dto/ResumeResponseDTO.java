@@ -1,147 +1,144 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class ResumeResponseDTO {
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ResumeListDTO {
-        private String resumeId;
-        private Long memberId;
-        private String avatarUrl;
-        private String position;
-        private String aboutMe;
-        private List<String> tags;
-        private int likeCount;
-        private int viewCount;
-
-        @JsonProperty("isLiked")
-        private boolean liked;
-
-        public ResumeListDTO(Resume resume, boolean liked) {
-            this.resumeId = resume.getId();
-            this.memberId = Long.parseLong(resume.getMemberId());
-            this.avatarUrl = resume.getAvatarUrl();
-            this.position = resume.getPosition();
-            this.aboutMe = resume.getAboutMe();
-            this.tags = resume.getTags();
-            this.likeCount = resume.getLikeCount();
-            this.viewCount = resume.getViewCount();
-            this.liked = liked;
+    public record ResumeListDTO(
+            String resumeId,
+            Long memberId,
+            String avatarUrl,
+            PositionType position,
+            String aboutMe,
+            List<String> tags,
+            int likeCount,
+            int viewCount,
+            LocalDateTime updatedAt,
+            @JsonProperty("isLiked") boolean liked
+    ) {
+        public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
+            this(
+                    resume.getId(),
+                    Long.parseLong(resume.getMemberId()),
+                    avatarFullUrl,
+                    resume.getPosition(),
+                    resume.getAboutMe(),
+                    resume.getTags(),
+                    resume.getLikeCount(),
+                    resume.getViewCount(),
+                    resume.getUpdatedAt(),
+                    liked
+            );
         }
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class PaginationResponseDTO<T> {
-        private int currentPage;
-        private int totalPages;
-        private long totalElements;
-        private int size;
-        private List<T> content;
-
+    public record PaginationResponseDTO<T>(
+            int currentPage,
+            int totalPages,
+            long totalElements,
+            int size,
+            List<T> content
+    ) {
         public PaginationResponseDTO(Page<T> page) {
-            this.currentPage = page.getNumber();
-            this.totalPages = page.getTotalPages();
-            this.totalElements = page.getTotalElements();
-            this.size = page.getSize();
-            this.content = page.getContent();
+            this(
+                    page.getNumber(),
+                    page.getTotalPages(),
+                    page.getTotalElements(),
+                    page.getSize(),
+                    page.getContent()
+            );
+        }
+        public PaginationResponseDTO(List<T> content, long totalElements, Pageable pageable) {
+            this(
+                    pageable.getPageNumber(),
+                    (int) Math.ceil((double) totalElements / pageable.getPageSize()),
+                    totalElements,
+                    pageable.getPageSize(),
+                    content
+            );
         }
     }
 
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class ResumeDetailDTO {
-        private String resumeId;
-        private Long memberId;  // 회원 ID
-        private String memberName; // 회원 이름
-        private String avatarUrl; // 프로필 사진
-        private String email; // 이메일 주소
-        private String position; // 포지션(직군)
-        private List<String> techStack;  // 기술 스택
-        private String aboutMe;  // 자기소개
-        private List<String> tags;  // 태그 (회사명 등)
-        private List<Resume.WorkExperience> workExperiences;  // 경력
-        private List<Resume.Project> projects;  // 프로젝트
-        private List<Resume.Link> links;  // 개인 링크
-        private List<Resume.Education> educations;  // 학력
-        private List<Resume.Certificate> certificates;  // 자격증
-        private int likeCount;  // 좋아요 수
-        private int viewCount;  // 조회수
-        @JsonProperty("isLiked")
-        private boolean liked; // 좋아요 여부
-
-        public ResumeDetailDTO(Resume resume, boolean liked) {
-            this.resumeId = resume.getId();
-            this.memberId = Long.valueOf(resume.getMemberId());
-            this.memberName = resume.getMemberName();
-            this.avatarUrl = resume.getAvatarUrl();
-            this.email = resume.getEmail();
-            this.position = resume.getPosition();
-            this.techStack = resume.getTechStack();
-            this.aboutMe = resume.getAboutMe();
-            this.tags = resume.getTags();
-            this.workExperiences = resume.getWorkExperiences();
-            this.projects = resume.getProjects();
-            this.links = resume.getLinks();
-            this.educations = resume.getEducations();
-            this.certificates = resume.getCertificates();
-            this.likeCount = resume.getLikeCount();
-            this.viewCount = resume.getViewCount();
-            this.liked = liked;
-        }
-    }
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class AIResponseDTO {
-        private List<Resume.Project> projects;  // 프로젝트
-        private List<String> techStack;
-        private String aboutMe;
-    }
-
-    @Getter
-    @Builder
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class CommentResponseDTO {
-        private Long id;
-        private String resumeId;
-        private Long memberId;
-        private String nickname;
-        private String avatarUrl;
-        private String content;
-        private LocalDateTime createdAt;
-        private LocalDateTime updatedAt;
-
-        public CommentResponseDTO(Comment comment, String nickname, String avatarUrl) {
-            this.id = comment.getId();
-            this.resumeId = comment.getResumeId();
-            this.memberId = comment.getMemberId();
-            this.nickname = nickname;
-            this.avatarUrl = avatarUrl;
-            this.content = comment.getContent();
-            this.createdAt = comment.getCreatedAt();
-            this.updatedAt = comment.getUpdatedAt();
+    public record ResumeDetailDTO(
+            String resumeId,
+            Long memberId,
+            String memberName,
+            String avatarUrl,
+            String email,
+            PositionType position,
+            List<String> techStack,
+            String aboutMe,
+            List<String> tags,
+            List<Resume.WorkExperience> workExperiences,
+            List<Resume.Project> projects,
+            List<Resume.Link> links,
+            List<Resume.Education> educations,
+            List<Resume.Certificate> certificates,
+            int likeCount,
+            int viewCount,
+            @JsonProperty("isLiked") boolean liked,
+            LocalDateTime updatedAt
+    ) {
+        public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
+            this(
+                    resume.getId(),
+                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberName(),
+                    avatarFullUrl,
+                    resume.getEmail(),
+                    resume.getPosition(),
+                    resume.getTechStack(),
+                    resume.getAboutMe(),
+                    resume.getTags(),
+                    resume.getWorkExperiences(),
+                    resume.getProjects(),
+                    resume.getLinks(),
+                    resume.getEducations(),
+                    resume.getCertificates(),
+                    resume.getLikeCount(),
+                    resume.getViewCount(),
+                    liked,
+                    resume.getUpdatedAt()
+            );
         }
     }
 
+    public record AIResponseDTO(
+            List<Resume.Project> projects,
+            List<String> techStack,
+            String aboutMe
+    ) {}
+
+    public record CommentResponseDTO(
+            Long id,
+            String resumeId,
+            Long memberId,
+            String nickname,
+            String avatarUrl,
+            String content,
+            LocalDateTime createdAt,
+            LocalDateTime updatedAt
+    ) {
+        public CommentResponseDTO(Comment comment, String nickname, String avatarFullUrl) {
+            this(
+                    comment.getId(),
+                    comment.getResumeId(),
+                    comment.getMemberId(),
+                    nickname,
+                    avatarFullUrl,
+                    comment.getContent(),
+                    comment.getCreatedAt(),
+                    comment.getUpdatedAt()
+            );
+        }
+    }
 }

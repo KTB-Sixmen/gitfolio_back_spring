@@ -51,25 +51,19 @@ public class Payment extends BaseEntityMySQL {
 
     public static Payment of(Long memberId, PaidPlanRequest paidPlanRequest, KakaoReadyResponse kakaoReady) {
         return Payment.builder()
-                .transactionId(kakaoReady.getTid())
+                .transactionId(kakaoReady.tid())
                 .memberId(memberId)
-                .amount(new BigDecimal(paidPlanRequest.getPaidPlan().getCost()))
-                .paidPlan(paidPlanRequest.getPaidPlan())
+                .amount(new BigDecimal(paidPlanRequest.paidPlan().getCost()))
+                .paidPlan(paidPlanRequest.paidPlan())
                 .status(PaymentStatus.PENDING)
                 .build();
     }
 
-    public void updatePaymentType(String paymentType) {
-        this.paymentType = paymentType;
-    }
-
-    public void updateCardInfo(CardInfo cardInfo) {
-        this.cardType = cardInfo.getCard_type();
-        this.cardCorp = cardInfo.getKakaopay_issuer_corp();
-        this.cardApprovedId = cardInfo.getApproved_id();
-    }
-
-    public void updateStatus(PaymentStatus paymentStatus) {
+    public void updatePaymentDetails(KakaoApproveResponse kakaoApproveResponse, PaymentStatus paymentStatus) {
+        this.paymentType = kakaoApproveResponse.payment_method_type();
+        this.cardType = kakaoApproveResponse.card_info().card_type();
+        this.cardCorp = kakaoApproveResponse.card_info().kakaopay_issuer_corp();
+        this.cardApprovedId = kakaoApproveResponse.card_info().approved_id();
         this.status = paymentStatus;
     }
 }

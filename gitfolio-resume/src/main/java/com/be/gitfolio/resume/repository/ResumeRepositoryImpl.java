@@ -21,35 +21,39 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Resume> findResumeByFilter(ResumeRequestDTO.ResumeFilterDTO resumeFilterDTO, Pageable pageable) {
+    public Page<Resume> findResumeByFilter(ResumeRequestDTO.ResumeFilterDTO resumeFilterDTO, List<String> likedResumeIds, Pageable pageable) {
         Query query = new Query();
 
         // 동적 필터 적용
-        if (resumeFilterDTO.getTag() != null && !resumeFilterDTO.getTag().isEmpty()) {
-            query.addCriteria(Criteria.where("tag").regex(resumeFilterDTO.getTag(), "i"));
+        if (resumeFilterDTO.tag() != null && !resumeFilterDTO.tag().isEmpty()) {
+            query.addCriteria(Criteria.where("tag").regex(resumeFilterDTO.tag(), "i"));
         }
 
-        if (resumeFilterDTO.getPosition() != null && !resumeFilterDTO.getPosition().isEmpty()) {
-            query.addCriteria(Criteria.where("position").regex(resumeFilterDTO.getPosition(), "i"));
+        if (resumeFilterDTO.position() != null && !resumeFilterDTO.position().isEmpty()) {
+            query.addCriteria(Criteria.where("position").regex(resumeFilterDTO.position(), "i"));
         }
 
-        if (resumeFilterDTO.getTechStack() != null && !resumeFilterDTO.getTechStack().isEmpty()) {
-            query.addCriteria(Criteria.where("techStack").regex(resumeFilterDTO.getTechStack(), "i"));
+        if (resumeFilterDTO.techStack() != null && !resumeFilterDTO.techStack().isEmpty()) {
+            query.addCriteria(Criteria.where("techStack").regex(resumeFilterDTO.techStack(), "i"));
         }
 
-        if (resumeFilterDTO.getSchoolType() != null && !resumeFilterDTO.getSchoolType().isEmpty()) {
-            query.addCriteria(Criteria.where("educations.schoolType").regex(resumeFilterDTO.getSchoolType(), "i"));
+        if (resumeFilterDTO.schoolType() != null && !resumeFilterDTO.schoolType().isEmpty()) {
+            query.addCriteria(Criteria.where("educations.schoolType").regex(resumeFilterDTO.schoolType(), "i"));
         }
 
         // 정렬 기준
-        if (resumeFilterDTO.getSortOrder() != null) {
-            switch (resumeFilterDTO.getSortOrder()) {
-                case "recent" -> query.with(Sort.by(Sort.Direction.DESC, "createdAt"));
+        if (resumeFilterDTO.sortOrder() != null) {
+            switch (resumeFilterDTO.sortOrder()) {
+                case "recent" -> query.with(Sort.by(Sort.Direction.DESC, "updatedAt"));
                 case "like" -> query.with(Sort.by(Sort.Direction.DESC, "likeCount"));
                 case "view" -> query.with(Sort.by(Sort.Direction.DESC, "viewCount"));
                 default -> {
                 }
             }
+        }
+
+        if (likedResumeIds != null) {
+            query.addCriteria(Criteria.where("_id").in(likedResumeIds));
         }
 
         // 페이징 처리

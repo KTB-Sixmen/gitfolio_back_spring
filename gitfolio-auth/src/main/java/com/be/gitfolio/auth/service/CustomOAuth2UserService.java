@@ -4,6 +4,7 @@ import com.be.gitfolio.auth.dto.CustomOAuth2User;
 import com.be.gitfolio.auth.dto.GithubResponse;
 import com.be.gitfolio.auth.dto.MemberDTO;
 import com.be.gitfolio.common.config.BaseResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -18,14 +19,11 @@ import reactor.core.publisher.Mono;
 import static com.be.gitfolio.auth.dto.MemberDTO.*;
 
 @Service
+@RequiredArgsConstructor
 @Slf4j
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
-    private final WebClient webClient;
-
-    public CustomOAuth2UserService(@Value("${member.server.url}") String memberServerUrl, WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl(memberServerUrl).build();
-    }
+    private final WebClient memberWebClient;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -47,7 +45,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 회원 정보 조회를 위한 WebClient 호출 메서드
     private Mono<Long> findMemberIdByUsername(String username) {
-        return webClient.get()
+        return memberWebClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/api/members")
                         .queryParam("username", username)
@@ -65,7 +63,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     // 회원 가입을 위한 WebClient 호출 메서드
     private Mono<Long> createMemberInMemberModule(MemberSaveRequestDTO memberSaveRequestDTO) {
-        return webClient.post()
+        return memberWebClient.post()
                 .uri("/api/members")
                 .bodyValue(memberSaveRequestDTO)
                 .retrieve()
@@ -77,23 +75,17 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     private MemberSaveRequestDTO createMemberSaveRequest(GithubResponse githubResponse) {
         // GithubResponse 값 확인
         log.info("GitHub Response: Username={}, Name={}, AvatarUrl={}", githubResponse.getGithubId(), githubResponse.getName(), githubResponse.getAvatarUrl());
-        return MemberSaveRequestDTO.builder()
-                .username(githubResponse.getGithubId())
-                .nickname(githubResponse.getName())
-                .role("ROLE_USER")
-                .avatarUrl(githubResponse.getAvatarUrl())
-                .githubName(githubResponse.getGithubName())
-                .build();
+        return MemberSaveRequestDTO.from(githubResponse);
     }
 
     // CustomOAuth2User 생성 메서드
     private CustomOAuth2User createCustomOAuth2User(Long memberId, GithubResponse githubResponse, boolean isNewMember) {
-        OAuth2UserDTO memberDTO = OAuth2UserDTO.builder()
-                .memberId(memberId)
-                .username(githubResponse.getGithubId())
-                .nickname(githubResponse.getName())
-                .role("ROLE_USER")
-                .build();
+        OAuth2UserDTO memberDTO = new OAuth2UserDTO(
+                memberId,
+                "ROLE_USER",
+                githubResponse.getName(),
+                githubResponse.getGithubId()
+        );
 
         return new CustomOAuth2User(memberDTO, isNewMember);
     }

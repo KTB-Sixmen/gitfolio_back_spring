@@ -1,0 +1,25 @@
+bootJar {
+	enabled = true
+	mainClass = 'com.be.gitfolio.notification.GitfolioNotificationApplication'
+}
+
+jar {
+	enabled = false
+}
+
+tasks.register("prepareKotlinBuildScriptModel"){}
+
+dependencies {
+
+	// Kafka 의존성
+	implementation 'org.springframework.kafka:spring-kafka'
+
+	// JPA (MySQL) 관련 의존성
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
+	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// 공통 모듈 추가
+	implementation project(":gitfolio-common")
+}
+
