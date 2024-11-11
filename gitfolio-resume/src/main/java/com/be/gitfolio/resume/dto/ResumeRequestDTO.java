@@ -12,6 +12,9 @@ public class ResumeRequestDTO {
 
     public record MemberInfoDTO(
             @NotBlank String memberId,  // 회원 ID
+            String nickname,
+            String username,
+            String githubName,
             @NotBlank String memberName,
             @NotBlank String avatarUrl,
             @Pattern(regexp = "^\\d{3}\\d{3,4}\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. 예시: 01012345678") String phoneNumber,
@@ -35,10 +38,10 @@ public class ResumeRequestDTO {
             List<String> selectedRepo,  // 이력서 생성에 사용할 레포 목록
             String requirements    // 요구사항(강조사항)
     ) {
-        public static AIRequestDTO of(MemberResponseById memberResponse, String personalRepo, CreateResumeRequestDTO createResumeRequestDTO) {
+        public static AIRequestDTO of(MemberInfoDTO memberInfoDTO, String personalRepo, CreateResumeRequestDTO createResumeRequestDTO) {
             return new AIRequestDTO(
-                    memberResponse.getNickname(),
-                    memberResponse.getGithubName(),
+                    memberInfoDTO.nickname(),
+                    memberInfoDTO.githubName(),
                     personalRepo,
                     createResumeRequestDTO.selectedRepo(),
                     createResumeRequestDTO.requirements()

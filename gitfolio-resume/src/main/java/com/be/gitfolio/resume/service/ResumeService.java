@@ -46,15 +46,14 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 @Transactional(readOnly = true)
 public class ResumeService {
 
-    private final MemberGrpcClient memberGrpcClient;
     private final ResumeRepository resumeRepository;
     private final LikeRepository likeRepository;
     private final CommentRepository commentRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final WebClient aiWebClient;
+    private final WebClient memberWebClient;
     private final JWTUtil jwtUtil;
     private final ResumeEventPublisher resumeEventPublisher;
-    private final MemberInfoMapper memberInfoMapper;
     private final S3Service s3Service;
     private final MongoTemplate mongoTemplate;
 
@@ -64,16 +63,17 @@ public class ResumeService {
     @Transactional
     public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO) {
 
-        // Member 가져와서 personalRepo 만들기
-        MemberResponseById memberResponse = memberGrpcClient.getMember(memberId);
-        String personalRepo = "https://github.com/" + memberResponse.getNickname();
+        MemberInfoDTO memberInfoDTO = memberWebClient.get()
+                .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                .retrieve()
+                .bodyToMono(MemberInfoDTO.class)
+                .block();
 
-        // proto -> MemberInfoDTO
-        MemberInfoDTO memberInfoDTO = memberInfoMapper.toMemberInfoDTO(memberResponse);
+        String personalRepo = "https://github.com/" + memberInfoDTO.nickname();
 
         // AI에 요청할 DTO 생성
-        AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberResponse, personalRepo, createResumeRequestDTO);
-        log.info("GithubName : {}", memberResponse.getGithubName());
+        AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberInfoDTO, personalRepo, createResumeRequestDTO);
+        log.info("GithubName : {}", memberInfoDTO.githubName());
 
         AIResponseDTO aiResponseDTO = aiWebClient.post()
                 .uri("/api/resumes")
@@ -275,7 +275,7 @@ public class ResumeService {
     }
 
     /**
-     * 좋아요 수 증가 (MongoTemplate 활용)
+     * 좋아요 수 증가 (findAndModify)
      */
     private void increaseLikeCount(String resumeId) {
         Query query = new Query(Criteria.where("_id").is(resumeId));
