@@ -6,6 +6,7 @@ import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -54,6 +55,15 @@ public class ResumeResponseDTO {
                     page.getTotalElements(),
                     page.getSize(),
                     page.getContent()
+            );
+        }
+        public PaginationResponseDTO(List<T> content, long totalElements, Pageable pageable) {
+            this(
+                    pageable.getPageNumber(),
+                    (int) Math.ceil((double) totalElements / pageable.getPageSize()),
+                    totalElements,
+                    pageable.getPageSize(),
+                    content
             );
         }
     }

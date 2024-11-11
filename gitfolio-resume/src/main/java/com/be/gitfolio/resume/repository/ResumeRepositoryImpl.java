@@ -21,7 +21,7 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Resume> findResumeByFilter(ResumeRequestDTO.ResumeFilterDTO resumeFilterDTO, Pageable pageable) {
+    public Page<Resume> findResumeByFilter(ResumeRequestDTO.ResumeFilterDTO resumeFilterDTO, List<String> likedResumeIds, Pageable pageable) {
         Query query = new Query();
 
         // 동적 필터 적용
@@ -50,6 +50,10 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
                 default -> {
                 }
             }
+        }
+
+        if (likedResumeIds != null) {
+            query.addCriteria(Criteria.where("_id").in(likedResumeIds));
         }
 
         // 페이징 처리
