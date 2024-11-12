@@ -11,19 +11,20 @@ import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
 public class ResumeRequestDTO {
 
     public record MemberInfoDTO(
-            @NotBlank String memberId,  // 회원 ID
+            @NotBlank Long memberId,
+            String memberAdditionalInfoId,
             String nickname,
+            @NotBlank String name,
             String username,
             String githubName,
-            @NotBlank String memberName,
             @NotBlank String avatarUrl,
             @Pattern(regexp = "^\\d{3}\\d{3,4}\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. 예시: 01012345678") String phoneNumber,
             @Email(message = "올바른 이메일 형식이어야 합니다.") String email,
             @NotBlank PositionType position,
-            List<Resume.WorkExperience> workExperiences,  // 경력
-            List<Resume.Link> links,  // 개인 링크
-            List<Resume.Education> educations,  // 학력
-            List<Resume.Certificate> certificates  // 자격증
+            List<Resume.WorkExperience> workExperiences,
+            List<Resume.Education> educations,
+            List<Resume.Certificate> certificates,
+            List<Resume.Link> links
     ) {}
 
     public record CreateResumeRequestDTO(
