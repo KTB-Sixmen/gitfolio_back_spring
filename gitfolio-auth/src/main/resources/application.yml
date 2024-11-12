@@ -8,9 +8,9 @@ spring:
         registration:
           github:
             client-name: GitHub
-            client-id: ${GITHUB_CLIENT_ID}
-            client-secret: ${GITHUB_CLIENT_SECRET}
-            redirect-uri: ${GITHUB_REDIRECT_URI}
+            client-id: ${GH_CLIENT_ID}
+            client-secret: ${GH_CLIENT_SECRET}
+            redirect-uri: ${GH_REDIRECT_URI}
             authorization-grant-type: authorization_code
             scope: read:user
   datasource:
@@ -18,12 +18,6 @@ spring:
 
   jwt:
     secret: ${JWT_SECRET_KEY}
-
-
-  data:
-    redis:
-      host: ${AUTH_REDIS_HOST}
-      port: ${AUTH_REDIS_PORT}
 
 cloud:
   aws:
@@ -60,3 +54,7 @@ kakao:
 ai:
   server:
     url: ${AI_SERVER_URL}
+
+redis:
+  host: ${RESUME_REDIS_HOST}
+  port: ${RESUME_REDIS_PORT}
