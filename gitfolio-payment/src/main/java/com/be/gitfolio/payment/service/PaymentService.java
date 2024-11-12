@@ -1,28 +1,22 @@
 package com.be.gitfolio.payment.service;
 
-import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.payment.config.KakaoPayProperties;
 import com.be.gitfolio.payment.domain.Payment;
 import com.be.gitfolio.payment.domain.PaymentStatusHistory;
-import com.be.gitfolio.payment.dto.PaymentRequest;
-import com.be.gitfolio.payment.dto.PaymentResponse;
 import com.be.gitfolio.payment.repository.PaymentRepository;
 import com.be.gitfolio.payment.repository.PaymentStatusHistoryRepository;
 import com.be.gitfolio.payment.type.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -38,11 +32,11 @@ public class PaymentService {
 
     @Value("${payment.server.url}")
     private String paymentBaseUrl;
-    private final MemberGrpcClient memberGrpcClient;
     private final PaymentRepository paymentRepository;
     private final PaymentStatusHistoryRepository paymentStatusHistoryRepository;
     private final KakaoPayProperties payProperties;
     private final WebClient kakaoWebClient;
+    private final WebClient memberWebClient;
     private KakaoReadyResponse kakaoReady;
 
     private HttpHeaders getHeaders() {
@@ -92,7 +86,12 @@ public class PaymentService {
         PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.approve(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
 
-        memberGrpcClient.updateMemberPlan(kakaoApproveResponse.partner_user_id(), kakaoApproveResponse.item_name());
+        memberWebClient.patch()
+                .uri("/api/members/{memberId}/updatePlan", memberId)
+                .bodyValue(PaidPlan.fromPlanName(kakaoApproveResponse.item_name()))
+                .retrieve()
+                .toBodilessEntity()
+                .block();
 
         return kakaoApproveResponse;
     }

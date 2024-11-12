@@ -2,6 +2,7 @@ package com.be.gitfolio.member.controller;
 
 import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.service.MemberService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -34,6 +35,15 @@ public class MemberController {
     @GetMapping("/{memberId}")
     public MemberDetailDTO getMemberDetail(@PathVariable("memberId") Long memberId) {
         return memberService.getMemberDetails(memberId);
+    }
+
+    /**
+     * 사용 플랜 변경(내부통신용)
+     */
+    @PatchMapping("/{memberId}/updatePlan")
+    public Void updatePlan(@PathVariable("memberId") Long memberId, @RequestBody PaidPlan paidPlan) {
+        return memberService.updateMemeberPlan(memberId, paidPlan);
+
     }
 
     /**
