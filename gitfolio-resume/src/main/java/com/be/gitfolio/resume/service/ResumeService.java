@@ -73,7 +73,6 @@ public class ResumeService {
 
         // AI에 요청할 DTO 생성
         AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberInfoDTO, personalRepo, createResumeRequestDTO);
-        log.info("GithubName : {}", memberInfoDTO.githubName());
 
         AIResponseDTO aiResponseDTO = aiWebClient.post()
                 .uri("/api/resumes")
