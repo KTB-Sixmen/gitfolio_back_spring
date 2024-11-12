@@ -1,15 +1,11 @@
 package com.be.gitfolio.resume.service;
 
-import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
-import com.be.gitfolio.common.grpc.MemberServiceProto;
 import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.dto.ResumeRequestDTO;
-import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.repository.CommentRepository;
 import com.be.gitfolio.resume.repository.ResumeRepository;
@@ -17,9 +13,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
@@ -32,9 +28,9 @@ public class CommentService {
 
     private final ResumeRepository resumeRepository;
     private final CommentRepository commentRepository;
-    private final MemberGrpcClient memberGrpcClient;
     private final ResumeEventPublisher resumeEventPublisher;
     private final S3Service s3Service;
+    private final WebClient memberWebClient;
 
     /**
      * 댓글 작성
@@ -93,13 +89,17 @@ public class CommentService {
         List<Comment> comments = commentRepository.findAllByResumeId(resumeId);
         return comments.stream()
                 .map(comment -> {
-                    MemberServiceProto.MemberResponseById memberResponse = memberGrpcClient.getMember(String.valueOf(comment.getMemberId()));
+                    MemberInfoDTO memberInfoDTO = memberWebClient.get()
+                            .uri("/api/members/{memberId}", comment.getMemberId())
+                            .retrieve()
+                            .bodyToMono(MemberInfoDTO.class)
+                            .block();
                     // Avatar URL 가공
-                    String avatarUrl = memberResponse.getAvatarUrl();
+                    String avatarUrl = memberInfoDTO.avatarUrl();
                     if (!avatarUrl.contains("avatars.githubusercontent.com")) {
                         avatarUrl = s3Service.getFullFileUrl(avatarUrl);
                     }
-                    return new CommentResponseDTO(comment, memberResponse.getNickname(), avatarUrl);
+                    return new CommentResponseDTO(comment, memberInfoDTO.nickname(), avatarUrl);
                 })
                 .toList();
     }

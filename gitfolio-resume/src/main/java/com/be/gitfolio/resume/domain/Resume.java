@@ -67,8 +67,8 @@ public class Resume extends BaseEntityMongo {
 
     public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO) {
         return Resume.builder()
-                .memberId(memberInfoDTO.memberId())
-                .memberName(memberInfoDTO.memberName())
+                .memberId(String.valueOf(memberInfoDTO.memberId()))
+                .memberName(memberInfoDTO.name())
                 .avatarUrl(memberInfoDTO.avatarUrl())
                 .phoneNumber(memberInfoDTO.phoneNumber())
                 .email(memberInfoDTO.email())

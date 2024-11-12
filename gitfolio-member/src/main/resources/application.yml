@@ -45,7 +45,7 @@ cloud:
 github:
   api:
     url: https://api.github.com
-    token: ${GITHUB_API_TOKEN}
+    token: ${GH_API_TOKEN}
 member:
   server:
     url: ${MEMBER_SERVER_URL}

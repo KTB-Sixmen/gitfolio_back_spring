@@ -17,7 +17,7 @@ public class MemberGrpcClient {
     public MemberGrpcClient() {
         // gRPC 채널 설정 (포트 9090) - NettyChannelBuilder 사용
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 9090)
-                .usePlaintext()  // 실제 환경에서는 TLS를 적용하는 것을 권장
+                .usePlaintext()
                 .build();
         memberStub = MemberServiceGrpc.newBlockingStub(channel);
     }
