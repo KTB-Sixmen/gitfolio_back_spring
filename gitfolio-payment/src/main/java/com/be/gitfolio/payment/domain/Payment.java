@@ -61,9 +61,11 @@ public class Payment extends BaseEntityMySQL {
 
     public void updatePaymentDetails(KakaoApproveResponse kakaoApproveResponse, PaymentStatus paymentStatus) {
         this.paymentType = kakaoApproveResponse.payment_method_type();
-        this.cardType = kakaoApproveResponse.card_info().card_type();
-        this.cardCorp = kakaoApproveResponse.card_info().kakaopay_issuer_corp();
-        this.cardApprovedId = kakaoApproveResponse.card_info().approved_id();
+        if (kakaoApproveResponse.card_info() != null) {
+            this.cardType = kakaoApproveResponse.card_info().card_type();
+            this.cardCorp = kakaoApproveResponse.card_info().kakaopay_issuer_corp();
+            this.cardApprovedId = kakaoApproveResponse.card_info().approved_id();
+        }
         this.status = paymentStatus;
     }
 }

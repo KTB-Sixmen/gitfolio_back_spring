@@ -10,26 +10,26 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class RedisTokenRepository {
 
-    private final RedisTemplate<String, Object> redisTemplate;
+    private final RedisTemplate<String, Object> authRedisTemplate;
 
     // Refresh 토큰 저장
     public void saveRefreshToken(String key, String refreshToken, Long expirationTimeMs) {
-        redisTemplate.opsForValue().set(key, refreshToken, expirationTimeMs, TimeUnit.MILLISECONDS);
+        authRedisTemplate.opsForValue().set(key, refreshToken, expirationTimeMs, TimeUnit.MILLISECONDS);
     }
 
     // Refresh 토큰 조회
     public String getRefreshToken(String key) {
-        return (String) redisTemplate.opsForValue().get(key);
+        return (String) authRedisTemplate.opsForValue().get(key);
     }
 
     // Refresh 토큰 삭제
     public void deleteRefreshToken(String key) {
-        redisTemplate.delete(key);
+        authRedisTemplate.delete(key);
     }
 
     // Refresh 토큰 존재 여부 확인
     public boolean existsByRefreshToken(String key) {
-        return redisTemplate.hasKey(key);
+        return authRedisTemplate.hasKey(key);
     }
 
 }
