@@ -1,6 +1,5 @@
 package com.be.gitfolio.resume.service;
 
-import com.be.gitfolio.common.client.MemberGrpcClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
@@ -9,12 +8,13 @@ import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
-import com.be.gitfolio.resume.mapper.MemberInfoMapper;
 import com.be.gitfolio.resume.repository.CommentRepository;
 import com.be.gitfolio.resume.repository.LikeRepository;
 import com.be.gitfolio.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -92,14 +92,12 @@ public class ResumeService {
      */
     public PaginationResponseDTO<ResumeListDTO> getResumeList(String token, ResumeFilterDTO resumeFilterDTO) {
         Long memberId = extractMemberIdFromToken(token);
-
         Pageable pageable = PageRequest.of(resumeFilterDTO.page(), resumeFilterDTO.size());
 
         // 1. MySQL에서 사용자가 좋아요 누른 이력서 ID 목록 조회
         List<String> likedResumeIds = null;
         if (Boolean.TRUE.equals(resumeFilterDTO.liked())) {
             likedResumeIds = likeRepository.findLikedResumeIdsByMemberId(memberId);
-            // 좋아요 목록 비어있으면 빈 페이지 반환
             if (likedResumeIds.isEmpty()) {
                 return new PaginationResponseDTO<>(List.of(), 0, pageable);
             }
@@ -112,22 +110,19 @@ public class ResumeService {
         List<Like> likes = likeRepository
                 .findLikesByMemberIdAndResumeIds(memberId, resumePage.stream().map(Resume::getId).toList());
 
-        // List<Like>를 Map<String, Boolean>으로 변환
         Map<String, Boolean> likedStatusMap = likes.stream()
                 .collect(Collectors.toMap(Like::getResumeId, Like::getStatus));
-
 
         // 4. 이력서 목록을 DTO로 변환
         List<ResumeListDTO> resumeListDTOs = resumePage.stream()
                 .map(resume -> {
-                    boolean isLiked = likedStatusMap.getOrDefault(resume.getId(), false);
-
                     // Avatar URL 가공
                     String avatarUrl = resume.getAvatarUrl();
                     if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
                         avatarUrl = s3Service.getFullFileUrl(avatarUrl);
                     }
 
+                    boolean isLiked = likedStatusMap.getOrDefault(resume.getId(), false);
                     return new ResumeListDTO(resume, isLiked, avatarUrl);
                 })
                 .toList();

@@ -3,6 +3,7 @@ package com.be.gitfolio.member.service;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.s3.S3Service;
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import com.be.gitfolio.member.repository.MemberAdditionalInfoRepository;
@@ -145,6 +146,18 @@ public class MemberService {
 
 
         return userRepositories;
+    }
+
+    /**
+     * 회원 플랜 변경
+     */
+    @Transactional
+    public Void updateMemeberPlan(Long memberId, PaidPlan paidPlan) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
+
+        member.updatePlan(paidPlan);
+        return null;
     }
 
     /**

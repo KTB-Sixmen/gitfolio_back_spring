@@ -3,9 +3,6 @@ spring:
   config:
     import: optional:file:.env[.properties]
   data:
-    redis:
-      host: ${RESUME_REDIS_HOST}
-      port: ${RESUME_REDIS_PORT}
     mongodb:
       uri: mongodb://${RESUME_MONGO_DB_USERNAME}:${RESUME_MONGO_DB_PORT}/${RESUME_MONGO_DB_DATABASE}
   datasource:
@@ -51,7 +48,7 @@ jwt:
 github:
   api:
     url: https://api.github.com
-    token: ${GITHUB_API_TOKEN}
+    token: ${GH_API_TOKEN}
 member:
   server:
     url: ${MEMBER_SERVER_URL}
@@ -64,3 +61,7 @@ ai:
 
 server:
   port: ${RESUME_SERVER_PORT}
+
+redis:
+  host: ${RESUME_REDIS_HOST}
+  port: ${RESUME_REDIS_PORT}
