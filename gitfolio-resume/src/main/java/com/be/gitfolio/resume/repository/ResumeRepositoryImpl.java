@@ -26,19 +26,19 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
 
         // 동적 필터 적용
         if (resumeFilterDTO.tag() != null && !resumeFilterDTO.tag().isEmpty()) {
-            query.addCriteria(Criteria.where("tag").regex(resumeFilterDTO.tag(), "i"));
+            query.addCriteria(Criteria.where("tag").is(resumeFilterDTO.tag()));
         }
 
         if (resumeFilterDTO.position() != null && !resumeFilterDTO.position().isEmpty()) {
-            query.addCriteria(Criteria.where("position").regex(resumeFilterDTO.position(), "i"));
+            query.addCriteria(Criteria.where("position").is(resumeFilterDTO.position()));
         }
 
         if (resumeFilterDTO.techStack() != null && !resumeFilterDTO.techStack().isEmpty()) {
-            query.addCriteria(Criteria.where("techStack").regex(resumeFilterDTO.techStack(), "i"));
+            query.addCriteria(Criteria.where("techStack").elemMatch(Criteria.where("$eq").is(resumeFilterDTO.techStack())));
         }
 
         if (resumeFilterDTO.schoolType() != null && !resumeFilterDTO.schoolType().isEmpty()) {
-            query.addCriteria(Criteria.where("educations.schoolType").regex(resumeFilterDTO.schoolType(), "i"));
+            query.addCriteria(Criteria.where("educations").elemMatch(Criteria.where("schoolType").is(resumeFilterDTO.schoolType())));
         }
 
         // 정렬 기준
