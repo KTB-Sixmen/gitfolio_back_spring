@@ -3,7 +3,7 @@ name: Backend MSA Deploy Pipeline
 on:
   push:
     branches:
-      - develop
+      - 48-Develop브랜치-푸시시-CI/CD-구현
 
 jobs:
   build-and-push:
@@ -191,9 +191,14 @@ jobs:
               chown ec2-user:ec2-user /home/ec2-user/docker-compose.yml && \
               cd /home/ec2-user && \
               docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
-              docker-compose pull && \
               if [ '${{ matrix.instance_name }}' = 'Gitfolio BE1' ]; then \
-                docker-compose -p gitfolio up -d auth member; \
+                docker-compose -p gitfolio down auth member && \
+                docker system prune -f && \
+                docker-compose pull && \
+                docker-compose -p gitfolio up -d --force-recreate auth member; \
               else \
-                docker-compose -p gitfolio up -d payment resume; \
+                docker-compose -p gitfolio down payment resume && \
+                docker system prune -f && \
+                docker-compose pull && \
+                docker-compose -p gitfolio up -d --force-recreate payment resume; \
               fi\"]}"
