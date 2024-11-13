@@ -1,0 +1,199 @@
+name: Backend MSA Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [auth, member, payment, resume]
+        include:
+          - module: auth
+            port: 8080
+          - module: member
+            port: 8081
+          - module: payment
+            port: 8083
+          - module: resume
+            port: 8082
+#도커 빌드해서 기존 이미지에 영향 안가게 dev1 태그로 푸시하게 해줬다. 계정은 여전히 aida 꺼로
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      - name: Build and push service image
+        uses: docker/build-push-action@v2
+        with:
+          context: ./gitfolio-${{ matrix.module }}
+          file: ./gitfolio-${{ matrix.module }}/dockerfile
+          target: runner
+          push: true
+          tags: aida0/gitfolio_${{ matrix.module }}:dev1
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - instance_name: "Gitfolio BE1"
+            instance_index: "1"
+          - instance_name: "Gitfolio BE2"
+            instance_index: "2"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      - name: Create .env file
+        run: |
+          cat << EOF > .env
+          # URL
+          REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }}
+          REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }}
+          MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }}
+          PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }}
+          AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
+
+          # gRPC Port
+          MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }}
+
+          # Server Ports
+          AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}
+          MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }}
+          RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }}
+          PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }}
+          NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}
+          CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}
+
+          # GitHub OAuth
+          GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+          GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
+          GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
+          GH_API_TOKEN=${{ secrets.GH_API_TOKEN }}
+
+          # JWT
+          JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+          ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }}
+          REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }}
+
+          # Redis Configuration
+          AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }}
+          AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }}
+          RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }}
+          RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }}
+
+          # MySQL Configuration
+          MEMBER_MYSQL_DB_HOST=${{ secrets.MEMBER_MYSQL_DB_HOST }}
+          MEMBER_MYSQL_DB_PORT=${{ secrets.MEMBER_MYSQL_DB_PORT }}
+          MEMBER_MYSQL_DB_NAME=${{ secrets.MEMBER_MYSQL_DB_NAME }}
+          MEMBER_MYSQL_DB_USERNAME=${{ secrets.MEMBER_MYSQL_DB_USERNAME }}
+          MEMBER_MYSQL_DB_PASSWORD=${{ secrets.MEMBER_MYSQL_DB_PASSWORD }}
+
+          LIKE_MYSQL_DB_HOST=${{ secrets.LIKE_MYSQL_DB_HOST }}
+          LIKE_MYSQL_DB_PORT=${{ secrets.LIKE_MYSQL_DB_PORT }}
+          LIKE_MYSQL_DB_NAME=${{ secrets.LIKE_MYSQL_DB_NAME }}
+          LIKE_MYSQL_DB_USERNAME=${{ secrets.LIKE_MYSQL_DB_USERNAME }}
+          LIKE_MYSQL_DB_PASSWORD=${{ secrets.LIKE_MYSQL_DB_PASSWORD }}
+
+          PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }}
+          PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }}
+          PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }}
+          PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}
+          PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}
+
+          NOTIFICATION_MYSQL_DB_HOST=${{ secrets.NOTIFICATION_MYSQL_DB_HOST }}
+          NOTIFICATION_MYSQL_DB_PORT=${{ secrets.NOTIFICATION_MYSQL_DB_PORT }}
+          NOTIFICATION_MYSQL_DB_NAME=${{ secrets.NOTIFICATION_MYSQL_DB_NAME }}
+          NOTIFICATION_MYSQL_DB_USERNAME=${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }}
+          NOTIFICATION_MYSQL_DB_PASSWORD=${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }}
+
+          # MongoDB Configuration
+          MEMBER_MONGO_DB_USERNAME=${{ secrets.MEMBER_MONGO_DB_USERNAME }}
+          MEMBER_MONGO_DB_PORT=${{ secrets.MEMBER_MONGO_DB_PORT }}
+          MEMBER_MONGO_DB_DATABASE=${{ secrets.MEMBER_MONGO_DB_DATABASE }}
+
+          RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }}
+          RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }}
+          RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }}
+
+          CHAT_MONGO_DB_USERNAME=${{ secrets.CHAT_MONGO_DB_USERNAME }}
+          CHAT_MONGO_DB_PORT=${{ secrets.CHAT_MONGO_DB_PORT }}
+          CHAT_MONGO_DB_DATABASE=${{ secrets.CHAT_MONGO_DB_DATABASE }}
+
+          # S3 Configuration
+          S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+          S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
+          S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }}
+
+          # Kakao Pay
+          KAKAO_API_URL=${{ secrets.KAKAO_API_URL }}
+          KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }}
+
+          # Kafka Configuration
+          KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }}
+          KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }}
+          EOF
+
+      - name: Get EC2 instance ID
+        id: get-instance
+        run: |
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:Service,Values=back" \
+              "Name=tag:Environment,Values=dev" \
+              "Name=tag:Name,Values=${{ matrix.instance_name }}" \
+              "Name=tag:Index,Values=${{ matrix.instance_index }}" \
+              "Name=instance-state-name,Values=running" \
+            --query "Reservations[*].Instances[*].InstanceId" \
+            --output text)
+          echo "instance_id=$INSTANCE_ID" >> $GITHUB_OUTPUT
+
+      - name: Install Session Manager Plugin
+        run: |
+          curl "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb"
+          sudo dpkg -i session-manager-plugin.deb
+
+      - name: Copy files to EC2 and Deploy
+        run: |
+          ENCODED_ENV=$(cat .env | base64 -w 0)
+          ENCODED_COMPOSE=$(cat docker-compose.yml | base64 -w 0)
+          
+          aws ssm start-session \
+            --target "${{ steps.get-instance.outputs.instance_id }}" \
+            --document-name "AWS-StartInteractiveCommand" \
+            --parameters "{\"command\":[\"sudo -i && \
+              echo '${ENCODED_ENV}' | base64 -d > /home/ec2-user/.env && \
+              echo '${ENCODED_COMPOSE}' | base64 -d > /home/ec2-user/docker-compose.yml && \
+              chmod 600 /home/ec2-user/.env && \
+              chmod 600 /home/ec2-user/docker-compose.yml && \
+              chown ec2-user:ec2-user /home/ec2-user/.env && \
+              chown ec2-user:ec2-user /home/ec2-user/docker-compose.yml && \
+              cd /home/ec2-user && \
+              docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
+              docker-compose pull && \
+              if [ '${{ matrix.instance_name }}' = 'Gitfolio BE1' ]; then \
+                docker-compose -p gitfolio up -d auth member; \
+              else \
+                docker-compose -p gitfolio up -d payment resume; \
+              fi\"]}"
