@@ -64,7 +64,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-northeast-2
-
+#백스프링의 최상단에 .env 를 생성하고 빌드하면 될가능성 있음
       - name: Create .env file
         run: |
           cat << EOF > .env
@@ -177,28 +177,28 @@ jobs:
       - name: Copy files to EC2 and Deploy
         run: |
           ENCODED_ENV=$(cat .env | base64 -w 0)
-          ENCODED_COMPOSE=$(cat docker-compose.yml | base64 -w 0)
+          ENCODED_COMPOSE=$(cat docker-compose.yaml | base64 -w 0)
           
           aws ssm start-session \
             --target "${{ steps.get-instance.outputs.instance_id }}" \
             --document-name "AWS-StartInteractiveCommand" \
-            --parameters "{\"command\":[\"sudo -i && \
+            --parameters "{\"command\":[\"sudo su - ec2-user && \
               echo '${ENCODED_ENV}' | base64 -d > /home/ec2-user/.env && \
-              echo '${ENCODED_COMPOSE}' | base64 -d > /home/ec2-user/docker-compose.yml && \
-              chmod 600 /home/ec2-user/.env && \
-              chmod 600 /home/ec2-user/docker-compose.yml && \
+              echo '${ENCODED_COMPOSE}' | base64 -d > /home/ec2-user/docker-compose.yaml && \
+          # 쓸모없는 권한변경은 제거할것, .env 가 이미지 안에 넣어주는것
+#              chmod 600 /home/ec2-user/.env && \
+#              chmod 600 /home/ec2-user/docker-compose.yaml && \
               chown ec2-user:ec2-user /home/ec2-user/.env && \
-              chown ec2-user:ec2-user /home/ec2-user/docker-compose.yml && \
+              chown ec2-user:ec2-user /home/ec2-user/docker-compose.yaml && \
               cd /home/ec2-user && \
               docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
               if [ '${{ matrix.instance_name }}' = 'Gitfolio BE1' ]; then \
-                docker-compose -p gitfolio down auth member && \
-                docker system prune -f && \
+                docker-compose down auth member && \
+          #-v (컨테이너정리)명령으로 기존 컨테이너 내림 --rmi all (이미지 정리)
                 docker-compose pull && \
                 docker-compose -p gitfolio up -d --force-recreate auth member; \
               else \
-                docker-compose -p gitfolio down payment resume && \
-                docker system prune -f && \
+                docker-compose down payment resume && \
                 docker-compose pull && \
                 docker-compose -p gitfolio up -d --force-recreate payment resume; \
               fi\"]}"
