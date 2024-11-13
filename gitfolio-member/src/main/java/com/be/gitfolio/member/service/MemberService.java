@@ -61,6 +61,23 @@ public class MemberService {
         return memberRepository.findByUsername(username);
     }
 
+    /**
+     * member 정보 가져오기 (내부통신용) 이미지 prefix없이 보내는 용도
+     */
+    public MemberDetailDTO sendMemberDetailToResume(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
+
+        // MongoDB에서 추가 정보 조회
+        Optional<MemberAdditionalInfo> additionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(member.getId().toString());
+
+        // 추가 정보가 없으면 기본값으로 처리
+        MemberAdditionalInfo additionalInfo = additionalInfoOpt
+                .orElseGet(() -> MemberAdditionalInfo.from(member.getId()));
+
+        // DTO에 MySQL과 MongoDB 데이터를 함께 담아 반환
+        return MemberDetailDTO.of(member, additionalInfo, member.getAvatarUrl());
+    }
 
     /**
      * 회원 정보 상세 조회
