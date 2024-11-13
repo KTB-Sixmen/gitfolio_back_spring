@@ -119,11 +119,6 @@ public class MemberService {
 
         // 이미지 파일이 있을 경우에만 업로드 진행
         if (imageFile != null && !imageFile.isEmpty()) {
-            // 기존 이미지가 깃허브 기본 이미지가 아니면 삭제
-            if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-                s3Service.deleteFile(avatarUrl);
-            }
-
             // 새 이미지 업로드
             avatarUrl = s3Service.uploadFile(imageFile);
         }
