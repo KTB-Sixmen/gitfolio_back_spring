@@ -214,10 +214,6 @@ public class ResumeService {
         String avatarUrl = resume.getAvatarUrl();
 
         if (imageFile != null && !imageFile.isEmpty()) {
-            if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-                s3Service.deleteFile(avatarUrl);
-            }
-
             avatarUrl = s3Service.uploadFile(imageFile);
         }
 
