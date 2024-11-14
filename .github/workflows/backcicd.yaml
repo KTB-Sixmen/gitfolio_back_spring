@@ -185,9 +185,6 @@ jobs:
             --parameters "{\"command\":[\"sudo su - ec2-user && \
               echo '${ENCODED_ENV}' | base64 -d > /home/ec2-user/.env && \
               echo '${ENCODED_COMPOSE}' | base64 -d > /home/ec2-user/docker-compose.yaml && \
-          # 쓸모없는 권한변경은 제거할것, .env 가 이미지 안에 넣어주는것
-#              chmod 600 /home/ec2-user/.env && \
-#              chmod 600 /home/ec2-user/docker-compose.yaml && \
               chown ec2-user:ec2-user /home/ec2-user/.env && \
               chown ec2-user:ec2-user /home/ec2-user/docker-compose.yaml && \
               cd /home/ec2-user && \
