@@ -18,7 +18,7 @@ services:
       context: ./gitfolio-auth
       dockerfile: dockerfile
       target: runner
-    image: aida0/gitfolio_auth:dev1
+    image: aida0/gitfolio_auth:test
     container_name: gitfolio_auth
     ports:
       - target: 8080
@@ -36,7 +36,7 @@ services:
       context: ./gitfolio-member
       dockerfile: dockerfile
       target: runner
-    image: aida0/gitfolio_member:dev1
+    image: aida0/gitfolio_member:test
     container_name: gitfolio_member
     ports:
       - target: 8080
@@ -54,7 +54,7 @@ services:
       context: ./gitfolio-payment
       dockerfile: dockerfile
       target: runner
-    image: aida0/gitfolio_payment:dev1
+    image: aida0/gitfolio_payment:test
     container_name: gitfolio_payment
     ports:
       - target: 8080
@@ -72,7 +72,7 @@ services:
       context: ./gitfolio-resume
       dockerfile: dockerfile
       target: runner
-    image: aida0/gitfolio_resume:dev1
+    image: aida0/gitfolio_resume:test
     container_name: gitfolio_resume
     ports:
       - target: 8080

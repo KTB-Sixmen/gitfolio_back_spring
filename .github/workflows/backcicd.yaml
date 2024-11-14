@@ -20,7 +20,7 @@ jobs:
             port: 8083
           - module: resume
             port: 8082
-#도커 빌드해서 기존 이미지에 영향 안가게 dev1 태그로 푸시하게 해줬다. 계정은 여전히 aida 꺼로
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -41,7 +41,7 @@ jobs:
           file: ./gitfolio-${{ matrix.module }}/dockerfile
           target: runner
           push: true
-          tags: aida0/gitfolio_${{ matrix.module }}:dev1
+          tags: aida0/gitfolio_${{ matrix.module }}:test
 
   deploy:
     needs: build-and-push
