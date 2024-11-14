@@ -5,8 +5,10 @@ import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.NotificationType;
+import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
+import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.repository.CommentRepository;
 import com.be.gitfolio.resume.repository.LikeRepository;
@@ -32,6 +34,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -61,7 +64,7 @@ public class ResumeService {
      * 이력서 생성 요청
      */
     @Transactional
-    public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO) {
+    public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO, Visibility visibility) {
 
         MemberInfoDTO memberInfoDTO = memberWebClient.get()
                 .uri("/api/members/{memberId}", Long.valueOf(memberId))
@@ -81,7 +84,7 @@ public class ResumeService {
                 .bodyToMono(AIResponseDTO.class)
                 .block();
 
-        Resume resume = Resume.of(memberInfoDTO, aiResponseDTO);
+        Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
         return resumeRepository.save(resume).getId();
     }
 
@@ -280,5 +283,18 @@ public class ResumeService {
         Query query = new Query(Criteria.where("_id").is(resumeId));
         Update update = new Update().inc("likeCount", -1);
         mongoTemplate.findAndModify(query, update, Resume.class);
+    }
+
+    @Transactional
+    public void updateVisibility(Long memberId, String resumeId, UpdateVisibilityDTO updateVisibilityDTO) {
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
+        if (!Objects.equals(resume.getMemberId(), memberId)) {
+            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
+        }
+
+        resume.updateVisibility(updateVisibilityDTO.visibility());
+        resumeRepository.save(resume);
     }
 }

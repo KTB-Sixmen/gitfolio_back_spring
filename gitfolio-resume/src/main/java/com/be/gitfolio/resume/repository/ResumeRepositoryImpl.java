@@ -1,7 +1,6 @@
 package com.be.gitfolio.resume.repository;
 
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -14,6 +13,8 @@ import org.springframework.data.mongodb.core.query.Query;
 
 import java.util.List;
 
+import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
+
 @RequiredArgsConstructor
 @Slf4j
 public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
@@ -21,8 +22,11 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
     private final MongoTemplate mongoTemplate;
 
     @Override
-    public Page<Resume> findResumeByFilter(ResumeRequestDTO.ResumeFilterDTO resumeFilterDTO, List<String> likedResumeIds, Pageable pageable) {
+    public Page<Resume> findResumeByFilter(ResumeFilterDTO resumeFilterDTO, List<String> likedResumeIds, Pageable pageable) {
         Query query = new Query();
+
+        // 공개 여부 PUBLIC인 것만
+        query.addCriteria(Criteria.where("visibility").is("PUBLIC"));
 
         // 동적 필터 적용
         if (resumeFilterDTO.tag() != null && !resumeFilterDTO.tag().isEmpty()) {
@@ -58,6 +62,8 @@ public class ResumeRepositoryImpl implements ResumeRepositoryCustom {
 
         // 페이징 처리
         query.with(pageable);
+        // allowDiskUse 옵션 추가
+        query.allowDiskUse(true);
         log.info("Generated Query : {}", query);
 
         // 결과 조회

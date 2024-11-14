@@ -4,6 +4,8 @@ import com.be.gitfolio.common.config.BaseEntityMongo;
 import com.be.gitfolio.common.type.*;
 import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.dto.ResumeResponseDTO;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -25,7 +27,7 @@ public class Resume extends BaseEntityMongo {
 
     @Id
     private String id;  // 이력서 ID
-    private String memberId;  // 회원 ID
+    private Long memberId;  // 회원 ID
     private String memberName; // 회원 이름
     private String avatarUrl; // 프로필 사진
     private String phoneNumber; // 전화번호
@@ -39,20 +41,19 @@ public class Resume extends BaseEntityMongo {
     private List<Link> links;  // 개인 링크
     private List<Education> educations;  // 학력
     private List<Certificate> certificates;  // 자격증
+    @Enumerated(EnumType.STRING)
+    private Visibility visibility; // 공개 여부
     private int likeCount;  // 좋아요 수
     private int viewCount;  // 조회수
+
+    public void updateVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
 
     public void updateView() {
         this.viewCount++;
     }
 
-    public void increaseLike() {
-        this.likeCount++;
-    }
-
-    public void decreaseLike() {
-        this.likeCount--;
-    }
     public void updateResume(UpdateResumeRequestDTO updateResumeDTO, String avatarUrl) {
         this.avatarUrl = avatarUrl;
         this.techStack = updateResumeDTO.techStack();
@@ -65,9 +66,9 @@ public class Resume extends BaseEntityMongo {
         this.certificates = updateResumeDTO.certificates();
     }
 
-    public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO) {
+    public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO, Visibility visibility) {
         return Resume.builder()
-                .memberId(String.valueOf(memberInfoDTO.memberId()))
+                .memberId(memberInfoDTO.memberId())
                 .memberName(memberInfoDTO.name())
                 .avatarUrl(memberInfoDTO.avatarUrl())
                 .phoneNumber(memberInfoDTO.phoneNumber())
@@ -80,6 +81,7 @@ public class Resume extends BaseEntityMongo {
                 .links(memberInfoDTO.links())
                 .educations(memberInfoDTO.educations())
                 .certificates(memberInfoDTO.certificates())
+                .visibility(visibility)
                 .likeCount(0)
                 .viewCount(0)
                 .build();
