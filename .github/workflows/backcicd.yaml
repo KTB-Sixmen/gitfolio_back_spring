@@ -191,7 +191,6 @@ jobs:
               docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }} && \
               if [ '${{ matrix.instance_name }}' = 'Gitfolio BE1' ]; then \
                 docker-compose down auth member && \
-          #-v (컨테이너정리)명령으로 기존 컨테이너 내림 --rmi all (이미지 정리)
                 docker-compose pull && \
                 docker-compose -p gitfolio up -d --force-recreate auth member; \
               else \
