@@ -11,10 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        module: [auth, member, payment, resume]
         include:
           - module: auth
             dockerfile_path: ./gitfolio-auth/Dockerfile
+            build_context: ./gitfolio-auth
             image_name: aida0/gitfolio_auth:test
             ec2_filters: |
               Name=tag:Name,Values=Gitfolio BE1
@@ -22,6 +22,7 @@ jobs:
               Name=tag:Type,Values=ec2
           - module: member
             dockerfile_path: ./gitfolio-member/Dockerfile
+            build_context: ./gitfolio-member
             image_name: aida0/gitfolio_member:test
             ec2_filters: |
               Name=tag:Name,Values=Gitfolio BE1
@@ -29,6 +30,7 @@ jobs:
               Name=tag:Type,Values=ec2
           - module: payment
             dockerfile_path: ./gitfolio-payment/Dockerfile
+            build_context: ./gitfolio-payment
             image_name: aida0/gitfolio_payment:test
             ec2_filters: |
               Name=tag:Name,Values=Gitfolio BE2
@@ -36,6 +38,7 @@ jobs:
               Name=tag:Type,Values=ec2
           - module: resume
             dockerfile_path: ./gitfolio-resume/Dockerfile
+            build_context: ./gitfolio-resume
             image_name: aida0/gitfolio_resume:test
             ec2_filters: |
               Name=tag:Name,Values=Gitfolio BE2
@@ -127,7 +130,7 @@ jobs:
             --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
             -f ${{ matrix.dockerfile_path }} \
             -t ${{ matrix.image_name }} \
-            ${{ dirname(matrix.dockerfile_path) }}
+            ${{ matrix.build_context }}
 
       # 5단계: Docker 이미지 푸시
       - name: Push the Docker image
