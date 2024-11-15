@@ -15,32 +15,28 @@ jobs:
           - module: auth
             instance_tags: |
               [
-                {"Name":"tag:Name","Values":["Gitfolio Backend"]},
-                {"Name":"tag:Service","Values":["Auth"]},
+                {"Name":"tag:Name","Values":["Gitfolio BE1"]},
                 {"Name":"tag:Environment","Values":["dev"]},
                 {"Name":"tag:Type","Values":["ec2"]}
               ]
           - module: member
             instance_tags: |
               [
-                {"Name":"tag:Name","Values":["Gitfolio Backend"]},
-                {"Name":"tag:Service","Values":["Member"]},
+                {"Name":"tag:Name","Values":["Gitfolio BE1"]},
                 {"Name":"tag:Environment","Values":["dev"]},
                 {"Name":"tag:Type","Values":["ec2"]}
               ]
           - module: payment
             instance_tags: |
               [
-                {"Name":"tag:Name","Values":["Gitfolio Backend"]},
-                {"Name":"tag:Service","Values":["Payment"]},
+                {"Name":"tag:Name","Values":["Gitfolio BE2"]},
                 {"Name":"tag:Environment","Values":["dev"]},
                 {"Name":"tag:Type","Values":["ec2"]}
               ]
           - module: resume
             instance_tags: |
               [
-                {"Name":"tag:Name","Values":["Gitfolio Backend"]},
-                {"Name":"tag:Service","Values":["Resume"]},
+                {"Name":"tag:Name","Values":["Gitfolio BE2"]},
                 {"Name":"tag:Environment","Values":["dev"]},
                 {"Name":"tag:Type","Values":["ec2"]}
               ]
