@@ -6,40 +6,206 @@ on:
       - 48-Develop브랜치-푸시시-CI/CD-구현
 
 jobs:
-  build_and_deploy:
+  build_and_deploy_auth:
+    name: Build and Deploy Auth Module
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        module: [auth, member, payment, resume]
-        include:
-          - module: auth
-            instance_tags: |
-              [
-                {"Name":"tag:Name","Values":["Gitfolio BE1"]},
-                {"Name":"tag:Environment","Values":["dev"]},
-                {"Name":"tag:Type","Values":["ec2"]}
-              ]
-          - module: member
-            instance_tags: |
-              [
-                {"Name":"tag:Name","Values":["Gitfolio BE1"]},
-                {"Name":"tag:Environment","Values":["dev"]},
-                {"Name":"tag:Type","Values":["ec2"]}
-              ]
-          - module: payment
-            instance_tags: |
-              [
-                {"Name":"tag:Name","Values":["Gitfolio BE2"]},
-                {"Name":"tag:Environment","Values":["dev"]},
-                {"Name":"tag:Type","Values":["ec2"]}
-              ]
-          - module: resume
-            instance_tags: |
-              [
-                {"Name":"tag:Name","Values":["Gitfolio BE2"]},
-                {"Name":"tag:Environment","Values":["dev"]},
-                {"Name":"tag:Type","Values":["ec2"]}
-              ]
+    steps:
+      # 1단계: 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2단계: AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3단계: Docker Hub에 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 4단계: Docker 이미지 빌드
+      - name: Build the Docker image
+        run: |
+          docker build \
+            --build-arg ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }} \
+            --build-arg REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }} \
+            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }} \
+            --build-arg GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }} \
+            --build-arg GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }} \
+            --build-arg AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }} \
+            --build-arg AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }} \
+            --build-arg AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }} \
+            --build-arg PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }} \
+            --build-arg PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }} \
+            --build-arg RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }} \
+            --build-arg REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }} \
+            --build-arg REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }} \
+            --build-arg AI_SERVER_URL=${{ secrets.AI_SERVER_URL }} \
+            --build-arg MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }} \
+            --build-arg NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }} \
+            --build-arg CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }} \
+            --build-arg GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} \
+            --build-arg RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }} \
+            --build-arg RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }} \
+            --build-arg S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
+            --build-arg S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \
+            --build-arg S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }} \
+            --build-arg KAKAO_API_URL=${{ secrets.KAKAO_API_URL }} \
+            --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
+            --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
+            --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
+            -f ./gitfolio-auth/Dockerfile \
+            -t aida0/gitfolio_auth:test \
+            ./gitfolio-auth
+
+      # 5단계: Docker 이미지 푸시
+      - name: Push the Docker image
+        run: |
+          docker push aida0/gitfolio_auth:test
+
+      # 6단계: EC2 인스턴스 ID 가져오기
+      - name: Get EC2 Instance IDs
+        id: get_instances
+        run: |
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --region ap-northeast-2 \
+            --filters 'Name=tag:Name,Values=Gitfolio BE1' 'Name=tag:Environment,Values=dev' 'Name=tag:Type,Values=ec2' \
+            --query 'Reservations[].Instances[].InstanceId' \
+            --output text)
+          echo "INSTANCE_IDS=$INSTANCE_IDS"
+          echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
+
+      # 7단계: AWS SSM을 통해 EC2 인스턴스에 배포
+      - name: Deploy to EC2 instances
+        id: deploy
+        run: |
+          if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
+            echo "No instance IDs found for Auth module. Exiting."
+            exit 1
+          fi
+
+          # 환경 변수를 JSON 형식으로 준비
+          ENV_VARS=$(jq -n \
+            --arg ACCESS_TOKEN_EXPIRY "${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
+            --arg REFRESH_TOKEN_EXPIRY "${{ secrets.REFRESH_TOKEN_EXPIRY }}" \
+            --arg JWT_SECRET_KEY "${{ secrets.JWT_SECRET_KEY }}" \
+            --arg GH_CLIENT_ID "${{ secrets.GH_CLIENT_ID }}" \
+            --arg GH_CLIENT_SECRET "${{ secrets.GH_CLIENT_SECRET }}" \
+            --arg GH_REDIRECT_URI "${{ secrets.GH_REDIRECT_URI }}" \
+            --arg AUTH_REDIS_HOST "${{ secrets.AUTH_REDIS_HOST }}" \
+            --arg AUTH_REDIS_PORT "${{ secrets.AUTH_REDIS_PORT }}" \
+            --arg AUTH_SERVER_PORT "${{ secrets.AUTH_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_PORT "${{ secrets.MEMBER_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_URL "${{ secrets.MEMBER_SERVER_URL }}" \
+            --arg PAYMENT_SERVER_PORT "${{ secrets.PAYMENT_SERVER_PORT }}" \
+            --arg PAYMENT_SERVER_URL "${{ secrets.PAYMENT_SERVER_URL }}" \
+            --arg RESUME_SERVER_PORT "${{ secrets.RESUME_SERVER_PORT }}" \
+            --arg REDIRECT_MAIN_URL "${{ secrets.REDIRECT_MAIN_URL }}" \
+            --arg REDIRECT_ONBOARDING_URL "${{ secrets.REDIRECT_ONBOARDING_URL }}" \
+            --arg AI_SERVER_URL "${{ secrets.AI_SERVER_URL }}" \
+            --arg MEMBER_GRPC_PORT "${{ secrets.MEMBER_GRPC_PORT }}" \
+            --arg NOTIFICATION_SERVER_PORT "${{ secrets.NOTIFICATION_SERVER_PORT }}" \
+            --arg CHAT_SERVER_PORT "${{ secrets.CHAT_SERVER_PORT }}" \
+            --arg GH_API_TOKEN "${{ secrets.GH_API_TOKEN }}" \
+            --arg RESUME_REDIS_HOST "${{ secrets.RESUME_REDIS_HOST }}" \
+            --arg RESUME_REDIS_PORT "${{ secrets.RESUME_REDIS_PORT }}" \
+            --arg S3_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}" \
+            --arg S3_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}" \
+            --arg S3_URL_PREFIX "${{ secrets.S3_URL_PREFIX }}" \
+            --arg KAKAO_API_URL "${{ secrets.KAKAO_API_URL }}" \
+            --arg KAKAOPAY_SECRET_KEY "${{ secrets.KAKAOPAY_SECRET_KEY }}" \
+            --arg KAFKA_HOST1 "${{ secrets.KAFKA_HOST1 }}" \
+            --arg KAFKA_PORT1 "${{ secrets.KAFKA_PORT1 }}" \
+            '
+            {
+              ACCESS_TOKEN_EXPIRY: $ACCESS_TOKEN_EXPIRY,
+              REFRESH_TOKEN_EXPIRY: $REFRESH_TOKEN_EXPIRY,
+              JWT_SECRET_KEY: $JWT_SECRET_KEY,
+              GH_CLIENT_ID: $GH_CLIENT_ID,
+              GH_CLIENT_SECRET: $GH_CLIENT_SECRET,
+              GH_REDIRECT_URI: $GH_REDIRECT_URI,
+              AUTH_REDIS_HOST: $AUTH_REDIS_HOST,
+              AUTH_REDIS_PORT: $AUTH_REDIS_PORT,
+              AUTH_SERVER_PORT: $AUTH_SERVER_PORT,
+              MEMBER_SERVER_PORT: $MEMBER_SERVER_PORT,
+              MEMBER_SERVER_URL: $MEMBER_SERVER_URL,
+              PAYMENT_SERVER_PORT: $PAYMENT_SERVER_PORT,
+              PAYMENT_SERVER_URL: $PAYMENT_SERVER_URL,
+              RESUME_SERVER_PORT: $RESUME_SERVER_PORT,
+              REDIRECT_MAIN_URL: $REDIRECT_MAIN_URL,
+              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL,
+              AI_SERVER_URL: $AI_SERVER_URL,
+              MEMBER_GRPC_PORT: $MEMBER_GRPC_PORT,
+              NOTIFICATION_SERVER_PORT: $NOTIFICATION_SERVER_PORT,
+              CHAT_SERVER_PORT: $CHAT_SERVER_PORT,
+              GH_API_TOKEN: $GH_API_TOKEN,
+              RESUME_REDIS_HOST: $RESUME_REDIS_HOST,
+              RESUME_REDIS_PORT: $RESUME_REDIS_PORT,
+              S3_ACCESS_KEY: $S3_ACCESS_KEY,
+              S3_SECRET_KEY: $S3_SECRET_KEY,
+              S3_URL_PREFIX: $S3_URL_PREFIX,
+              KAKAO_API_URL: $KAKAO_API_URL,
+              KAKAOPAY_SECRET_KEY: $KAKAOPAY_SECRET_KEY,
+              KAFKA_HOST1: $KAFKA_HOST1,
+              KAFKA_PORT1: $KAFKA_PORT1
+            }
+            ')
+
+          # 환경 변수를 Base64로 인코딩
+          ENV_VARS_BASE64=$(echo "$ENV_VARS" | base64 -w 0)
+
+          # AWS SSM 명령의 commands 파라미터를 JSON 문자열로 구성
+          COMMANDS_JSON='[
+            "sudo yum install -y jq",
+            "echo \"$ENV_VARS_BASE64\" | base64 -d > /home/ec2-user/env_vars.json",
+            "cd /home/ec2-user",
+            "jq -r '\''to_entries|map(\\(.key)=\\(.value|tostring))|.[]'\'' env_vars.json > .env",
+            "docker-compose down -v --rmi all",
+            "docker-compose pull",
+            "docker-compose up -d"
+          ]'
+
+          # AWS SSM 명령 실행
+          COMMAND_OUTPUT=$(aws ssm send-command \
+            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploying Auth module" \
+            --parameters commands="$COMMANDS_JSON" \
+            --timeout-seconds 600 \
+            --region ap-northeast-2)
+          echo "COMMAND_OUTPUT=$COMMAND_OUTPUT"
+          COMMAND_ID=$(echo "$COMMAND_OUTPUT" | jq -r '.Command.CommandId')
+          echo "COMMAND_ID=$COMMAND_ID"
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+
+      # 8단계: 명령 실행 완료 대기
+      - name: Wait for command to complete
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+      # 9단계: 명령 결과 확인 (선택 사항)
+      - name: Get command result
+        run: |
+          aws ssm get-command-invocation \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+  build_and_deploy_member:
+    name: Build and Deploy Member Module
+    runs-on: ubuntu-latest
     steps:
       # 1단계: 코드 체크아웃
       - name: Checkout code
@@ -92,45 +258,22 @@ jobs:
             --build-arg MEMBER_MYSQL_DB_NAME=${{ secrets.MEMBER_MYSQL_DB_NAME }} \
             --build-arg MEMBER_MYSQL_DB_PASSWORD=${{ secrets.MEMBER_MYSQL_DB_PASSWORD }} \
             --build-arg MEMBER_MYSQL_DB_USERNAME=${{ secrets.MEMBER_MYSQL_DB_USERNAME }} \
-            --build-arg LIKE_MYSQL_DB_HOST=${{ secrets.LIKE_MYSQL_DB_HOST }} \
-            --build-arg LIKE_MYSQL_DB_PORT=${{ secrets.LIKE_MYSQL_DB_PORT }} \
-            --build-arg LIKE_MYSQL_DB_NAME=${{ secrets.LIKE_MYSQL_DB_NAME }} \
-            --build-arg LIKE_MYSQL_DB_PASSWORD=${{ secrets.LIKE_MYSQL_DB_PASSWORD }} \
-            --build-arg LIKE_MYSQL_DB_USERNAME=${{ secrets.LIKE_MYSQL_DB_USERNAME }} \
-            --build-arg PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }} \
-            --build-arg PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }} \
-            --build-arg PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }} \
-            --build-arg PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }} \
-            --build-arg PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }} \
-            --build-arg NOTIFICATION_MYSQL_DB_HOST=${{ secrets.NOTIFICATION_MYSQL_DB_HOST }} \
-            --build-arg NOTIFICATION_MYSQL_DB_PORT=${{ secrets.NOTIFICATION_MYSQL_DB_PORT }} \
-            --build-arg NOTIFICATION_MYSQL_DB_NAME=${{ secrets.NOTIFICATION_MYSQL_DB_NAME }} \
-            --build-arg NOTIFICATION_MYSQL_DB_PASSWORD=${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }} \
-            --build-arg NOTIFICATION_MYSQL_DB_USERNAME=${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }} \
             --build-arg MEMBER_MONGO_DB_USERNAME=${{ secrets.MEMBER_MONGO_DB_USERNAME }} \
             --build-arg MEMBER_MONGO_DB_PORT=${{ secrets.MEMBER_MONGO_DB_PORT }} \
             --build-arg MEMBER_MONGO_DB_DATABASE=${{ secrets.MEMBER_MONGO_DB_DATABASE }} \
-            --build-arg RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }} \
-            --build-arg RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }} \
-            --build-arg RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }} \
-            --build-arg CHAT_MONGO_DB_USERNAME=${{ secrets.CHAT_MONGO_DB_USERNAME }} \
-            --build-arg CHAT_MONGO_DB_PORT=${{ secrets.CHAT_MONGO_DB_PORT }} \
-            --build-arg CHAT_MONGO_DB_DATABASE=${{ secrets.CHAT_MONGO_DB_DATABASE }} \
             --build-arg S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
             --build-arg S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \
             --build-arg S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }} \
-            --build-arg KAKAO_API_URL=${{ secrets.KAKAO_API_URL }} \
-            --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
             --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
             --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
-            -f ./gitfolio-${{ matrix.module }}/Dockerfile \
-            -t aida0/gitfolio_${{ matrix.module }}:test \
-            ./gitfolio-${{ matrix.module }}
+            -f ./gitfolio-member/Dockerfile \
+            -t aida0/gitfolio_member:test \
+            ./gitfolio-member
 
       # 5단계: Docker 이미지 푸시
       - name: Push the Docker image
         run: |
-          docker push aida0/gitfolio_${{ matrix.module }}:test
+          docker push aida0/gitfolio_member:test
 
       # 6단계: EC2 인스턴스 ID 가져오기
       - name: Get EC2 Instance IDs
@@ -138,7 +281,7 @@ jobs:
         run: |
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-northeast-2 \
-            --filters '${{ matrix.instance_tags }}' \
+            --filters 'Name=tag:Name,Values=Gitfolio BE1' 'Name=tag:Environment,Values=dev' 'Name=tag:Type,Values=ec2' \
             --query 'Reservations[].Instances[].InstanceId' \
             --output text)
           echo "INSTANCE_IDS=$INSTANCE_IDS"
@@ -149,7 +292,7 @@ jobs:
         id: deploy
         run: |
           if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
-            echo "No instance IDs found for module ${{ matrix.module }}. Exiting."
+            echo "No instance IDs found for Member module. Exiting."
             exit 1
           fi
 
@@ -183,35 +326,12 @@ jobs:
             --arg MEMBER_MYSQL_DB_NAME "${{ secrets.MEMBER_MYSQL_DB_NAME }}" \
             --arg MEMBER_MYSQL_DB_PASSWORD "${{ secrets.MEMBER_MYSQL_DB_PASSWORD }}" \
             --arg MEMBER_MYSQL_DB_USERNAME "${{ secrets.MEMBER_MYSQL_DB_USERNAME }}" \
-            --arg LIKE_MYSQL_DB_HOST "${{ secrets.LIKE_MYSQL_DB_HOST }}" \
-            --arg LIKE_MYSQL_DB_PORT "${{ secrets.LIKE_MYSQL_DB_PORT }}" \
-            --arg LIKE_MYSQL_DB_NAME "${{ secrets.LIKE_MYSQL_DB_NAME }}" \
-            --arg LIKE_MYSQL_DB_PASSWORD "${{ secrets.LIKE_MYSQL_DB_PASSWORD }}" \
-            --arg LIKE_MYSQL_DB_USERNAME "${{ secrets.LIKE_MYSQL_DB_USERNAME }}" \
-            --arg PAYMENT_MYSQL_DB_HOST "${{ secrets.PAYMENT_MYSQL_DB_HOST }}" \
-            --arg PAYMENT_MYSQL_DB_PORT "${{ secrets.PAYMENT_MYSQL_DB_PORT }}" \
-            --arg PAYMENT_MYSQL_DB_NAME "${{ secrets.PAYMENT_MYSQL_DB_NAME }}" \
-            --arg PAYMENT_MYSQL_DB_PASSWORD "${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}" \
-            --arg PAYMENT_MYSQL_DB_USERNAME "${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}" \
-            --arg NOTIFICATION_MYSQL_DB_HOST "${{ secrets.NOTIFICATION_MYSQL_DB_HOST }}" \
-            --arg NOTIFICATION_MYSQL_DB_PORT "${{ secrets.NOTIFICATION_MYSQL_DB_PORT }}" \
-            --arg NOTIFICATION_MYSQL_DB_NAME "${{ secrets.NOTIFICATION_MYSQL_DB_NAME }}" \
-            --arg NOTIFICATION_MYSQL_DB_PASSWORD "${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }}" \
-            --arg NOTIFICATION_MYSQL_DB_USERNAME "${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }}" \
             --arg MEMBER_MONGO_DB_USERNAME "${{ secrets.MEMBER_MONGO_DB_USERNAME }}" \
             --arg MEMBER_MONGO_DB_PORT "${{ secrets.MEMBER_MONGO_DB_PORT }}" \
             --arg MEMBER_MONGO_DB_DATABASE "${{ secrets.MEMBER_MONGO_DB_DATABASE }}" \
-            --arg RESUME_MONGO_DB_USERNAME "${{ secrets.RESUME_MONGO_DB_USERNAME }}" \
-            --arg RESUME_MONGO_DB_PORT "${{ secrets.RESUME_MONGO_DB_PORT }}" \
-            --arg RESUME_MONGO_DB_DATABASE "${{ secrets.RESUME_MONGO_DB_DATABASE }}" \
-            --arg CHAT_MONGO_DB_USERNAME "${{ secrets.CHAT_MONGO_DB_USERNAME }}" \
-            --arg CHAT_MONGO_DB_PORT "${{ secrets.CHAT_MONGO_DB_PORT }}" \
-            --arg CHAT_MONGO_DB_DATABASE "${{ secrets.CHAT_MONGO_DB_DATABASE }}" \
             --arg S3_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}" \
             --arg S3_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}" \
             --arg S3_URL_PREFIX "${{ secrets.S3_URL_PREFIX }}" \
-            --arg KAKAO_API_URL "${{ secrets.KAKAO_API_URL }}" \
-            --arg KAKAOPAY_SECRET_KEY "${{ secrets.KAKAOPAY_SECRET_KEY }}" \
             --arg KAFKA_HOST1 "${{ secrets.KAFKA_HOST1 }}" \
             --arg KAFKA_PORT1 "${{ secrets.KAFKA_PORT1 }}" \
             '
@@ -244,35 +364,12 @@ jobs:
               MEMBER_MYSQL_DB_NAME: $MEMBER_MYSQL_DB_NAME,
               MEMBER_MYSQL_DB_PASSWORD: $MEMBER_MYSQL_DB_PASSWORD,
               MEMBER_MYSQL_DB_USERNAME: $MEMBER_MYSQL_DB_USERNAME,
-              LIKE_MYSQL_DB_HOST: $LIKE_MYSQL_DB_HOST,
-              LIKE_MYSQL_DB_PORT: $LIKE_MYSQL_DB_PORT,
-              LIKE_MYSQL_DB_NAME: $LIKE_MYSQL_DB_NAME,
-              LIKE_MYSQL_DB_PASSWORD: $LIKE_MYSQL_DB_PASSWORD,
-              LIKE_MYSQL_DB_USERNAME: $LIKE_MYSQL_DB_USERNAME,
-              PAYMENT_MYSQL_DB_HOST: $PAYMENT_MYSQL_DB_HOST,
-              PAYMENT_MYSQL_DB_PORT: $PAYMENT_MYSQL_DB_PORT,
-              PAYMENT_MYSQL_DB_NAME: $PAYMENT_MYSQL_DB_NAME,
-              PAYMENT_MYSQL_DB_PASSWORD: $PAYMENT_MYSQL_DB_PASSWORD,
-              PAYMENT_MYSQL_DB_USERNAME: $PAYMENT_MYSQL_DB_USERNAME,
-              NOTIFICATION_MYSQL_DB_HOST: $NOTIFICATION_MYSQL_DB_HOST,
-              NOTIFICATION_MYSQL_DB_PORT: $NOTIFICATION_MYSQL_DB_PORT,
-              NOTIFICATION_MYSQL_DB_NAME: $NOTIFICATION_MYSQL_DB_NAME,
-              NOTIFICATION_MYSQL_DB_PASSWORD: $NOTIFICATION_MYSQL_DB_PASSWORD,
-              NOTIFICATION_MYSQL_DB_USERNAME: $NOTIFICATION_MYSQL_DB_USERNAME,
               MEMBER_MONGO_DB_USERNAME: $MEMBER_MONGO_DB_USERNAME,
               MEMBER_MONGO_DB_PORT: $MEMBER_MONGO_DB_PORT,
               MEMBER_MONGO_DB_DATABASE: $MEMBER_MONGO_DB_DATABASE,
-              RESUME_MONGO_DB_USERNAME: $RESUME_MONGO_DB_USERNAME,
-              RESUME_MONGO_DB_PORT: $RESUME_MONGO_DB_PORT,
-              RESUME_MONGO_DB_DATABASE: $RESUME_MONGO_DB_DATABASE,
-              CHAT_MONGO_DB_USERNAME: $CHAT_MONGO_DB_USERNAME,
-              CHAT_MONGO_DB_PORT: $CHAT_MONGO_DB_PORT,
-              CHAT_MONGO_DB_DATABASE: $CHAT_MONGO_DB_DATABASE,
               S3_ACCESS_KEY: $S3_ACCESS_KEY,
               S3_SECRET_KEY: $S3_SECRET_KEY,
               S3_URL_PREFIX: $S3_URL_PREFIX,
-              KAKAO_API_URL: $KAKAO_API_URL,
-              KAKAOPAY_SECRET_KEY: $KAKAOPAY_SECRET_KEY,
               KAFKA_HOST1: $KAFKA_HOST1,
               KAFKA_PORT1: $KAFKA_PORT1
             }
@@ -296,7 +393,419 @@ jobs:
           COMMAND_OUTPUT=$(aws ssm send-command \
             --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploying ${{ matrix.module }} module" \
+            --comment "Deploying Member module" \
+            --parameters commands="$COMMANDS_JSON" \
+            --timeout-seconds 600 \
+            --region ap-northeast-2)
+          echo "COMMAND_OUTPUT=$COMMAND_OUTPUT"
+          COMMAND_ID=$(echo "$COMMAND_OUTPUT" | jq -r '.Command.CommandId')
+          echo "COMMAND_ID=$COMMAND_ID"
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+
+      # 8단계: 명령 실행 완료 대기
+      - name: Wait for command to complete
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+      # 9단계: 명령 결과 확인 (선택 사항)
+      - name: Get command result
+        run: |
+          aws ssm get-command-invocation \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+  build_and_deploy_payment:
+    name: Build and Deploy Payment Module
+    runs-on: ubuntu-latest
+    steps:
+      # 1단계: 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2단계: AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3단계: Docker Hub에 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 4단계: Docker 이미지 빌드
+      - name: Build the Docker image
+        run: |
+          docker build \
+            --build-arg ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }} \
+            --build-arg REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }} \
+            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }} \
+            --build-arg GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }} \
+            --build-arg GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }} \
+            --build-arg AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }} \
+            --build-arg AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }} \
+            --build-arg AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }} \
+            --build-arg PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }} \
+            --build-arg PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }} \
+            --build-arg RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }} \
+            --build-arg REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }} \
+            --build-arg REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }} \
+            --build-arg AI_SERVER_URL=${{ secrets.AI_SERVER_URL }} \
+            --build-arg MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }} \
+            --build-arg NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }} \
+            --build-arg CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }} \
+            --build-arg GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} \
+            --build-arg RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }} \
+            --build-arg RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }} \
+            --build-arg PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }} \
+            --build-arg PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }} \
+            --build-arg PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }} \
+            --build-arg PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }} \
+            --build-arg PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }} \
+            --build-arg KAKAO_API_URL=${{ secrets.KAKAO_API_URL }} \
+            --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
+            --build-arg S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
+            --build-arg S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \
+            --build-arg S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }} \
+            --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
+            --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
+            -f ./gitfolio-payment/Dockerfile \
+            -t aida0/gitfolio_payment:test \
+            ./gitfolio-payment
+
+      # 5단계: Docker 이미지 푸시
+      - name: Push the Docker image
+        run: |
+          docker push aida0/gitfolio_payment:test
+
+      # 6단계: EC2 인스턴스 ID 가져오기
+      - name: Get EC2 Instance IDs
+        id: get_instances
+        run: |
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --region ap-northeast-2 \
+            --filters 'Name=tag:Name,Values=Gitfolio BE2' 'Name=tag:Environment,Values=dev' 'Name=tag:Type,Values=ec2' \
+            --query 'Reservations[].Instances[].InstanceId' \
+            --output text)
+          echo "INSTANCE_IDS=$INSTANCE_IDS"
+          echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
+
+      # 7단계: AWS SSM을 통해 EC2 인스턴스에 배포
+      - name: Deploy to EC2 instances
+        id: deploy
+        run: |
+          if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
+            echo "No instance IDs found for Payment module. Exiting."
+            exit 1
+          fi
+
+          # 환경 변수를 JSON 형식으로 준비
+          ENV_VARS=$(jq -n \
+            --arg ACCESS_TOKEN_EXPIRY "${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
+            --arg REFRESH_TOKEN_EXPIRY "${{ secrets.REFRESH_TOKEN_EXPIRY }}" \
+            --arg JWT_SECRET_KEY "${{ secrets.JWT_SECRET_KEY }}" \
+            --arg GH_CLIENT_ID "${{ secrets.GH_CLIENT_ID }}" \
+            --arg GH_CLIENT_SECRET "${{ secrets.GH_CLIENT_SECRET }}" \
+            --arg GH_REDIRECT_URI "${{ secrets.GH_REDIRECT_URI }}" \
+            --arg AUTH_REDIS_HOST "${{ secrets.AUTH_REDIS_HOST }}" \
+            --arg AUTH_REDIS_PORT "${{ secrets.AUTH_REDIS_PORT }}" \
+            --arg AUTH_SERVER_PORT "${{ secrets.AUTH_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_PORT "${{ secrets.MEMBER_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_URL "${{ secrets.MEMBER_SERVER_URL }}" \
+            --arg PAYMENT_SERVER_PORT "${{ secrets.PAYMENT_SERVER_PORT }}" \
+            --arg PAYMENT_SERVER_URL "${{ secrets.PAYMENT_SERVER_URL }}" \
+            --arg RESUME_SERVER_PORT "${{ secrets.RESUME_SERVER_PORT }}" \
+            --arg REDIRECT_MAIN_URL "${{ secrets.REDIRECT_MAIN_URL }}" \
+            --arg REDIRECT_ONBOARDING_URL "${{ secrets.REDIRECT_ONBOARDING_URL }}" \
+            --arg AI_SERVER_URL "${{ secrets.AI_SERVER_URL }}" \
+            --arg MEMBER_GRPC_PORT "${{ secrets.MEMBER_GRPC_PORT }}" \
+            --arg NOTIFICATION_SERVER_PORT "${{ secrets.NOTIFICATION_SERVER_PORT }}" \
+            --arg CHAT_SERVER_PORT "${{ secrets.CHAT_SERVER_PORT }}" \
+            --arg GH_API_TOKEN "${{ secrets.GH_API_TOKEN }}" \
+            --arg RESUME_REDIS_HOST "${{ secrets.RESUME_REDIS_HOST }}" \
+            --arg RESUME_REDIS_PORT "${{ secrets.RESUME_REDIS_PORT }}" \
+            --arg PAYMENT_MYSQL_DB_HOST "${{ secrets.PAYMENT_MYSQL_DB_HOST }}" \
+            --arg PAYMENT_MYSQL_DB_PORT "${{ secrets.PAYMENT_MYSQL_DB_PORT }}" \
+            --arg PAYMENT_MYSQL_DB_NAME "${{ secrets.PAYMENT_MYSQL_DB_NAME }}" \
+            --arg PAYMENT_MYSQL_DB_PASSWORD "${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}" \
+            --arg PAYMENT_MYSQL_DB_USERNAME "${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}" \
+            --arg KAKAO_API_URL "${{ secrets.KAKAO_API_URL }}" \
+            --arg KAKAOPAY_SECRET_KEY "${{ secrets.KAKAOPAY_SECRET_KEY }}" \
+            --arg S3_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}" \
+            --arg S3_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}" \
+            --arg S3_URL_PREFIX "${{ secrets.S3_URL_PREFIX }}" \
+            --arg KAFKA_HOST1 "${{ secrets.KAFKA_HOST1 }}" \
+            --arg KAFKA_PORT1 "${{ secrets.KAFKA_PORT1 }}" \
+            '
+            {
+              ACCESS_TOKEN_EXPIRY: $ACCESS_TOKEN_EXPIRY,
+              REFRESH_TOKEN_EXPIRY: $REFRESH_TOKEN_EXPIRY,
+              JWT_SECRET_KEY: $JWT_SECRET_KEY,
+              GH_CLIENT_ID: $GH_CLIENT_ID,
+              GH_CLIENT_SECRET: $GH_CLIENT_SECRET,
+              GH_REDIRECT_URI: $GH_REDIRECT_URI,
+              AUTH_REDIS_HOST: $AUTH_REDIS_HOST,
+              AUTH_REDIS_PORT: $AUTH_REDIS_PORT,
+              AUTH_SERVER_PORT: $AUTH_SERVER_PORT,
+              MEMBER_SERVER_PORT: $MEMBER_SERVER_PORT,
+              MEMBER_SERVER_URL: $MEMBER_SERVER_URL,
+              PAYMENT_SERVER_PORT: $PAYMENT_SERVER_PORT,
+              PAYMENT_SERVER_URL: $PAYMENT_SERVER_URL,
+              RESUME_SERVER_PORT: $RESUME_SERVER_PORT,
+              REDIRECT_MAIN_URL: $REDIRECT_MAIN_URL,
+              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL,
+              AI_SERVER_URL: $AI_SERVER_URL,
+              MEMBER_GRPC_PORT: $MEMBER_GRPC_PORT,
+              NOTIFICATION_SERVER_PORT: $NOTIFICATION_SERVER_PORT,
+              CHAT_SERVER_PORT: $CHAT_SERVER_PORT,
+              GH_API_TOKEN: $GH_API_TOKEN,
+              RESUME_REDIS_HOST: $RESUME_REDIS_HOST,
+              RESUME_REDIS_PORT: $RESUME_REDIS_PORT,
+              PAYMENT_MYSQL_DB_HOST: $PAYMENT_MYSQL_DB_HOST,
+              PAYMENT_MYSQL_DB_PORT: $PAYMENT_MYSQL_DB_PORT,
+              PAYMENT_MYSQL_DB_NAME: $PAYMENT_MYSQL_DB_NAME,
+              PAYMENT_MYSQL_DB_PASSWORD: $PAYMENT_MYSQL_DB_PASSWORD,
+              PAYMENT_MYSQL_DB_USERNAME: $PAYMENT_MYSQL_DB_USERNAME,
+              KAKAO_API_URL: $KAKAO_API_URL,
+              KAKAOPAY_SECRET_KEY: $KAKAOPAY_SECRET_KEY,
+              S3_ACCESS_KEY: $S3_ACCESS_KEY,
+              S3_SECRET_KEY: $S3_SECRET_KEY,
+              S3_URL_PREFIX: $S3_URL_PREFIX,
+              KAFKA_HOST1: $KAFKA_HOST1,
+              KAFKA_PORT1: $KAFKA_PORT1
+            }
+            ')
+
+          # 환경 변수를 Base64로 인코딩
+          ENV_VARS_BASE64=$(echo "$ENV_VARS" | base64 -w 0)
+
+          # AWS SSM 명령의 commands 파라미터를 JSON 문자열로 구성
+          COMMANDS_JSON='[
+            "sudo yum install -y jq",
+            "echo \"$ENV_VARS_BASE64\" | base64 -d > /home/ec2-user/env_vars.json",
+            "cd /home/ec2-user",
+            "jq -r '\''to_entries|map(\\(.key)=\\(.value|tostring))|.[]'\'' env_vars.json > .env",
+            "docker-compose down -v --rmi all",
+            "docker-compose pull",
+            "docker-compose up -d"
+          ]'
+
+          # AWS SSM 명령 실행
+          COMMAND_OUTPUT=$(aws ssm send-command \
+            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploying Payment module" \
+            --parameters commands="$COMMANDS_JSON" \
+            --timeout-seconds 600 \
+            --region ap-northeast-2)
+          echo "COMMAND_OUTPUT=$COMMAND_OUTPUT"
+          COMMAND_ID=$(echo "$COMMAND_OUTPUT" | jq -r '.Command.CommandId')
+          echo "COMMAND_ID=$COMMAND_ID"
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+
+      # 8단계: 명령 실행 완료 대기
+      - name: Wait for command to complete
+        run: |
+          aws ssm wait command-executed \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+      # 9단계: 명령 결과 확인 (선택 사항)
+      - name: Get command result
+        run: |
+          aws ssm get-command-invocation \
+            --command-id ${{ steps.deploy.outputs.command_id }} \
+            --instance-id ${{ steps.get_instances.outputs.instance_ids }} \
+            --region ap-northeast-2
+
+  build_and_deploy_resume:
+    name: Build and Deploy Resume Module
+    runs-on: ubuntu-latest
+    steps:
+      # 1단계: 코드 체크아웃
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2단계: AWS 자격 증명 구성
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-2
+
+      # 3단계: Docker Hub에 로그인
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+      # 4단계: Docker 이미지 빌드
+      - name: Build the Docker image
+        run: |
+          docker build \
+            --build-arg ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }} \
+            --build-arg REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }} \
+            --build-arg JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }} \
+            --build-arg GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }} \
+            --build-arg GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }} \
+            --build-arg GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }} \
+            --build-arg AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }} \
+            --build-arg AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }} \
+            --build-arg AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }} \
+            --build-arg MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }} \
+            --build-arg PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }} \
+            --build-arg PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }} \
+            --build-arg RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }} \
+            --build-arg REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }} \
+            --build-arg REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }} \
+            --build-arg AI_SERVER_URL=${{ secrets.AI_SERVER_URL }} \
+            --build-arg MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }} \
+            --build-arg NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }} \
+            --build-arg CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }} \
+            --build-arg GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} \
+            --build-arg RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }} \
+            --build-arg RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }} \
+            --build-arg RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }} \
+            --build-arg RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }} \
+            --build-arg RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }} \
+            --build-arg S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
+            --build-arg S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \
+            --build-arg S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }} \
+            --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
+            --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
+            -f ./gitfolio-resume/Dockerfile \
+            -t aida0/gitfolio_resume:test \
+            ./gitfolio-resume
+
+      # 5단계: Docker 이미지 푸시
+      - name: Push the Docker image
+        run: |
+          docker push aida0/gitfolio_resume:test
+
+      # 6단계: EC2 인스턴스 ID 가져오기
+      - name: Get EC2 Instance IDs
+        id: get_instances
+        run: |
+          INSTANCE_IDS=$(aws ec2 describe-instances \
+            --region ap-northeast-2 \
+            --filters 'Name=tag:Name,Values=Gitfolio BE2' 'Name=tag:Environment,Values=dev' 'Name=tag:Type,Values=ec2' \
+            --query 'Reservations[].Instances[].InstanceId' \
+            --output text)
+          echo "INSTANCE_IDS=$INSTANCE_IDS"
+          echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
+
+      # 7단계: AWS SSM을 통해 EC2 인스턴스에 배포
+      - name: Deploy to EC2 instances
+        id: deploy
+        run: |
+          if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
+            echo "No instance IDs found for Resume module. Exiting."
+            exit 1
+          fi
+
+          # 환경 변수를 JSON 형식으로 준비
+          ENV_VARS=$(jq -n \
+            --arg ACCESS_TOKEN_EXPIRY "${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
+            --arg REFRESH_TOKEN_EXPIRY "${{ secrets.REFRESH_TOKEN_EXPIRY }}" \
+            --arg JWT_SECRET_KEY "${{ secrets.JWT_SECRET_KEY }}" \
+            --arg GH_CLIENT_ID "${{ secrets.GH_CLIENT_ID }}" \
+            --arg GH_CLIENT_SECRET "${{ secrets.GH_CLIENT_SECRET }}" \
+            --arg GH_REDIRECT_URI "${{ secrets.GH_REDIRECT_URI }}" \
+            --arg AUTH_REDIS_HOST "${{ secrets.AUTH_REDIS_HOST }}" \
+            --arg AUTH_REDIS_PORT "${{ secrets.AUTH_REDIS_PORT }}" \
+            --arg AUTH_SERVER_PORT "${{ secrets.AUTH_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_PORT "${{ secrets.MEMBER_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_URL "${{ secrets.MEMBER_SERVER_URL }}" \
+            --arg PAYMENT_SERVER_PORT "${{ secrets.PAYMENT_SERVER_PORT }}" \
+            --arg PAYMENT_SERVER_URL "${{ secrets.PAYMENT_SERVER_URL }}" \
+            --arg RESUME_SERVER_PORT "${{ secrets.RESUME_SERVER_PORT }}" \
+            --arg REDIRECT_MAIN_URL "${{ secrets.REDIRECT_MAIN_URL }}" \
+            --arg REDIRECT_ONBOARDING_URL "${{ secrets.REDIRECT_ONBOARDING_URL }}" \
+            --arg AI_SERVER_URL "${{ secrets.AI_SERVER_URL }}" \
+            --arg MEMBER_GRPC_PORT "${{ secrets.MEMBER_GRPC_PORT }}" \
+            --arg NOTIFICATION_SERVER_PORT "${{ secrets.NOTIFICATION_SERVER_PORT }}" \
+            --arg CHAT_SERVER_PORT "${{ secrets.CHAT_SERVER_PORT }}" \
+            --arg GH_API_TOKEN "${{ secrets.GH_API_TOKEN }}" \
+            --arg RESUME_REDIS_HOST "${{ secrets.RESUME_REDIS_HOST }}" \
+            --arg RESUME_REDIS_PORT "${{ secrets.RESUME_REDIS_PORT }}" \
+            --arg RESUME_MONGO_DB_USERNAME "${{ secrets.RESUME_MONGO_DB_USERNAME }}" \
+            --arg RESUME_MONGO_DB_PORT "${{ secrets.RESUME_MONGO_DB_PORT }}" \
+            --arg RESUME_MONGO_DB_DATABASE "${{ secrets.RESUME_MONGO_DB_DATABASE }}" \
+            --arg S3_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}" \
+            --arg S3_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}" \
+            --arg S3_URL_PREFIX "${{ secrets.S3_URL_PREFIX }}" \
+            --arg KAFKA_HOST1 "${{ secrets.KAFKA_HOST1 }}" \
+            --arg KAFKA_PORT1 "${{ secrets.KAFKA_PORT1 }}" \
+            '
+            {
+              ACCESS_TOKEN_EXPIRY: $ACCESS_TOKEN_EXPIRY,
+              REFRESH_TOKEN_EXPIRY: $REFRESH_TOKEN_EXPIRY,
+              JWT_SECRET_KEY: $JWT_SECRET_KEY,
+              GH_CLIENT_ID: $GH_CLIENT_ID,
+              GH_CLIENT_SECRET: $GH_CLIENT_SECRET,
+              GH_REDIRECT_URI: $GH_REDIRECT_URI,
+              AUTH_REDIS_HOST: $AUTH_REDIS_HOST,
+              AUTH_REDIS_PORT: $AUTH_REDIS_PORT,
+              AUTH_SERVER_PORT: $AUTH_SERVER_PORT,
+              MEMBER_SERVER_PORT: $MEMBER_SERVER_PORT,
+              MEMBER_SERVER_URL: $MEMBER_SERVER_URL,
+              PAYMENT_SERVER_PORT: $PAYMENT_SERVER_PORT,
+              PAYMENT_SERVER_URL: $PAYMENT_SERVER_URL,
+              RESUME_SERVER_PORT: $RESUME_SERVER_PORT,
+              REDIRECT_MAIN_URL: $REDIRECT_MAIN_URL,
+              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL,
+              AI_SERVER_URL: $AI_SERVER_URL,
+              MEMBER_GRPC_PORT: $MEMBER_GRPC_PORT,
+              NOTIFICATION_SERVER_PORT: $NOTIFICATION_SERVER_PORT,
+              CHAT_SERVER_PORT: $CHAT_SERVER_PORT,
+              GH_API_TOKEN: $GH_API_TOKEN,
+              RESUME_REDIS_HOST: $RESUME_REDIS_HOST,
+              RESUME_REDIS_PORT: $RESUME_REDIS_PORT,
+              RESUME_MONGO_DB_USERNAME: $RESUME_MONGO_DB_USERNAME,
+              RESUME_MONGO_DB_PORT: $RESUME_MONGO_DB_PORT,
+              RESUME_MONGO_DB_DATABASE: $RESUME_MONGO_DB_DATABASE,
+              S3_ACCESS_KEY: $S3_ACCESS_KEY,
+              S3_SECRET_KEY: $S3_SECRET_KEY,
+              S3_URL_PREFIX: $S3_URL_PREFIX,
+              KAFKA_HOST1: $KAFKA_HOST1,
+              KAFKA_PORT1: $KAFKA_PORT1
+            }
+            ')
+
+          # 환경 변수를 Base64로 인코딩
+          ENV_VARS_BASE64=$(echo "$ENV_VARS" | base64 -w 0)
+
+          # AWS SSM 명령의 commands 파라미터를 JSON 문자열로 구성
+          COMMANDS_JSON='[
+            "sudo yum install -y jq",
+            "echo \"$ENV_VARS_BASE64\" | base64 -d > /home/ec2-user/env_vars.json",
+            "cd /home/ec2-user",
+            "jq -r '\''to_entries|map(\\(.key)=\\(.value|tostring))|.[]'\'' env_vars.json > .env",
+            "docker-compose down -v --rmi all",
+            "docker-compose pull",
+            "docker-compose up -d"
+          ]'
+
+          # AWS SSM 명령 실행
+          COMMAND_OUTPUT=$(aws ssm send-command \
+            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Deploying Resume module" \
             --parameters commands="$COMMANDS_JSON" \
             --timeout-seconds 600 \
             --region ap-northeast-2)
