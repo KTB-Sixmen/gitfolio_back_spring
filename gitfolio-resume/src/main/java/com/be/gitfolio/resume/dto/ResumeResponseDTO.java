@@ -1,6 +1,7 @@
 package com.be.gitfolio.resume.dto;
 
 import com.be.gitfolio.common.type.PositionType;
+import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -13,6 +14,9 @@ import java.util.List;
 
 public class ResumeResponseDTO {
 
+    public record UpdateVisibilityDTO(Visibility visibility) {}
+
+
     public record ResumeListDTO(
             String resumeId,
             Long memberId,
@@ -23,12 +27,13 @@ public class ResumeResponseDTO {
             int likeCount,
             int viewCount,
             LocalDateTime updatedAt,
-            @JsonProperty("isLiked") boolean liked
+            @JsonProperty("isLiked") boolean liked,
+            Visibility visibility
     ) {
         public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    Long.parseLong(resume.getMemberId()),
+                    resume.getMemberId(),
                     avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
@@ -36,7 +41,8 @@ public class ResumeResponseDTO {
                     resume.getLikeCount(),
                     resume.getViewCount(),
                     resume.getUpdatedAt(),
-                    liked
+                    liked,
+                    resume.getVisibility()
             );
         }
     }
@@ -86,7 +92,8 @@ public class ResumeResponseDTO {
             int likeCount,
             int viewCount,
             @JsonProperty("isLiked") boolean liked,
-            LocalDateTime updatedAt
+            LocalDateTime updatedAt,
+            Visibility visibility
     ) {
         public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
@@ -107,7 +114,8 @@ public class ResumeResponseDTO {
                     resume.getLikeCount(),
                     resume.getViewCount(),
                     liked,
-                    resume.getUpdatedAt()
+                    resume.getUpdatedAt(),
+                    resume.getVisibility()
             );
         }
     }

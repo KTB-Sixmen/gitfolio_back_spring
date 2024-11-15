@@ -2,6 +2,7 @@ package com.be.gitfolio.resume.controller;
 
 import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
+import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import com.be.gitfolio.resume.service.CommentService;
 import com.be.gitfolio.resume.service.ResumeService;
 import jakarta.persistence.OptimisticLockException;
@@ -35,15 +36,30 @@ public class ResumeController {
     @AuthRequired
     @PostMapping()
     public ResponseEntity<BaseResponse<String>> createResume(HttpServletRequest request,
-                                                             @Valid @RequestBody CreateResumeRequestDTO createResumeRequestDTO) {
+                                                             @Valid @RequestBody CreateResumeRequestDTO createResumeRequestDTO
+    ) {
         String memberId = request.getAttribute("memberId").toString();
         return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
                 HttpStatus.CREATED,
                 "201 CREATED",
                 "이력서 생성에 성공했습니다.",
-                resumeService.createResume(memberId, createResumeRequestDTO)
+                resumeService.createResume(memberId, createResumeRequestDTO, createResumeRequestDTO.visibility())
         ));
     }
+
+    /**
+     * 이력서 공개 여부 변경
+     */
+    @AuthRequired
+    @PatchMapping("/{resumeId}/visibility")
+    public ResponseEntity<BaseResponse<String>> updateVisibility(HttpServletRequest request,
+                                                                 @PathVariable("resumeId") String resumeId,
+                                                                 @RequestBody UpdateVisibilityDTO updateVisibilityDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        resumeService.updateVisibility(Long.valueOf(memberId), resumeId, updateVisibilityDTO);
+        return ResponseEntity.ok().body(new BaseResponse<>("이력서 공개 여부가 변경되었습니다."));
+    }
+
 
     /**
      * 이력서 목록 조회
@@ -146,24 +162,6 @@ public class ResumeController {
         }
     }
 
-    /**
-     * 좋아요 기능 동시성 테스트용
-     */
-//    @PostMapping("{resumeId}/members/{memberId}/likes")
-//    public ResponseEntity<BaseResponse<String>> toggleLike(@PathVariable("resumeId") String resumeId,
-//                                                           @PathVariable("memberId") Long memberId) {
-//        try {
-//            boolean liked = resumeService.toggleLike(resumeId, memberId);
-//            if (liked) {
-//                return ResponseEntity.ok().body(new BaseResponse<>("좋아요가 추가되었습니다."));
-//            } else {
-//                return ResponseEntity.ok().body(new BaseResponse<>("좋아요 상태가 변경되었습니다."));
-//            }
-//        } catch (OptimisticLockException e) {
-//            return ResponseEntity.status(HttpStatus.CONFLICT)
-//                    .body(new BaseResponse<>("동시에 많은 요청이 발생했습니다. 다시 시도해 주세요."));
-//        }
-//    }
 
     /**
      * 댓글 작성
@@ -174,7 +172,12 @@ public class ResumeController {
                                                             HttpServletRequest request,
                                                             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
-        return ResponseEntity.ok().body(new BaseResponse<>(commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)));
+        return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
+                HttpStatus.CREATED,
+                "201 CREATED",
+                "댓글 생성에 성공했습니다.",
+                commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)
+        ));
     }
 
     /**
