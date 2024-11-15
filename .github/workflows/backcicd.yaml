@@ -109,11 +109,60 @@ jobs:
             echo "No instance IDs found for module ${{ matrix.module }}. Exiting."
             exit 1
           fi
+          
+          # 환경 변수를 JSON 형식으로 준비
+          ENV_VARS=$(jq -n \
+            --arg ACCESS_TOKEN_EXPIRY "${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
+            --arg REFRESH_TOKEN_EXPIRY "${{ secrets.REFRESH_TOKEN_EXPIRY }}" \
+            --arg JWT_SECRET_KEY "${{ secrets.JWT_SECRET_KEY }}" \
+            --arg GH_CLIENT_ID "${{ secrets.GH_CLIENT_ID }}" \
+            --arg GH_CLIENT_SECRET "${{ secrets.GH_CLIENT_SECRET }}" \
+            --arg GH_REDIRECT_URI "${{ secrets.GH_REDIRECT_URI }}" \
+            --arg AUTH_REDIS_HOST "${{ secrets.AUTH_REDIS_HOST }}" \
+            --arg AUTH_REDIS_PORT "${{ secrets.AUTH_REDIS_PORT }}" \
+            --arg AUTH_SERVER_PORT "${{ secrets.AUTH_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_PORT "${{ secrets.MEMBER_SERVER_PORT }}" \
+            --arg MEMBER_SERVER_URL "${{ secrets.MEMBER_SERVER_URL }}" \
+            --arg PAYMENT_SERVER_PORT "${{ secrets.PAYMENT_SERVER_PORT }}" \
+            --arg PAYMENT_SERVER_URL "${{ secrets.PAYMENT_SERVER_URL }}" \
+            --arg RESUME_SERVER_PORT "${{ secrets.RESUME_SERVER_PORT }}" \
+            --arg REDIRECT_MAIN_URL "${{ secrets.REDIRECT_MAIN_URL }}" \
+            --arg REDIRECT_ONBOARDING_URL "${{ secrets.REDIRECT_ONBOARDING_URL }}" \
+            '
+            {
+              ACCESS_TOKEN_EXPIRY: $ACCESS_TOKEN_EXPIRY,
+              REFRESH_TOKEN_EXPIRY: $REFRESH_TOKEN_EXPIRY,
+              JWT_SECRET_KEY: $JWT_SECRET_KEY,
+              GH_CLIENT_ID: $GH_CLIENT_ID,
+              GH_CLIENT_SECRET: $GH_CLIENT_SECRET,
+              GH_REDIRECT_URI: $GH_REDIRECT_URI,
+              AUTH_REDIS_HOST: $AUTH_REDIS_HOST,
+              AUTH_REDIS_PORT: $AUTH_REDIS_PORT,
+              AUTH_SERVER_PORT: $AUTH_SERVER_PORT,
+              MEMBER_SERVER_PORT: $MEMBER_SERVER_PORT,
+              MEMBER_SERVER_URL: $MEMBER_SERVER_URL,
+              PAYMENT_SERVER_PORT: $PAYMENT_SERVER_PORT,
+              PAYMENT_SERVER_URL: $PAYMENT_SERVER_URL,
+              RESUME_SERVER_PORT: $RESUME_SERVER_PORT,
+              REDIRECT_MAIN_URL: $REDIRECT_MAIN_URL,
+              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL
+            }
+            ')
+          
+          # 환경 변수를 SSM 명령의 파라미터로 전달
           COMMAND_OUTPUT=$(aws ssm send-command \
             --instance-ids ${{ steps.get_instances.outputs.instance_ids }} \
             --document-name "AWS-RunShellScript" \
             --comment "Deploying ${{ matrix.module }} module" \
-            --parameters '{"commands":["cd /home/ec2-user && docker-compose down -v --rmi all && docker-compose pull && docker-compose up -d"], "workingDirectory":["/home/ec2-user"]}' \
+            --parameters '{"commands": [
+              "sudo yum install -y jq",
+              "echo '\''$ENV_VARS'\'' > /home/ec2-user/env_vars.json",
+              "cd /home/ec2-user",
+              "jq -r '\''to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]'\'' env_vars.json > .env",
+              "docker-compose down -v --rmi all",
+              "docker-compose pull",
+              "docker-compose up -d"
+            ]}' \
             --timeout-seconds 600 \
             --region ap-northeast-2)
           echo "COMMAND_OUTPUT=$COMMAND_OUTPUT"
