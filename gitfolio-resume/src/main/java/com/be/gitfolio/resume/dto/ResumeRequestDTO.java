@@ -31,7 +31,7 @@ public class ResumeRequestDTO {
     public record CreateResumeRequestDTO(
             @NotEmpty(message = "적어도 하나의 레포지토리를 선택해야 합니다.") List<String> selectedRepo,
             String requirements,
-            @NotBlank(message = "공개 여부는 필수 항목입니다.") Visibility visibility
+            @NotNull(message = "공개 여부는 필수 항목입니다.") Visibility visibility
     ) {}
 
     public record AIRequestDTO(
