@@ -13,22 +13,22 @@ jobs:
       matrix:
         include:
           - module: auth
-            dockerfile_path: ./gitfolio-auth/Dockerfile
+            dockerfile_path: ./gitfolio-auth/dockerfile
             build_context: ./gitfolio-auth
             image_name: aida0/gitfolio_auth:test
             instance_index: '1'
           - module: member
-            dockerfile_path: ./gitfolio-member/Dockerfile
+            dockerfile_path: ./gitfolio-member/dockerfile
             build_context: ./gitfolio-member
             image_name: aida0/gitfolio_member:test
             instance_index: '1'
           - module: payment
-            dockerfile_path: ./gitfolio-payment/Dockerfile
+            dockerfile_path: ./gitfolio-payment/dockerfile
             build_context: ./gitfolio-payment
             image_name: aida0/gitfolio_payment:test
             instance_index: '2'
           - module: resume
-            dockerfile_path: ./gitfolio-resume/Dockerfile
+            dockerfile_path: ./gitfolio-resume/dockerfile
             build_context: ./gitfolio-resume
             image_name: aida0/gitfolio_resume:test
             instance_index: '2'
