@@ -112,7 +112,7 @@ jobs:
             --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
             --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
             --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
-            -f ${{ matrix.dockerfile_path }} \
+            -f ${{ matrix.dockerfile_path }}/dockerfile \
             -t ${{ matrix.image_name }} \
             ${{ matrix.build_context }}
 
