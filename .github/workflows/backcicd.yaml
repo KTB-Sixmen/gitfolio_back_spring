@@ -16,34 +16,22 @@ jobs:
             dockerfile_path: ./gitfolio-auth/Dockerfile
             build_context: ./gitfolio-auth
             image_name: aida0/gitfolio_auth:test
-            ec2_filters: |
-              Name=tag:Name,Values=Gitfolio BE1
-              Name=tag:Environment,Values=dev
-              Name=tag:Type,Values=ec2
+            instance_index: '1'
           - module: member
             dockerfile_path: ./gitfolio-member/Dockerfile
             build_context: ./gitfolio-member
             image_name: aida0/gitfolio_member:test
-            ec2_filters: |
-              Name=tag:Name,Values=Gitfolio BE1
-              Name=tag:Environment,Values=dev
-              Name=tag:Type,Values=ec2
+            instance_index: '1'
           - module: payment
             dockerfile_path: ./gitfolio-payment/Dockerfile
             build_context: ./gitfolio-payment
             image_name: aida0/gitfolio_payment:test
-            ec2_filters: |
-              Name=tag:Name,Values=Gitfolio BE2
-              Name=tag:Environment,Values=dev
-              Name=tag:Type,Values=ec2
+            instance_index: '2'
           - module: resume
             dockerfile_path: ./gitfolio-resume/Dockerfile
             build_context: ./gitfolio-resume
             image_name: aida0/gitfolio_resume:test
-            ec2_filters: |
-              Name=tag:Name,Values=Gitfolio BE2
-              Name=tag:Environment,Values=dev
-              Name=tag:Type,Values=ec2
+            instance_index: '2'
 
     steps:
       - name: Checkout code
@@ -135,10 +123,12 @@ jobs:
       - name: Get EC2 Instance IDs
         id: get_instances
         run: |
-          FILTERS=$(echo "${{ matrix.ec2_filters }}" | tr '\n' ' ' | sed 's/\(Name=[^ ]*\)/"\1"/g')
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-northeast-2 \
-            --filters $FILTERS \
+            --filters 'Name=tag:Service,Values=back' \
+                      'Name=tag:Index,Values=${{ matrix.instance_index }}' \
+                      'Name=tag:Environment,Values=dev' \
+                      'Name=tag:Type,Values=ec2' \
             --query 'Reservations[].Instances[].InstanceId' \
             --output text)
           echo "INSTANCE_IDS=$INSTANCE_IDS"
