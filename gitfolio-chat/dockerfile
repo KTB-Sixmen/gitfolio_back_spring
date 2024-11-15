@@ -5,6 +5,6 @@ WORKDIR /resume
 EXPOSE 8080
 
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-chat-*-SNAPSHOT.jar chat.jar
 
-CMD [ "java", "-jar", "resume.jar" ]
+CMD [ "java", "-jar", "chat.jar" ]

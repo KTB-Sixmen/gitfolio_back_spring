@@ -1,0 +1,10 @@
+FROM amazoncorretto:17 AS runner
+
+WORKDIR /resume
+
+EXPOSE 8080
+
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
+
+CMD [ "java", "-jar", "notification.jar" ]

@@ -2,7 +2,7 @@ FROM amazoncorretto:17 AS runner
 
 WORKDIR /member
 
-EXPOSE 8081
+EXPOSE 8080
 
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
