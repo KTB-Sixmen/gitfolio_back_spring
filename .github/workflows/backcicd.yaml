@@ -80,6 +80,49 @@ jobs:
             --build-arg RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }} \
             --build-arg REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }} \
             --build-arg REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }} \
+            --build-arg AI_SERVER_URL=${{ secrets.AI_SERVER_URL }} \
+            --build-arg MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }} \
+            --build-arg NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }} \
+            --build-arg CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }} \
+            --build-arg GH_API_TOKEN=${{ secrets.GH_API_TOKEN }} \
+            --build-arg RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }} \
+            --build-arg RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }} \
+            --build-arg MEMBER_MYSQL_DB_HOST=${{ secrets.MEMBER_MYSQL_DB_HOST }} \
+            --build-arg MEMBER_MYSQL_DB_PORT=${{ secrets.MEMBER_MYSQL_DB_PORT }} \
+            --build-arg MEMBER_MYSQL_DB_NAME=${{ secrets.MEMBER_MYSQL_DB_NAME }} \
+            --build-arg MEMBER_MYSQL_DB_PASSWORD=${{ secrets.MEMBER_MYSQL_DB_PASSWORD }} \
+            --build-arg MEMBER_MYSQL_DB_USERNAME=${{ secrets.MEMBER_MYSQL_DB_USERNAME }} \
+            --build-arg LIKE_MYSQL_DB_HOST=${{ secrets.LIKE_MYSQL_DB_HOST }} \
+            --build-arg LIKE_MYSQL_DB_PORT=${{ secrets.LIKE_MYSQL_DB_PORT }} \
+            --build-arg LIKE_MYSQL_DB_NAME=${{ secrets.LIKE_MYSQL_DB_NAME }} \
+            --build-arg LIKE_MYSQL_DB_PASSWORD=${{ secrets.LIKE_MYSQL_DB_PASSWORD }} \
+            --build-arg LIKE_MYSQL_DB_USERNAME=${{ secrets.LIKE_MYSQL_DB_USERNAME }} \
+            --build-arg PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }} \
+            --build-arg PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }} \
+            --build-arg PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }} \
+            --build-arg PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }} \
+            --build-arg PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }} \
+            --build-arg NOTIFICATION_MYSQL_DB_HOST=${{ secrets.NOTIFICATION_MYSQL_DB_HOST }} \
+            --build-arg NOTIFICATION_MYSQL_DB_PORT=${{ secrets.NOTIFICATION_MYSQL_DB_PORT }} \
+            --build-arg NOTIFICATION_MYSQL_DB_NAME=${{ secrets.NOTIFICATION_MYSQL_DB_NAME }} \
+            --build-arg NOTIFICATION_MYSQL_DB_PASSWORD=${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }} \
+            --build-arg NOTIFICATION_MYSQL_DB_USERNAME=${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }} \
+            --build-arg MEMBER_MONGO_DB_USERNAME=${{ secrets.MEMBER_MONGO_DB_USERNAME }} \
+            --build-arg MEMBER_MONGO_DB_PORT=${{ secrets.MEMBER_MONGO_DB_PORT }} \
+            --build-arg MEMBER_MONGO_DB_DATABASE=${{ secrets.MEMBER_MONGO_DB_DATABASE }} \
+            --build-arg RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }} \
+            --build-arg RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }} \
+            --build-arg RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }} \
+            --build-arg CHAT_MONGO_DB_USERNAME=${{ secrets.CHAT_MONGO_DB_USERNAME }} \
+            --build-arg CHAT_MONGO_DB_PORT=${{ secrets.CHAT_MONGO_DB_PORT }} \
+            --build-arg CHAT_MONGO_DB_DATABASE=${{ secrets.CHAT_MONGO_DB_DATABASE }} \
+            --build-arg S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }} \
+            --build-arg S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }} \
+            --build-arg S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }} \
+            --build-arg KAKAO_API_URL=${{ secrets.KAKAO_API_URL }} \
+            --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
+            --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
+            --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
             -f ./gitfolio-${{ matrix.module }}/Dockerfile \
             -t aida0/gitfolio_${{ matrix.module }}:test \
             ./gitfolio-${{ matrix.module }}
@@ -128,6 +171,49 @@ jobs:
             --arg RESUME_SERVER_PORT "${{ secrets.RESUME_SERVER_PORT }}" \
             --arg REDIRECT_MAIN_URL "${{ secrets.REDIRECT_MAIN_URL }}" \
             --arg REDIRECT_ONBOARDING_URL "${{ secrets.REDIRECT_ONBOARDING_URL }}" \
+            --arg AI_SERVER_URL "${{ secrets.AI_SERVER_URL }}" \
+            --arg MEMBER_GRPC_PORT "${{ secrets.MEMBER_GRPC_PORT }}" \
+            --arg NOTIFICATION_SERVER_PORT "${{ secrets.NOTIFICATION_SERVER_PORT }}" \
+            --arg CHAT_SERVER_PORT "${{ secrets.CHAT_SERVER_PORT }}" \
+            --arg GH_API_TOKEN "${{ secrets.GH_API_TOKEN }}" \
+            --arg RESUME_REDIS_HOST "${{ secrets.RESUME_REDIS_HOST }}" \
+            --arg RESUME_REDIS_PORT "${{ secrets.RESUME_REDIS_PORT }}" \
+            --arg MEMBER_MYSQL_DB_HOST "${{ secrets.MEMBER_MYSQL_DB_HOST }}" \
+            --arg MEMBER_MYSQL_DB_PORT "${{ secrets.MEMBER_MYSQL_DB_PORT }}" \
+            --arg MEMBER_MYSQL_DB_NAME "${{ secrets.MEMBER_MYSQL_DB_NAME }}" \
+            --arg MEMBER_MYSQL_DB_PASSWORD "${{ secrets.MEMBER_MYSQL_DB_PASSWORD }}" \
+            --arg MEMBER_MYSQL_DB_USERNAME "${{ secrets.MEMBER_MYSQL_DB_USERNAME }}" \
+            --arg LIKE_MYSQL_DB_HOST "${{ secrets.LIKE_MYSQL_DB_HOST }}" \
+            --arg LIKE_MYSQL_DB_PORT "${{ secrets.LIKE_MYSQL_DB_PORT }}" \
+            --arg LIKE_MYSQL_DB_NAME "${{ secrets.LIKE_MYSQL_DB_NAME }}" \
+            --arg LIKE_MYSQL_DB_PASSWORD "${{ secrets.LIKE_MYSQL_DB_PASSWORD }}" \
+            --arg LIKE_MYSQL_DB_USERNAME "${{ secrets.LIKE_MYSQL_DB_USERNAME }}" \
+            --arg PAYMENT_MYSQL_DB_HOST "${{ secrets.PAYMENT_MYSQL_DB_HOST }}" \
+            --arg PAYMENT_MYSQL_DB_PORT "${{ secrets.PAYMENT_MYSQL_DB_PORT }}" \
+            --arg PAYMENT_MYSQL_DB_NAME "${{ secrets.PAYMENT_MYSQL_DB_NAME }}" \
+            --arg PAYMENT_MYSQL_DB_PASSWORD "${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}" \
+            --arg PAYMENT_MYSQL_DB_USERNAME "${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}" \
+            --arg NOTIFICATION_MYSQL_DB_HOST "${{ secrets.NOTIFICATION_MYSQL_DB_HOST }}" \
+            --arg NOTIFICATION_MYSQL_DB_PORT "${{ secrets.NOTIFICATION_MYSQL_DB_PORT }}" \
+            --arg NOTIFICATION_MYSQL_DB_NAME "${{ secrets.NOTIFICATION_MYSQL_DB_NAME }}" \
+            --arg NOTIFICATION_MYSQL_DB_PASSWORD "${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }}" \
+            --arg NOTIFICATION_MYSQL_DB_USERNAME "${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }}" \
+            --arg MEMBER_MONGO_DB_USERNAME "${{ secrets.MEMBER_MONGO_DB_USERNAME }}" \
+            --arg MEMBER_MONGO_DB_PORT "${{ secrets.MEMBER_MONGO_DB_PORT }}" \
+            --arg MEMBER_MONGO_DB_DATABASE "${{ secrets.MEMBER_MONGO_DB_DATABASE }}" \
+            --arg RESUME_MONGO_DB_USERNAME "${{ secrets.RESUME_MONGO_DB_USERNAME }}" \
+            --arg RESUME_MONGO_DB_PORT "${{ secrets.RESUME_MONGO_DB_PORT }}" \
+            --arg RESUME_MONGO_DB_DATABASE "${{ secrets.RESUME_MONGO_DB_DATABASE }}" \
+            --arg CHAT_MONGO_DB_USERNAME "${{ secrets.CHAT_MONGO_DB_USERNAME }}" \
+            --arg CHAT_MONGO_DB_PORT "${{ secrets.CHAT_MONGO_DB_PORT }}" \
+            --arg CHAT_MONGO_DB_DATABASE "${{ secrets.CHAT_MONGO_DB_DATABASE }}" \
+            --arg S3_ACCESS_KEY "${{ secrets.S3_ACCESS_KEY }}" \
+            --arg S3_SECRET_KEY "${{ secrets.S3_SECRET_KEY }}" \
+            --arg S3_URL_PREFIX "${{ secrets.S3_URL_PREFIX }}" \
+            --arg KAKAO_API_URL "${{ secrets.KAKAO_API_URL }}" \
+            --arg KAKAOPAY_SECRET_KEY "${{ secrets.KAKAOPAY_SECRET_KEY }}" \
+            --arg KAFKA_HOST1 "${{ secrets.KAFKA_HOST1 }}" \
+            --arg KAFKA_PORT1 "${{ secrets.KAFKA_PORT1 }}" \
             '
             {
               ACCESS_TOKEN_EXPIRY: $ACCESS_TOKEN_EXPIRY,
@@ -145,7 +231,50 @@ jobs:
               PAYMENT_SERVER_URL: $PAYMENT_SERVER_URL,
               RESUME_SERVER_PORT: $RESUME_SERVER_PORT,
               REDIRECT_MAIN_URL: $REDIRECT_MAIN_URL,
-              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL
+              REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL,
+              AI_SERVER_URL: $AI_SERVER_URL,
+              MEMBER_GRPC_PORT: $MEMBER_GRPC_PORT,
+              NOTIFICATION_SERVER_PORT: $NOTIFICATION_SERVER_PORT,
+              CHAT_SERVER_PORT: $CHAT_SERVER_PORT,
+              GH_API_TOKEN: $GH_API_TOKEN,
+              RESUME_REDIS_HOST: $RESUME_REDIS_HOST,
+              RESUME_REDIS_PORT: $RESUME_REDIS_PORT,
+              MEMBER_MYSQL_DB_HOST: $MEMBER_MYSQL_DB_HOST,
+              MEMBER_MYSQL_DB_PORT: $MEMBER_MYSQL_DB_PORT,
+              MEMBER_MYSQL_DB_NAME: $MEMBER_MYSQL_DB_NAME,
+              MEMBER_MYSQL_DB_PASSWORD: $MEMBER_MYSQL_DB_PASSWORD,
+              MEMBER_MYSQL_DB_USERNAME: $MEMBER_MYSQL_DB_USERNAME,
+              LIKE_MYSQL_DB_HOST: $LIKE_MYSQL_DB_HOST,
+              LIKE_MYSQL_DB_PORT: $LIKE_MYSQL_DB_PORT,
+              LIKE_MYSQL_DB_NAME: $LIKE_MYSQL_DB_NAME,
+              LIKE_MYSQL_DB_PASSWORD: $LIKE_MYSQL_DB_PASSWORD,
+              LIKE_MYSQL_DB_USERNAME: $LIKE_MYSQL_DB_USERNAME,
+              PAYMENT_MYSQL_DB_HOST: $PAYMENT_MYSQL_DB_HOST,
+              PAYMENT_MYSQL_DB_PORT: $PAYMENT_MYSQL_DB_PORT,
+              PAYMENT_MYSQL_DB_NAME: $PAYMENT_MYSQL_DB_NAME,
+              PAYMENT_MYSQL_DB_PASSWORD: $PAYMENT_MYSQL_DB_PASSWORD,
+              PAYMENT_MYSQL_DB_USERNAME: $PAYMENT_MYSQL_DB_USERNAME,
+              NOTIFICATION_MYSQL_DB_HOST: $NOTIFICATION_MYSQL_DB_HOST,
+              NOTIFICATION_MYSQL_DB_PORT: $NOTIFICATION_MYSQL_DB_PORT,
+              NOTIFICATION_MYSQL_DB_NAME: $NOTIFICATION_MYSQL_DB_NAME,
+              NOTIFICATION_MYSQL_DB_PASSWORD: $NOTIFICATION_MYSQL_DB_PASSWORD,
+              NOTIFICATION_MYSQL_DB_USERNAME: $NOTIFICATION_MYSQL_DB_USERNAME,
+              MEMBER_MONGO_DB_USERNAME: $MEMBER_MONGO_DB_USERNAME,
+              MEMBER_MONGO_DB_PORT: $MEMBER_MONGO_DB_PORT,
+              MEMBER_MONGO_DB_DATABASE: $MEMBER_MONGO_DB_DATABASE,
+              RESUME_MONGO_DB_USERNAME: $RESUME_MONGO_DB_USERNAME,
+              RESUME_MONGO_DB_PORT: $RESUME_MONGO_DB_PORT,
+              RESUME_MONGO_DB_DATABASE: $RESUME_MONGO_DB_DATABASE,
+              CHAT_MONGO_DB_USERNAME: $CHAT_MONGO_DB_USERNAME,
+              CHAT_MONGO_DB_PORT: $CHAT_MONGO_DB_PORT,
+              CHAT_MONGO_DB_DATABASE: $CHAT_MONGO_DB_DATABASE,
+              S3_ACCESS_KEY: $S3_ACCESS_KEY,
+              S3_SECRET_KEY: $S3_SECRET_KEY,
+              S3_URL_PREFIX: $S3_URL_PREFIX,
+              KAKAO_API_URL: $KAKAO_API_URL,
+              KAKAOPAY_SECRET_KEY: $KAKAOPAY_SECRET_KEY,
+              KAFKA_HOST1: $KAFKA_HOST1,
+              KAFKA_PORT1: $KAFKA_PORT1
             }
             ')
 
