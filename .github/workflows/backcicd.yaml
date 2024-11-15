@@ -109,7 +109,7 @@ jobs:
             echo "No instance IDs found for module ${{ matrix.module }}. Exiting."
             exit 1
           fi
-          
+
           # 환경 변수를 JSON 형식으로 준비
           ENV_VARS=$(jq -n \
             --arg ACCESS_TOKEN_EXPIRY "${{ secrets.ACCESS_TOKEN_EXPIRY }}" \
@@ -148,21 +148,27 @@ jobs:
               REDIRECT_ONBOARDING_URL: $REDIRECT_ONBOARDING_URL
             }
             ')
-          
-          # 환경 변수를 SSM 명령의 파라미터로 전달
+
+          # 환경 변수를 Base64로 인코딩
+          ENV_VARS_BASE64=$(echo "$ENV_VARS" | base64 -w 0)
+
+          # AWS SSM 명령의 commands 파라미터를 JSON 문자열로 구성
+          COMMANDS_JSON='[
+            "sudo yum install -y jq",
+            "echo \"$ENV_VARS_BASE64\" | base64 -d > /home/ec2-user/env_vars.json",
+            "cd /home/ec2-user",
+            "jq -r '\''to_entries|map(\\(.key)=\\(.value|tostring))|.[]'\'' env_vars.json > .env",
+            "docker-compose down -v --rmi all",
+            "docker-compose pull",
+            "docker-compose up -d"
+          ]'
+
+          # AWS SSM 명령 실행
           COMMAND_OUTPUT=$(aws ssm send-command \
-            --instance-ids ${{ steps.get_instances.outputs.instance_ids }} \
+            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
             --document-name "AWS-RunShellScript" \
             --comment "Deploying ${{ matrix.module }} module" \
-            --parameters '{"commands": [
-              "sudo yum install -y jq",
-              "echo '\''$ENV_VARS'\'' > /home/ec2-user/env_vars.json",
-              "cd /home/ec2-user",
-              "jq -r '\''to_entries|map(\"\(.key)=\(.value|tostring)\")|.[]'\'' env_vars.json > .env",
-              "docker-compose down -v --rmi all",
-              "docker-compose pull",
-              "docker-compose up -d"
-            ]}' \
+            --parameters commands="$COMMANDS_JSON" \
             --timeout-seconds 600 \
             --region ap-northeast-2)
           echo "COMMAND_OUTPUT=$COMMAND_OUTPUT"
