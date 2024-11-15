@@ -6,9 +6,42 @@ on:
       - 48-Develop브랜치-푸시시-CI/CD-구현
 
 jobs:
-  build_and_deploy_member:
-    name: Build and Deploy Member Module
+  build_and_deploy:
+    name: Build and Deploy Modules
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: [auth, member, payment, resume]
+        include:
+          - module: auth
+            dockerfile_path: ./gitfolio-auth/Dockerfile
+            image_name: aida0/gitfolio_auth:test
+            ec2_filters: |
+              Name=tag:Name,Values=Gitfolio BE1
+              Name=tag:Environment,Values=dev
+              Name=tag:Type,Values=ec2
+          - module: member
+            dockerfile_path: ./gitfolio-member/Dockerfile
+            image_name: aida0/gitfolio_member:test
+            ec2_filters: |
+              Name=tag:Name,Values=Gitfolio BE1
+              Name=tag:Environment,Values=dev
+              Name=tag:Type,Values=ec2
+          - module: payment
+            dockerfile_path: ./gitfolio-payment/Dockerfile
+            image_name: aida0/gitfolio_payment:test
+            ec2_filters: |
+              Name=tag:Name,Values=Gitfolio BE2
+              Name=tag:Environment,Values=dev
+              Name=tag:Type,Values=ec2
+          - module: resume
+            dockerfile_path: ./gitfolio-resume/Dockerfile
+            image_name: aida0/gitfolio_resume:test
+            ec2_filters: |
+              Name=tag:Name,Values=Gitfolio BE2
+              Name=tag:Environment,Values=dev
+              Name=tag:Type,Values=ec2
+
     steps:
       # 1단계: 코드 체크아웃
       - name: Checkout code
@@ -92,14 +125,14 @@ jobs:
             --build-arg KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }} \
             --build-arg KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }} \
             --build-arg KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }} \
-            -f ./gitfolio-member/Dockerfile \
-            -t aida0/gitfolio_member:test \
-            ./gitfolio-member
+            -f ${{ matrix.dockerfile_path }} \
+            -t ${{ matrix.image_name }} \
+            ${{ dirname(matrix.dockerfile_path) }}
 
       # 5단계: Docker 이미지 푸시
       - name: Push the Docker image
         run: |
-          docker push aida0/gitfolio_member:test
+          docker push ${{ matrix.image_name }}
 
       # 6단계: EC2 인스턴스 ID 가져오기
       - name: Get EC2 Instance IDs
@@ -107,7 +140,7 @@ jobs:
         run: |
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-northeast-2 \
-            --filters 'Name=tag:Name,Values=Gitfolio BE1' 'Name=tag:Environment,Values=dev' 'Name=tag:Type,Values=ec2' \
+            --filters ${{ matrix.ec2_filters }} \
             --query 'Reservations[].Instances[].InstanceId' \
             --output text)
           echo "INSTANCE_IDS=$INSTANCE_IDS"
@@ -117,13 +150,13 @@ jobs:
       - name: Deploy to EC2 instances
         run: |
           if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
-            echo "No instance IDs found for Member module. Exiting."
+            echo "No instance IDs found for ${{ matrix.module }} module. Exiting."
             exit 1
           fi
           aws ssm send-command \
             --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
             --document-name "AWS-RunShellScript" \
-            --comment "Deploying Member module" \
+            --comment "Deploying ${{ matrix.module }} module" \
             --parameters commands='cd /home/ec2-user && docker-compose down -v --rmi all && docker-compose pull && docker-compose up -d' \
             --timeout-seconds 600 \
             --region ap-northeast-2
@@ -131,4 +164,4 @@ jobs:
       # 8단계: 명령 실행 완료 대기 (선택 사항)
       - name: Wait for command to complete
         run: |
-          echo "Deployment command sent. Monitoring is not implemented in this step."
+          echo "Deployment command sent for ${{ matrix.module }} module."
