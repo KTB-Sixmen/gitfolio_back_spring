@@ -115,9 +115,11 @@ public class ResumeController {
      */
     @AuthRequired
     @GetMapping("/me")
-    public ResponseEntity<BaseResponse<List<ResumeListDTO>>> getMyResumeList(HttpServletRequest request) {
+    public ResponseEntity<BaseResponse<PaginationResponseDTO<ResumeListDTO>>> getMyResumeList(HttpServletRequest request,
+                                                                             @RequestParam(defaultValue = "0") int page,
+                                                                             @RequestParam(defaultValue = "10") int size) {
         String memberId = request.getAttribute("memberId").toString();
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getMyResumeList(memberId)));
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getMyResumeList(Long.valueOf(memberId), page, size)));
 
     }
 
