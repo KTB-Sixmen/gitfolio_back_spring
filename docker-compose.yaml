@@ -20,6 +20,8 @@ services:
       target: runner
     image: aida0/gitfolio_auth:test
     container_name: gitfolio_auth
+    env_file:
+      - /home/ec2-user/.env
     ports:
       - target: 8080
         published: 80
@@ -38,6 +40,8 @@ services:
       target: runner
     image: aida0/gitfolio_member:test
     container_name: gitfolio_member
+    env_file:
+      - /home/ec2-user/.env
     ports:
       - target: 8080
         published: 81
@@ -56,6 +60,8 @@ services:
       target: runner
     image: aida0/gitfolio_payment:test
     container_name: gitfolio_payment
+    env_file:
+      - /home/ec2-user/.env
     ports:
       - target: 8080
         published: 80
@@ -74,6 +80,8 @@ services:
       target: runner
     image: aida0/gitfolio_resume:test
     container_name: gitfolio_resume
+    env_file:
+      - /home/ec2-user/.env
     ports:
       - target: 8080
         published: 81
