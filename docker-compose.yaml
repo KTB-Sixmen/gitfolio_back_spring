@@ -11,7 +11,7 @@ services:
     image: aida0/gitfolio_builder:test
     profiles:
       - build
-#모든 확장자 yaml 로 통일
+
   auth:
     platform: linux/amd64
     build:
