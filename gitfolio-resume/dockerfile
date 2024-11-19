@@ -1,14 +1,10 @@
-# 베이스 이미지 설정
 FROM amazoncorretto:17 AS runner
 
-# 작업 디렉토리 설정
 WORKDIR /resume
 
-# 애플리케이션 포트 노출 (예: 8082)
 EXPOSE 8082
 
-# 빌드된 JAR 파일 복사
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
-# 애플리케이션 실행
 CMD [ "java", "-jar", "resume.jar" ]
