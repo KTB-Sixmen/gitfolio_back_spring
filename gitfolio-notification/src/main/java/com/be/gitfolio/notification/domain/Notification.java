@@ -4,15 +4,12 @@ import com.be.gitfolio.common.config.BaseEntityMySQL;
 import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.type.NotificationType;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Getter
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class Notification extends BaseEntityMySQL {
 

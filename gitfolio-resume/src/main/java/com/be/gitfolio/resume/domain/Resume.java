@@ -6,10 +6,7 @@ import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -21,7 +18,7 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 @Getter
 @Builder
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(collection = "resume")
 public class Resume extends BaseEntityMongo {
 
@@ -90,7 +87,7 @@ public class Resume extends BaseEntityMongo {
     @Getter
     @Builder
     @AllArgsConstructor
-    @NoArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class Project {
         private String projectName;
         private String projectStartedAt;
@@ -103,7 +100,7 @@ public class Resume extends BaseEntityMongo {
         @Getter
         @Builder
         @AllArgsConstructor
-        @NoArgsConstructor
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
         public static class WorkExperience {
             private String companyName;
             private String departmentName;
@@ -117,7 +114,7 @@ public class Resume extends BaseEntityMongo {
         @Getter
         @Builder
         @AllArgsConstructor
-        @NoArgsConstructor
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
         public static class Education {
             private SchoolType schoolType;
             private String schoolName;
@@ -130,7 +127,7 @@ public class Resume extends BaseEntityMongo {
         @Getter
         @Builder
         @AllArgsConstructor
-        @NoArgsConstructor
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
         public static class Certificate {
             private String certificateName;
             private String certificateGrade;
@@ -141,7 +138,7 @@ public class Resume extends BaseEntityMongo {
         @Getter
         @Builder
         @AllArgsConstructor
-        @NoArgsConstructor
+        @NoArgsConstructor(access = AccessLevel.PROTECTED)
         public static class Link {
             private String linkTitle;
             private String linkUrl;
