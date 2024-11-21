@@ -1,0 +1,16 @@
+FROM amazoncorretto:17 AS runner
+
+WORKDIR /chat
+
+EXPOSE 8083
+
+# 빌드된 JAR 파일 복사
+# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-chat-*-SNAPSHOT.jar chat.jar
+# 로컬용
+
+COPY ../build/.env .env
+COPY ../build/*-chat-*-SNAPSHOT.jar chat.jar
+
+
+CMD [ "java", "-jar", "chat.jar" ]
