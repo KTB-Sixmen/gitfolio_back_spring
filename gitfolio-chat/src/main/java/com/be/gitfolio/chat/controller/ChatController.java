@@ -30,16 +30,16 @@ public class ChatController {
     /**
      * 메시지 전송
      */
-    @AuthRequired
+//    @AuthRequired
     @PostMapping("/send")
     public Mono<Void> sendMessage(HttpServletRequest request,
                             @RequestBody MessageContentDTO messageContentDTO) {
         log.info("/send 컨트롤러 진입");
-        String memberId = request.getAttribute("memberId").toString();
-        String nickname = request.getAttribute("nickname").toString();
+//        String memberId = request.getAttribute("memberId").toString();
+//        String nickname = request.getAttribute("nickname").toString();
 
         // 메시지를 먼저 저장하고 성공하면 스트림에 발행
-        return chatService.sendMessage(Long.valueOf(memberId), nickname, messageContentDTO.content())
+        return chatService.sendMessage(1L, "1", messageContentDTO.content())
                 .doOnSuccess(chatMessage -> {
                     log.info("Message saved successfully, now publishing to stream");
                     MessageDetailDTO messageDetailDTO = MessageDetailDTO.from(chatMessage);
