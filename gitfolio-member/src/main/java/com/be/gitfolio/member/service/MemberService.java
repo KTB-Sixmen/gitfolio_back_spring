@@ -31,7 +31,7 @@ import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
 public class MemberService {
 
     @Value(("${github.api.token}"))
-    private String GITHUB_API_TOKEN;
+    private String GH_API_TOKEN;
 
 
     private final MemberRepository memberRepository;
@@ -187,7 +187,7 @@ public class MemberService {
     private List<MemberGithubRepositoryDTO> getRepositoriesForUser(String username) {
         return githubWebClient.get()
                 .uri("/users/{username}/repos", username)
-                .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
+                .header("Authorization", "Bearer " + GH_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
                 .map(MemberGithubRepositoryDTO::from)
@@ -199,7 +199,7 @@ public class MemberService {
     private List<String> getOrganizationsForUser(String username) {
         return githubWebClient.get()
                 .uri("/users/{username}/orgs", username)
-                .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
+                .header("Authorization", "Bearer " + GH_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
                 .map(org -> (String) org.get("login"))  // 조직 이름(login)을 추출
@@ -211,7 +211,7 @@ public class MemberService {
     private List<MemberGithubRepositoryDTO> getRepositoriesForOrganization(String org) {
         return githubWebClient.get()
                 .uri("/orgs/{org}/repos", org)
-                .header("Authorization", "Bearer " + GITHUB_API_TOKEN)
+                .header("Authorization", "Bearer " + GH_API_TOKEN)
                 .retrieve()
                 .bodyToFlux(Map.class)
                 .map(MemberGithubRepositoryDTO::from)
