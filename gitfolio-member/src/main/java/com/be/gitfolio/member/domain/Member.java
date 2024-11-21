@@ -4,6 +4,7 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -12,6 +13,7 @@ import static com.be.gitfolio.member.domain.MemberRequest.*;
 
 @Builder
 @Getter
+@Slf4j
 public class Member {
 
     private Long id;
@@ -29,6 +31,7 @@ public class Member {
     private LocalDateTime updatedAt;
 
     public static Member from(MemberCreate memberCreate) {
+        log.info("회원 GithubName값 : {}", memberCreate.githubName());
         return Member.builder()
                 .username(memberCreate.username())
                 .nickname(memberCreate.nickname())

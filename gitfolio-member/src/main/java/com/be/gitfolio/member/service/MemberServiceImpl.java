@@ -47,6 +47,7 @@ public class MemberServiceImpl implements MemberService {
         // 회원 기본정보 생성 및 저장
         Member member = Member.from(memberCreate);
         Member savedMember = memberRepository.save(member);
+        log.info("저장된 회원의 GithubName : {}", savedMember.getGithubName());
 
         // 회원 추가정보 생성만
         MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.from(savedMember.getId());
