@@ -32,7 +32,6 @@ jobs:
             build_context: ./gitfolio-resume
             image_name: aida0/gitfolio_resume:test
             instance_index: '2'
-#            notification, chat 추가해야함
 #  '48-Develop브랜치')의 코드를 GitHub Actions 실행 환경으로 복사
 #    그동안 localhost 8080 에 떳었던 이유는 develop 브랜치가 아닌 내 브랜치의 코드를 가져와서 그랬음
     steps:

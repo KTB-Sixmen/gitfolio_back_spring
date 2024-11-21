@@ -15,6 +15,7 @@ import com.be.gitfolio.resume.repository.LikeRepository;
 import com.be.gitfolio.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.InternalException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
@@ -66,23 +69,34 @@ public class ResumeService {
     @Transactional
     public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO, Visibility visibility) {
 
-        MemberInfoDTO memberInfoDTO = memberWebClient.get()
-                .uri("/api/members/{memberId}", Long.valueOf(memberId))
-                .retrieve()
-                .bodyToMono(MemberInfoDTO.class)
-                .block();
+        MemberInfoDTO memberInfoDTO;
+        try {
+            memberInfoDTO = memberWebClient.get()
+                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(MemberInfoDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new InternalException("MemberWebClient erorr" + exception.getMessage());
+        }
+
 
         String personalRepo = "https://github.com/" + memberInfoDTO.nickname();
 
         // AI에 요청할 DTO 생성
         AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberInfoDTO, personalRepo, createResumeRequestDTO);
 
-        AIResponseDTO aiResponseDTO = aiWebClient.post()
-                .uri("/api/resumes")
-                .bodyValue(aiRequestDTO)
-                .retrieve()
-                .bodyToMono(AIResponseDTO.class)
-                .block();
+        AIResponseDTO aiResponseDTO;
+        try {
+            aiResponseDTO = aiWebClient.post()
+                    .uri("/api/resumes")
+                    .bodyValue(aiRequestDTO)
+                    .retrieve()
+                    .bodyToMono(AIResponseDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new InternalException("AIWebClient erorr" + exception.getMessage());
+        }
 
         Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
         return resumeRepository.save(resume).getId();

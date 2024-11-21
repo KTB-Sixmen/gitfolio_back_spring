@@ -1,76 +1,82 @@
 package com.be.gitfolio.member.domain;
 
-import com.be.gitfolio.common.config.BaseEntityMySQL;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
-import com.be.gitfolio.member.dto.MemberRequestDTO;
-import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
-import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
-@Getter
-@Entity
-@AllArgsConstructor
-@NoArgsConstructor
+import static com.be.gitfolio.member.domain.MemberRequest.*;
+
 @Builder
-public class Member extends BaseEntityMySQL {
+@Getter
+@Slf4j
+public class Member {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "member_id")
     private Long id;
-
     private String username;
-
     private String nickname;
-
     private String name;
-
     private String githubName;
-
     private String role;
-
     private String avatarUrl;
-
     private String phoneNumber;
-
     private String email;
-
-    @Enumerated(EnumType.STRING)
     private PositionType position;
-
-    @Enumerated(EnumType.STRING)
     private PaidPlan paidPlan;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    public void updatePlan(PaidPlan paidPlan) {
-        this.paidPlan = paidPlan;
-    }
-
-    public static Member from(MemberCreateRequestDTO dto) {
+    public static Member from(MemberCreate memberCreate) {
+        log.info("회원 GithubName값 : {}", memberCreate.githubName());
         return Member.builder()
-                .username(dto.username())
-                .nickname(dto.nickname())
-                .githubName(dto.githubName())
-                .role(dto.role())
-                .avatarUrl(dto.avatarUrl())
+                .username(memberCreate.username())
+                .nickname(memberCreate.nickname())
+                .githubName(Optional.ofNullable(memberCreate.githubName()).orElse(""))
+                .role(memberCreate.role())
+                .avatarUrl(memberCreate.avatarUrl())
                 .paidPlan(PaidPlan.FREE)
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 
-
-    /**
-     * 회원 기본정보 수정
-     */
-    public void updateMember(MemberUpdateRequestDTO memberUpdateRequestDTO, String avatarUrl) {
-        this.name = memberUpdateRequestDTO.name();
-        this.avatarUrl = avatarUrl;
-        this.phoneNumber = memberUpdateRequestDTO.phoneNumber();
-        this.email = memberUpdateRequestDTO.email();
-        this.position = memberUpdateRequestDTO.position();
+    public Member updateMember(MemberUpdate memberUpdate, String avatarUrl) {
+        return Member.builder()
+                .id(id)
+                .username(username)
+                .nickname(nickname)
+                .name(memberUpdate.name())
+                .githubName(githubName)
+                .role(role)
+                .avatarUrl(avatarUrl)
+                .phoneNumber(memberUpdate.phoneNumber())
+                .email(memberUpdate.email())
+                .position(memberUpdate.position())
+                .paidPlan(paidPlan)
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
     }
 
+    public Member updatePlan(PaidPlan paidPlan) {
+        return Member.builder()
+                .id(id)
+                .username(username)
+                .nickname(nickname)
+                .name(name)
+                .githubName(githubName)
+                .role(role)
+                .avatarUrl(avatarUrl)
+                .phoneNumber(phoneNumber)
+                .email(email)
+                .position(position)
+                .paidPlan(paidPlan)
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
 }

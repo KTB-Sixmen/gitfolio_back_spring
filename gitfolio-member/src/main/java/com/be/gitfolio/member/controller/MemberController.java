@@ -3,8 +3,10 @@ package com.be.gitfolio.member.controller;
 import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.common.type.PaidPlan;
+import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
-import com.be.gitfolio.member.service.MemberService;
+import com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
+import com.be.gitfolio.member.service.MemberServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +18,10 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
-import static com.be.gitfolio.member.dto.MemberRequestDTO.*;
-import static com.be.gitfolio.member.dto.MemberResponseDTO.*;
+import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.controller.response.MemberResponse.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -32,7 +35,7 @@ public class MemberController {
      * 사용자 정보 조회(내부통신용)
      */
     @GetMapping("/{memberId}")
-    public MemberDetailDTO getMemberDetail(@PathVariable("memberId") Long memberId) {
+    public MemberDetail getMemberDetail(@PathVariable("memberId") Long memberId) {
         return memberService.sendMemberDetailToResume(memberId);
     }
 
@@ -49,12 +52,12 @@ public class MemberController {
      * 회원 생성
      */
     @PostMapping
-    public ResponseEntity<BaseResponse<Long>> createMember(@RequestBody MemberCreateRequestDTO memberCreateRequestDTO) {
+    public ResponseEntity<BaseResponse<Long>> createMember(@RequestBody MemberCreate memberCreate) {
         return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
                 HttpStatus.CREATED,
                 "201 CREATED",
                 "회원 가입에 성공했습니다.",
-                memberService.createMember(memberCreateRequestDTO)));
+                memberService.createMember(memberCreate).getId()));
     }
 
     /**
@@ -62,12 +65,9 @@ public class MemberController {
      */
     @GetMapping
     public ResponseEntity<BaseResponse<Long>> findMemberIdByUsername(@RequestParam("username") String username) {
-        Member member = memberService.findMemberIdByUsername(username);
-        if (member != null) {
-            return ResponseEntity.ok().body(new BaseResponse<>(member.getId()));
-        } else {
-            return ResponseEntity.ok().body(new BaseResponse<>(null));
-        }
+        Optional<Member> member = memberService.findMemberIdByUsername(username);
+        return member.map(value -> ResponseEntity.ok().body(new BaseResponse<>(value.getId())))
+                .orElseGet(() -> ResponseEntity.ok().body(new BaseResponse<>(null)));
     }
 
 
@@ -76,7 +76,7 @@ public class MemberController {
      */
     @AuthRequired
     @GetMapping("/me")
-    public ResponseEntity<BaseResponse<MemberDetailDTO>> getMemberDetails(HttpServletRequest request) {
+    public ResponseEntity<BaseResponse<MemberDetail>> getMemberDetails(HttpServletRequest request) {
         Long memberId = (Long) request.getAttribute("memberId");
         return ResponseEntity.ok().body(new BaseResponse<>(memberService.getMemberDetails(memberId)));
     }
@@ -88,12 +88,12 @@ public class MemberController {
     @PutMapping("/me")
     public ResponseEntity<BaseResponse<String>> updateMemberBasicInfo(
             HttpServletRequest request,
-            @Valid @RequestPart("memberUpdateRequestDTO") MemberUpdateRequestDTO memberUpdateRequestDTO,
-            @RequestPart("memberAdditionalRequestDTO") MemberAdditionalRequestDTO memberAdditionalRequestDTO,
+            @Valid @RequestPart("memberUpdateRequestDTO") MemberUpdate memberUpdate,
+            @RequestPart("memberAdditionalRequestDTO") MemberAdditionalInfoUpdate memberAdditionalInfoUpdate,
             @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
 
         Long memberId = (Long) request.getAttribute("memberId");
-        memberService.updateMemberInfo(memberId, memberUpdateRequestDTO, memberAdditionalRequestDTO, imageFile);
+        memberService.updateMemberInfo(memberId, memberUpdate, memberAdditionalInfoUpdate, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("회원 기본 정보 수정이 완료되었습니다."));
     }
 
@@ -102,7 +102,7 @@ public class MemberController {
      */
     @AuthRequired
     @GetMapping("/myRepo")
-    public ResponseEntity<BaseResponse<List<MemberGithubRepositoryDTO>>> getUserRepositoriesWithLanguages(HttpServletRequest request) {
+    public ResponseEntity<BaseResponse<List<MemberGithubRepository>>> getUserRepositoriesWithLanguages(HttpServletRequest request) {
         String username = String.valueOf(request.getAttribute("nickname"));
         log.info("사용자 아이디 : {}", username);
         return ResponseEntity.ok().body(new BaseResponse<>(memberService.getUserRepositoriesWithLanguages(username)));

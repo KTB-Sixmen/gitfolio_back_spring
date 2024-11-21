@@ -1,17 +1,16 @@
-package com.be.gitfolio.member.dto;
+package com.be.gitfolio.member.controller.response;
 
 import com.be.gitfolio.common.type.PositionType;
-import com.be.gitfolio.member.domain.Member;
-import com.be.gitfolio.member.domain.MemberAdditionalInfo;
+import com.be.gitfolio.member.domain.*;
 
 import java.util.List;
 import java.util.Map;
 
 
 
-public class MemberResponseDTO {
+public class MemberResponse {
 
-    public record MemberDetailDTO(
+    public record MemberDetail(
             Long memberId,
             String memberAdditionalInfoId,
             String nickname,
@@ -22,13 +21,13 @@ public class MemberResponseDTO {
             String phoneNumber,
             String email,
             PositionType position,
-            List<MemberAdditionalInfo.WorkExperience> workExperiences,
-            List<MemberAdditionalInfo.Education> educations,
-            List<MemberAdditionalInfo.Certificate> certificates,
-            List<MemberAdditionalInfo.Link> links
+            List<WorkExperience> workExperiences,
+            List<Education> educations,
+            List<Certificate> certificates,
+            List<Link> links
     ) {
-        public static MemberDetailDTO of(Member member, MemberAdditionalInfo memberAdditionalInfo, String avatarFullUrl) {
-            return new MemberDetailDTO(
+        public static MemberDetail of(Member member, MemberAdditionalInfo memberAdditionalInfo, String avatarFullUrl) {
+            return new MemberDetail(
                     member.getId(),
                     memberAdditionalInfo.getId(),
                     member.getNickname(),
@@ -47,15 +46,15 @@ public class MemberResponseDTO {
         }
     }
 
-    public record MemberGithubRepositoryDTO(
+    public record MemberGithubRepository(
             Long repoId,
             String repoName,
             String repoUrl,
             String topLanguage,
             String updatedAt
     ) {
-        public static MemberGithubRepositoryDTO from(Map<String, Object> repo) {
-            return new MemberGithubRepositoryDTO(
+        public static MemberGithubRepository from(Map<String, Object> repo) {
+            return new MemberGithubRepository(
                     Long.valueOf((Integer) repo.get("id")),
                     (String) repo.get("name"),
                     (String) repo.get("html_url"),

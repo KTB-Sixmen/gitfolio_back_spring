@@ -37,6 +37,11 @@ subprojects {
 	}
 
 	dependencies {
+		// mock
+		testImplementation 'org.mockito:mockito-core:5.14.2'
+		testImplementation 'org.junit.jupiter:junit-jupiter-api:5.11.3'
+
+
 		implementation 'org.springframework.boot:spring-boot-starter-web'
 		compileOnly 'org.projectlombok:lombok:1.18.28'
 		annotationProcessor 'org.projectlombok:lombok:1.18.28'
