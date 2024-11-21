@@ -1,0 +1,15 @@
+FROM amazoncorretto:17 AS runner
+
+WORKDIR /payment
+
+EXPOSE 8083
+
+# 빌드된 JAR 파일 복사
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
+# 로컬용
+# COPY ../build/.env .env
+# COPY ../build/*-payment-*-SNAPSHOT.jar payment.jar
+
+
+CMD [ "java", "-jar", "payment.jar" ]

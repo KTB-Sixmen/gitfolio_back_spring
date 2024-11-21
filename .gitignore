@@ -44,7 +44,7 @@ out/
 
 ### VS Code ###
 .vscode/
-
+gradlew.*
 ### envs ###
 .env
 
