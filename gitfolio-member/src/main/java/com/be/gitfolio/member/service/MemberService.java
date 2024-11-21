@@ -11,6 +11,7 @@ import com.be.gitfolio.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -137,6 +138,7 @@ public class MemberService {
     /**
      * 회원 레포 조회
      */
+    @Cacheable(value = "memberCache", key = "#username")
     public List<MemberGithubRepositoryDTO> getUserRepositoriesWithLanguages(String username) {
 
         // 1. 사용자 개인 레포지토리 조회
