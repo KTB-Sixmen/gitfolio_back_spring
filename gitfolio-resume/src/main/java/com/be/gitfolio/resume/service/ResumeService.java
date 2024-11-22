@@ -15,6 +15,7 @@ import com.be.gitfolio.resume.repository.LikeRepository;
 import com.be.gitfolio.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.InternalException;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -30,6 +31,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import reactor.core.publisher.Mono;
 
 import java.io.IOException;
 import java.util.List;
@@ -66,23 +69,34 @@ public class ResumeService {
     @Transactional
     public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO, Visibility visibility) {
 
-        MemberInfoDTO memberInfoDTO = memberWebClient.get()
-                .uri("/api/members/{memberId}", Long.valueOf(memberId))
-                .retrieve()
-                .bodyToMono(MemberInfoDTO.class)
-                .block();
+        MemberInfoDTO memberInfoDTO;
+        try {
+            memberInfoDTO = memberWebClient.get()
+                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(MemberInfoDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new InternalException("MemberWebClient erorr" + exception.getMessage());
+        }
+
 
         String personalRepo = "https://github.com/" + memberInfoDTO.nickname();
 
         // AI에 요청할 DTO 생성
         AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberInfoDTO, personalRepo, createResumeRequestDTO);
 
-        AIResponseDTO aiResponseDTO = aiWebClient.post()
-                .uri("/api/resumes")
-                .bodyValue(aiRequestDTO)
-                .retrieve()
-                .bodyToMono(AIResponseDTO.class)
-                .block();
+        AIResponseDTO aiResponseDTO;
+        try {
+            aiResponseDTO = aiWebClient.post()
+                    .uri("/api/resumes")
+                    .bodyValue(aiRequestDTO)
+                    .retrieve()
+                    .bodyToMono(AIResponseDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new InternalException("AIWebClient erorr" + exception.getMessage());
+        }
 
         Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
         return resumeRepository.save(resume).getId();
@@ -149,7 +163,7 @@ public class ResumeService {
      * 이력서 상세 조회
      */
     @Transactional
-    public ResumeDetailDTO getResumeDetail(String token, String resumeId,String clientIp) {
+    public ResumeDetailDTO getResumeDetail(String token, String resumeId, String clientIp) {
         Long memberId = extractMemberIdFromToken(token);
 
         Resume resume = resumeRepository.findById(resumeId)
@@ -172,13 +186,28 @@ public class ResumeService {
     /**
      * 내 이력서 목록 조회
      */
-    public List<ResumeListDTO> getMyResumeList(String memberId) {
-        List<Resume> resumes = resumeRepository.findAllByMemberId(memberId, Sort.by(Sort.Direction.DESC, "updatedAt"));
+    public PaginationResponseDTO<ResumeListDTO> getMyResumeList(Long memberId, int page, int size) {
+        // Pageable 객체 생성 (페이지 번호는 0부터 시작)
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        return resumes.stream()
+        // 1. MySQL에서 사용자의 이력서 목록을 페이지네이션으로 조회
+        Page<Resume> resumePage = resumeRepository.findAllByMemberId(memberId, pageable);
+
+        // 2. 사용자의 모든 이력서 ID를 추출
+        List<String> resumeIds = resumePage.getContent().stream()
+                .map(Resume::getId)
+                .toList();
+
+        // 3. MySQL에서 사용자가 좋아요 누른 상태를 한 번에 조회하고 Map으로 변환
+        List<Like> likes = likeRepository.findLikesByMemberIdAndResumeIds(memberId, resumeIds);
+        Map<String, Boolean> likedStatusMap = likes.stream()
+                .collect(Collectors.toMap(Like::getResumeId, Like::getStatus));
+
+        // 4. 이력서 목록을 DTO로 변환
+        List<ResumeListDTO> resumeListDTOs = resumePage.getContent().stream()
                 .map(resume -> {
-                    Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), Long.valueOf(memberId));
-                    boolean isLiked = likeOpt.isPresent() && likeOpt.get().getStatus();
+                    // 좋아요 여부 확인
+                    boolean isLiked = likedStatusMap.getOrDefault(resume.getId(), false);
 
                     // Avatar URL 가공
                     String avatarUrl = resume.getAvatarUrl();
@@ -189,6 +218,9 @@ public class ResumeService {
                     return new ResumeListDTO(resume, isLiked, avatarUrl);
                 })
                 .toList();
+
+        // 5. PaginationResponseDTO를 사용해 결과 반환
+        return new PaginationResponseDTO<>(resumeListDTOs, resumePage.getTotalElements(), pageable);
     }
 
     /**

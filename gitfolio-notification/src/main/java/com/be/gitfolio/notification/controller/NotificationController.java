@@ -34,7 +34,7 @@ public class NotificationController {
      * 알림 조회
      */
     @AuthRequired
-    @PatchMapping("/{notificationId}")
+    @GetMapping("/{notificationId}")
     public ResponseEntity<BaseResponse<NotificationListDTO>> getNotification(HttpServletRequest request,
                                                                  @PathVariable("notificationId") Long notificationId) {
         String memberId = request.getAttribute("memberId").toString();

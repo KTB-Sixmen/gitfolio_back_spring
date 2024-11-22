@@ -3,17 +3,14 @@ package com.be.gitfolio.payment.domain;
 import com.be.gitfolio.common.config.BaseEntityMySQL;
 import com.be.gitfolio.payment.type.PaymentStatus;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @AllArgsConstructor
-@NoArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Builder
 public class PaymentStatusHistory {
 
