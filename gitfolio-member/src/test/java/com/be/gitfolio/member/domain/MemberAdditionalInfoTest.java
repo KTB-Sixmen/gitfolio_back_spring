@@ -1,5 +1,8 @@
 package com.be.gitfolio.member.domain;
 
+import com.be.gitfolio.common.type.EmploymentStatus;
+import com.be.gitfolio.common.type.GraduationStatus;
+import com.be.gitfolio.common.type.SchoolType;
 import com.be.gitfolio.common.type.WorkType;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +22,7 @@ public class MemberAdditionalInfoTest {
         //when
         MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.from(memberId);
         //then
-        assertThat(memberAdditionalInfo.getMemberId()).isEqualTo(memberId);
+        assertThat(memberAdditionalInfo.getMemberId()).isEqualTo(String.valueOf(memberId));
         assertThat(memberAdditionalInfo.getWorkExperiences()).isEmpty();
         assertThat(memberAdditionalInfo.getEducations()).isEmpty();
         assertThat(memberAdditionalInfo.getCertificates()).isEmpty();
@@ -31,26 +34,61 @@ public class MemberAdditionalInfoTest {
         //given
         Long memberId = 1L;
         MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.from(memberId);
+
         List<WorkExperience> workExperienceList = new ArrayList<>();
         WorkExperience workExperience = WorkExperience.builder()
+                .role("workRole")
+                .companyName("workCompanyName")
+                .departmentName("workDepartmentName")
+                .employmentStatus(EmploymentStatus.RESIGNATION)
+                .startedAt("2000-11-11")
+                .endedAt("2000-11-13")
                 .workType(WorkType.FREELANCER)
                 .build();
         workExperienceList.add(workExperience);
 
+        List<Education> educationList = new ArrayList<>();
+        Education education = Education.builder()
+                .schoolType(SchoolType.HIGH_SCHOOL)
+                .major("educationMajor")
+                .schoolName("educationSchoolName")
+                .graduationStatus(GraduationStatus.GRADUATED)
+                .startedAt("2000-11-11")
+                .endedAt("2000-11-13")
+                .build();
+        educationList.add(education);
+
+        List<Certificate> certificateList = new ArrayList<>();
+        Certificate certificate = Certificate.builder()
+                .certificateOrganization("certificateOrganization")
+                .certificateName("certificationName")
+                .certificateGrade("certificateGrade")
+                .certificatedAt("2000-11-11")
+                .build();
+        certificateList.add(certificate);
+
+        List<Link> linkList = new ArrayList<>();
+        Link link = Link.builder()
+                .linkTitle("linkTitle")
+                .linkUrl("linkUrl")
+                .build();
+        linkList.add(link);
+
         MemberAdditionalInfoUpdate memberAdditionalInfoUpdate = MemberAdditionalInfoUpdate.builder()
                 .workExperiences(workExperienceList)
-                .educations(Collections.emptyList())
-                .certificates(Collections.emptyList())
-                .links(Collections.emptyList())
+                .educations(educationList)
+                .certificates(certificateList)
+                .links(linkList)
                 .build();
 
         //when
-        memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalInfoUpdate);
+        MemberAdditionalInfo updatedMemberAdditionalInfo = memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalInfoUpdate);
+
         //then
-        assertThat(memberAdditionalInfo.getWorkExperiences()).isEqualTo(workExperienceList);
-        assertThat(memberAdditionalInfo.getEducations()).isEmpty();
-        assertThat(memberAdditionalInfo.getCertificates()).isEmpty();
-        assertThat(memberAdditionalInfo.getLinks()).isEmpty();
+        assertThat(updatedMemberAdditionalInfo.getWorkExperiences()).isEqualTo(workExperienceList);
+        assertThat(updatedMemberAdditionalInfo.getEducations()).isEqualTo(educationList);
+        assertThat(updatedMemberAdditionalInfo.getCertificates()).isEqualTo(certificateList);
+        assertThat(updatedMemberAdditionalInfo.getLinks()).isEqualTo(linkList);
     }
 
 }
