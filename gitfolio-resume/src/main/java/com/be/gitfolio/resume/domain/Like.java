@@ -21,17 +21,10 @@ public class Like extends BaseEntityMySQL {
 
     private String resumeId;
 
-    private Boolean status;
-
-    public void updateStatus() {
-        this.status = !this.status;
-    }
-
     public static Like of(String resumeId, Long memberId) {
         return Like.builder()
                 .resumeId(resumeId)
                 .memberId(memberId)
-                .status(Boolean.TRUE)
                 .build();
     }
 }
