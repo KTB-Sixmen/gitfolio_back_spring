@@ -48,6 +48,18 @@ public class ResumeController {
     }
 
     /**
+     * 이력서 수정
+     */
+    @AuthRequired
+    @PostMapping("/{resumeId}")
+    public ResponseEntity<BaseResponse<String>> update(HttpServletRequest request,
+                                                       @PathVariable("resumeId") String resumeId,
+                                                       @Valid @RequestBody UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
+        String memberId = request.getAttribute("memberId").toString();
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.updateResumeWithAI(memberId, resumeId, updateResumeWithAIRequestDTO)));
+    }
+
+    /**
      * 이력서 공개 여부 변경
      */
     @AuthRequired

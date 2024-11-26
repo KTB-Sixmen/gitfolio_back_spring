@@ -7,8 +7,6 @@ import jakarta.validation.constraints.*;
 
 import java.util.List;
 
-import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
-
 public class ResumeRequestDTO {
 
     public record MemberInfoDTO(
@@ -33,6 +31,26 @@ public class ResumeRequestDTO {
             String requirements,
             @NotNull(message = "공개 여부는 필수 항목입니다.") Visibility visibility
     ) {}
+
+    public record UpdateResumeWithAIRequestDTO(
+            String selectedText,
+            @NotEmpty(message = "요구사항은 필수 항목입니다.") String requirement
+    ) {}
+
+    public record AIUpdateRequestDTO(
+        String selectedText,
+        String requirement,
+        Resume resumeInfo
+    ) {
+        public static AIUpdateRequestDTO of(UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO,
+                                            Resume resumeInfo) {
+            return new AIUpdateRequestDTO(
+                    updateResumeWithAIRequestDTO.selectedText(),
+                    updateResumeWithAIRequestDTO.requirement(),
+                    resumeInfo
+            );
+        }
+    }
 
     public record AIRequestDTO(
             String githubID,    // 회원 깃허브 아이디(nickname 필드)
