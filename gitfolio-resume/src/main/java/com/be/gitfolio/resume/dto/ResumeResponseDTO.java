@@ -10,6 +10,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 public class ResumeResponseDTO {
@@ -33,14 +35,16 @@ public class ResumeResponseDTO {
         public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    resume.getMemberId(),
+                    Long.valueOf(resume.getMemberId()),
                     avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
                     resume.getTags(),
                     resume.getLikeCount(),
                     resume.getViewCount(),
-                    resume.getUpdatedAt(),
+                    ZonedDateTime.of(resume.getUpdatedAt(), ZoneId.of("UTC"))
+                            .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                            .toLocalDateTime(),
                     liked,
                     resume.getVisibility()
             );
@@ -114,7 +118,9 @@ public class ResumeResponseDTO {
                     resume.getLikeCount(),
                     resume.getViewCount(),
                     liked,
-                    resume.getUpdatedAt(),
+                    ZonedDateTime.of(resume.getUpdatedAt(), ZoneId.of("UTC"))
+                            .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                            .toLocalDateTime(),
                     resume.getVisibility()
             );
         }
@@ -144,8 +150,12 @@ public class ResumeResponseDTO {
                     nickname,
                     avatarFullUrl,
                     comment.getContent(),
-                    comment.getCreatedAt(),
-                    comment.getUpdatedAt()
+                    ZonedDateTime.of(comment.getCreatedAt(), ZoneId.of("UTC"))
+                            .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                            .toLocalDateTime(),
+                    ZonedDateTime.of(comment.getUpdatedAt(), ZoneId.of("UTC"))
+                            .withZoneSameInstant(ZoneId.of("Asia/Seoul"))
+                            .toLocalDateTime()
             );
         }
     }
