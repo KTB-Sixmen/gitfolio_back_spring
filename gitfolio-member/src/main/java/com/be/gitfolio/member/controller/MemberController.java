@@ -6,7 +6,6 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
-import com.be.gitfolio.member.service.MemberServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +45,16 @@ public class MemberController {
     public Void updatePlan(@PathVariable("memberId") Long memberId, @RequestBody PaidPlan paidPlan) {
         return memberService.updateMemeberPlan(memberId, paidPlan);
 
+    }
+
+    /**
+     * 회원 잔여 사용권 차감
+     * @param memberId
+     * @return
+     */
+    @PatchMapping("/{memberId}/remainingCount/decrease")
+    public Void decreaseRemainingCount(@PathVariable("memberId") Long memberId) {
+        return memberService.decreaseRemainingCount(memberId);
     }
 
     /**

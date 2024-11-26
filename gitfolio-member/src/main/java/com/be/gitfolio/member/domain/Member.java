@@ -27,6 +27,7 @@ public class Member {
     private String email;
     private PositionType position;
     private PaidPlan paidPlan;
+    private Integer remainingCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,6 +40,7 @@ public class Member {
                 .role(memberCreate.role())
                 .avatarUrl(memberCreate.avatarUrl())
                 .paidPlan(PaidPlan.FREE)
+                .remainingCount(3)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -57,6 +59,7 @@ public class Member {
                 .email(memberUpdate.email())
                 .position(memberUpdate.position())
                 .paidPlan(paidPlan)
+                .remainingCount(remainingCount)
                 .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
@@ -75,6 +78,26 @@ public class Member {
                 .email(email)
                 .position(position)
                 .paidPlan(paidPlan)
+                .remainingCount(remainingCount)
+                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public Member decreaseRemainingCount() {
+        return Member.builder()
+                .id(id)
+                .username(username)
+                .nickname(nickname)
+                .name(name)
+                .githubName(githubName)
+                .role(role)
+                .avatarUrl(avatarUrl)
+                .phoneNumber(phoneNumber)
+                .email(email)
+                .position(position)
+                .paidPlan(paidPlan)
+                .remainingCount(remainingCount-1)
                 .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();

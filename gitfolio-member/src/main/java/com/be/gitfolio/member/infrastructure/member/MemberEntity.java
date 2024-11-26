@@ -43,6 +43,8 @@ public class MemberEntity {
     @Enumerated(EnumType.STRING)
     private PaidPlan paidPlan;
 
+    private Integer remainingCount; // 잔여 사용 가능 횟수
+
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
@@ -60,6 +62,7 @@ public class MemberEntity {
                 .email(member.getEmail())
                 .position(member.getPosition())
                 .paidPlan(member.getPaidPlan())
+                .remainingCount(member.getRemainingCount())
                 .createdAt(member.getCreatedAt())
                 .updatedAt(member.getUpdatedAt())
                 .build();
@@ -78,8 +81,13 @@ public class MemberEntity {
                 .email(email)
                 .position(position)
                 .paidPlan(paidPlan)
+                .remainingCount(remainingCount)
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .build();
+    }
+
+    public void resetCount() {
+        this.remainingCount = 3;
     }
 }
