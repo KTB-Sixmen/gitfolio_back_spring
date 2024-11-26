@@ -8,7 +8,6 @@ import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.dto.ResumeResponseDTO;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.repository.CommentRepository;
 import com.be.gitfolio.resume.repository.LikeRepository;
@@ -16,8 +15,6 @@ import com.be.gitfolio.resume.repository.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.InternalException;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -32,17 +29,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 
@@ -77,7 +69,7 @@ public class ResumeService {
                     .bodyToMono(MemberInfoDTO.class)
                     .block();
         } catch (WebClientResponseException exception) {
-            throw new InternalException("MemberWebClient erorr" + exception.getMessage());
+            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
         }
 
 
@@ -99,7 +91,38 @@ public class ResumeService {
         }
 
         Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
-        return resumeRepository.save(resume).getId();
+        String resumeId = resumeRepository.save(resume).getId();
+
+        memberWebClient.patch()
+                .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
+                .retrieve()
+                .bodyToMono(Void.class)
+                .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
+                .subscribe(); // 비동기 요청으로 실행
+
+        return resumeId;
+    }
+
+    /**
+     * 이력서 수정 (AI로)
+     */
+    @Transactional
+    public String updateResumeWithAI(String memberId, String resumeId, UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
+
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
+        // 이력서 생성한 사람이 본인인지 확인
+        if (!resume.getMemberId().equals(memberId)) {
+            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
+        }
+
+        AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resume);
+
+        // TODO: 11/21/24 AI모듈 연동 해야함(통째로 덮어씌우기)
+        Resume updateResume = resume;
+        return resumeRepository.save(updateResume).getId();
+        // TODO: 11/25/24 Member모듈 사용권 차감 요청 추가해야함 
     }
 
 
@@ -107,10 +130,11 @@ public class ResumeService {
      * 이력서 목록 조회
      */
     public PaginationResponseDTO<ResumeListDTO> getResumeList(String token, ResumeFilterDTO resumeFilterDTO) {
+        // Token에서 사용자 ID 추출
         Long memberId = extractMemberIdFromToken(token);
         Pageable pageable = PageRequest.of(resumeFilterDTO.page(), resumeFilterDTO.size());
 
-        // 1. MySQL에서 사용자가 좋아요 누른 이력서 ID 목록 조회
+        // 1. 좋아요 필터가 있는 경우, MySQL에서 좋아요 누른 이력서 ID 목록 조회
         List<String> likedResumeIds = null;
         if (Boolean.TRUE.equals(resumeFilterDTO.liked())) {
             likedResumeIds = likeRepository.findLikedResumeIdsByMemberId(memberId);
@@ -122,12 +146,9 @@ public class ResumeService {
         // 2. MongoDB에서 이력서 목록 조회
         Page<Resume> resumePage = resumeRepository.findResumeByFilter(resumeFilterDTO, likedResumeIds, pageable);
 
-        // 3. MySQL에서 사용자가 좋아요 누른 상태를 한 번에 조회하고 Map으로 변환
-        List<Like> likes = likeRepository
-                .findLikesByMemberIdAndResumeIds(memberId, resumePage.stream().map(Resume::getId).toList());
-
-        Map<String, Boolean> likedStatusMap = likes.stream()
-                .collect(Collectors.toMap(Like::getResumeId, Like::getStatus));
+        // 3. 좋아요 상태를 Map으로 변환 (Hard Delete 기반)
+        Set<String> likedResumeSet = new HashSet<>(likeRepository.findLikedResumeIdsByMemberIdAndResumeIds(
+                memberId, resumePage.stream().map(Resume::getId).toList()));
 
         // 4. 이력서 목록을 DTO로 변환
         List<ResumeListDTO> resumeListDTOs = resumePage.stream()
@@ -138,11 +159,13 @@ public class ResumeService {
                         avatarUrl = s3Service.getFullFileUrl(avatarUrl);
                     }
 
-                    boolean isLiked = likedStatusMap.getOrDefault(resume.getId(), false);
+                    // 좋아요 여부 확인
+                    boolean isLiked = likedResumeSet.contains(resume.getId());
                     return new ResumeListDTO(resume, isLiked, avatarUrl);
                 })
                 .toList();
 
+        // 5. 결과 반환
         return new PaginationResponseDTO<>(resumeListDTOs, resumePage.getTotalElements(), pageable);
     }
 
@@ -164,22 +187,27 @@ public class ResumeService {
      */
     @Transactional
     public ResumeDetailDTO getResumeDetail(String token, String resumeId, String clientIp) {
+        // Token에서 사용자 ID 추출
         Long memberId = extractMemberIdFromToken(token);
 
+        // 1. 이력서 조회
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
+        // 2. 조회수 증가 및 저장
         incrementViewCount(resume, clientIp);
         resumeRepository.save(resume);
 
-        Optional<Like> likeOpt = likeRepository.findByResumeIdAndMemberId(resume.getId(), memberId);
-        boolean isLiked = likeOpt.isPresent() && likeOpt.get().getStatus().equals(Boolean.TRUE);
+        // 3. 좋아요 여부 확인
+        boolean isLiked = likeRepository.existsByResumeIdAndMemberId(resume.getId(), memberId);
 
-        // Avatar URL 가공
+        // 4. Avatar URL 가공
         String avatarUrl = resume.getAvatarUrl();
         if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
             avatarUrl = s3Service.getFullFileUrl(avatarUrl);
         }
 
+        // 5. DTO 생성 및 반환
         return new ResumeDetailDTO(resume, isLiked, avatarUrl);
     }
 
@@ -198,16 +226,17 @@ public class ResumeService {
                 .map(Resume::getId)
                 .toList();
 
-        // 3. MySQL에서 사용자가 좋아요 누른 상태를 한 번에 조회하고 Map으로 변환
+        // 3. MySQL에서 사용자가 좋아요를 누른 이력서를 한 번에 조회
         List<Like> likes = likeRepository.findLikesByMemberIdAndResumeIds(memberId, resumeIds);
-        Map<String, Boolean> likedStatusMap = likes.stream()
-                .collect(Collectors.toMap(Like::getResumeId, Like::getStatus));
+        Set<String> likedResumeIds = likes.stream()
+                .map(Like::getResumeId)
+                .collect(Collectors.toSet());
 
         // 4. 이력서 목록을 DTO로 변환
         List<ResumeListDTO> resumeListDTOs = resumePage.getContent().stream()
                 .map(resume -> {
                     // 좋아요 여부 확인
-                    boolean isLiked = likedStatusMap.getOrDefault(resume.getId(), false);
+                    boolean isLiked = likedResumeIds.contains(resume.getId());
 
                     // Avatar URL 가공
                     String avatarUrl = resume.getAvatarUrl();
@@ -276,27 +305,41 @@ public class ResumeService {
     @Transactional
     public boolean toggleLike(String resumeId, Long memberId) {
 
+        MemberInfoDTO memberInfoDTO;
+        try {
+            memberInfoDTO = memberWebClient.get()
+                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(MemberInfoDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
+        }
+
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         Optional<Like> existingLikeOpt = likeRepository.findByResumeIdAndMemberId(resumeId, memberId);
 
-        return existingLikeOpt.map(existingLike -> {
-            existingLike.updateStatus();
-            if (Boolean.TRUE.equals(existingLike.getStatus())) {
-                increaseLikeCount(resumeId);
-                resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
-            } else {
-                decreaseLikeCount(resumeId);
-            }
+        if (existingLikeOpt.isPresent()) {
+            // 좋아요 취소 (삭제)
+            likeRepository.deleteByResumeIdAndMemberId(resumeId, memberId);
+            decreaseLikeCount(resumeId);
             return false;
-        }).orElseGet(() -> {
+        } else {
+            // 좋아요 추가
             Like newLike = Like.of(resumeId, memberId);
-            increaseLikeCount(resumeId);
             likeRepository.save(newLike);
-            resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.LIKE);
+            increaseLikeCount(resumeId);
+            resumeEventPublisher.publishResumeEvent(
+                    memberId,
+                    memberInfoDTO.nickname(),
+                    Long.valueOf(resume.getMemberId()),
+                    resumeId,
+                    NotificationType.LIKE
+            );
             return true;
-        });
+        }
     }
 
     /**
@@ -317,6 +360,12 @@ public class ResumeService {
         mongoTemplate.findAndModify(query, update, Resume.class);
     }
 
+    /**
+     * 이력서 공개 여부 변경
+     * @param memberId
+     * @param resumeId
+     * @param updateVisibilityDTO
+     */
     @Transactional
     public void updateVisibility(Long memberId, String resumeId, UpdateVisibilityDTO updateVisibilityDTO) {
         Resume resume = resumeRepository.findById(resumeId)
