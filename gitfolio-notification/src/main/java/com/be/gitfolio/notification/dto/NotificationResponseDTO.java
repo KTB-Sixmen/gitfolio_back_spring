@@ -10,6 +10,7 @@ public class NotificationResponseDTO {
             Long notificationId,
             String resumeId,
             Long senderId,
+            String senderNickName,
             Long receiverId,
             NotificationType type,
             @JsonProperty("isRead") boolean read
@@ -19,6 +20,7 @@ public class NotificationResponseDTO {
                     notification.getId(),
                     notification.getResumeId(),
                     notification.getSenderId(),
+                    notification.getSenderNickname(),
                     notification.getReceiverId(),
                     notification.getType(),
                     notification.isRead()
