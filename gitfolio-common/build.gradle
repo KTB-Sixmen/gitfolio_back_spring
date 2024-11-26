@@ -9,22 +9,8 @@ repositories {
 
 dependencies {
 
-    // Map Struct 의존성
-    implementation 'org.mapstruct:mapstruct:1.5.3.Final'
-    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.3.Final'
-    annotationProcessor 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-
     // Kafka 의존성
     implementation 'org.springframework.kafka:spring-kafka'
-
-    // gRPC 관련 의존성
-    implementation 'io.grpc:grpc-netty-shaded:1.45.1'
-    implementation 'io.grpc:grpc-protobuf:1.45.1'
-    implementation 'io.grpc:grpc-stub:1.45.1'
-    implementation 'io.grpc:grpc-core:1.45.1'
-
-    implementation 'com.google.protobuf:protobuf-java:4.28.2'
-    implementation 'io.github.lognet:grpc-spring-boot-starter:5.1.5'
 
     implementation 'javax.annotation:javax.annotation-api:1.3.2'
 
