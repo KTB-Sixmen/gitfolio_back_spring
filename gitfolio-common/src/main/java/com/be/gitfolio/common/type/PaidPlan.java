@@ -9,8 +9,6 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum PaidPlan {
     FREE("무료 플랜", 0),
-    BASIC("베이직 플랜", 9800),
-    STANDARD("스탠다드 플랜", 14700),
     PRO("프로 플랜", 22500),
     ;
 
