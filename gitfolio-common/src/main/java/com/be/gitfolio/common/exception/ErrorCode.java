@@ -9,6 +9,20 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     /**
+     * WebClient 에러
+     */
+    AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI 서버 에러입니다."),
+    MEMBER_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "Member 서버 에러입니다."),
+
+    /**
+     * 배치 에러
+     */
+    ALREADY_COMPLETED_JOB(HttpStatus.CONFLICT, "이미 완료된 작업입니다."),
+    ALREADY_RUNNING_JOB(HttpStatus.CONFLICT, "이미 진행중인 작업입니다."),
+    INVALID_JOB_PARAMETER(HttpStatus.BAD_REQUEST, "작업의 매개변수가 올바르지 않습니다."),
+    CANNOT_RESTART_JOB(HttpStatus.CONFLICT, "작업을 재시작할 수 없습니다."),
+
+    /**
      * 알림 에러
      */
     NO_NOTIFICATION_INFO(HttpStatus.NOT_FOUND, "알림 정보가 존재하지 않습니다."),
@@ -19,7 +33,8 @@ public enum ErrorCode {
      */
     PAY_CANCELED(HttpStatus.OK, "결제가 취소되었습니다."),
     PAY_FAILED(HttpStatus.PAYMENT_REQUIRED, "결제에 실패했습니다."),
-    NO_PAYMENT_TRANSACTION_INFO(HttpStatus.NOT_FOUND, "결제 트랜젝션이 존재하지 않습니다."),
+    NO_PAYMENT_TRANSACTION_INFO(HttpStatus.NOT_FOUND, "결제 트랜잭션이 존재하지 않습니다."),
+    NO_PAYMENT_INFO(HttpStatus.NOT_FOUND, "결제 정보가 존재하지 않습니다."),
 
     /**
      * 댓글 에러
