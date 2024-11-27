@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import static com.be.gitfolio.member.domain.MemberRequest.*;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @Slf4j
 public class Member {
@@ -47,58 +47,26 @@ public class Member {
     }
 
     public Member updateMember(MemberUpdate memberUpdate, String avatarUrl) {
-        return Member.builder()
-                .id(id)
-                .username(username)
-                .nickname(nickname)
+        return this.toBuilder()
                 .name(memberUpdate.name())
-                .githubName(githubName)
-                .role(role)
                 .avatarUrl(avatarUrl)
                 .phoneNumber(memberUpdate.phoneNumber())
                 .email(memberUpdate.email())
                 .position(memberUpdate.position())
-                .paidPlan(paidPlan)
-                .remainingCount(remainingCount)
-                .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
 
     public Member updatePlan(PaidPlan paidPlan) {
-        return Member.builder()
-                .id(id)
-                .username(username)
-                .nickname(nickname)
-                .name(name)
-                .githubName(githubName)
-                .role(role)
-                .avatarUrl(avatarUrl)
-                .phoneNumber(phoneNumber)
-                .email(email)
-                .position(position)
+        return this.toBuilder()
                 .paidPlan(paidPlan)
-                .remainingCount(remainingCount)
-                .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
 
     public Member decreaseRemainingCount() {
-        return Member.builder()
-                .id(id)
-                .username(username)
-                .nickname(nickname)
-                .name(name)
-                .githubName(githubName)
-                .role(role)
-                .avatarUrl(avatarUrl)
-                .phoneNumber(phoneNumber)
-                .email(email)
-                .position(position)
-                .paidPlan(paidPlan)
+        return this.toBuilder()
                 .remainingCount(remainingCount-1)
-                .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
