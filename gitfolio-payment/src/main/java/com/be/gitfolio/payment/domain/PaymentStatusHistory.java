@@ -49,21 +49,21 @@ public class PaymentStatusHistory {
                 .build();
     }
 
-    public static PaymentStatusHistory cancel(Long paymentId) {
+    public static PaymentStatusHistory cancel(Long paymentId, String reason) {
         return PaymentStatusHistory.builder()
                 .paymentId(paymentId)
                 .status(PaymentStatus.CANCELED)
                 .changedAt(LocalDateTime.now())
-                .reason("결제 취소")
+                .reason(reason)
                 .build();
     }
 
-    public static PaymentStatusHistory fail(Long paymentId) {
+    public static PaymentStatusHistory fail(Long paymentId, String reason) {
         return PaymentStatusHistory.builder()
                 .paymentId(paymentId)
                 .status(PaymentStatus.FAILED)
                 .changedAt(LocalDateTime.now())
-                .reason("결제 실패")
+                .reason(reason)
                 .build();
     }
 

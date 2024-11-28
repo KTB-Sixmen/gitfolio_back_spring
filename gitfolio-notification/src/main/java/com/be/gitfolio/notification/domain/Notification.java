@@ -6,6 +6,8 @@ import com.be.gitfolio.common.type.NotificationType;
 import jakarta.persistence.*;
 import lombok.*;
 
+import static com.be.gitfolio.common.event.KafkaEvent.*;
+
 @Entity
 @Getter
 @AllArgsConstructor
@@ -22,6 +24,8 @@ public class Notification extends BaseEntityMySQL {
 
     private Long senderId;
 
+    private String senderNickname;
+
     private Long receiverId;
 
     @Enumerated(EnumType.STRING)
@@ -30,10 +34,11 @@ public class Notification extends BaseEntityMySQL {
     @Column(name = "is_read")
     private boolean read;
 
-    public static Notification from(KafkaEvent.ResumeEvent resumeEvent) {
+    public static Notification from(ResumeEvent resumeEvent) {
         return Notification.builder()
                 .resumeId(resumeEvent.getResumeId())
                 .senderId(resumeEvent.getSenderId())
+                .senderNickname(resumeEvent.getSenderNickname())
                 .receiverId(resumeEvent.getReceiverId())
                 .type(resumeEvent.getType())
                 .read(Boolean.FALSE)

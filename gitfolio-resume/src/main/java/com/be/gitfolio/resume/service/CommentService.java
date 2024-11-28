@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 
@@ -37,6 +38,17 @@ public class CommentService {
      */
     @Transactional
     public Long createComment(String resumeId, Long memberId, CommentRequestDTO commentRequestDTO) {
+        MemberInfoDTO memberInfoDTO;
+        try {
+            memberInfoDTO = memberWebClient.get()
+                    .uri("/api/members/{memberId}", memberId)
+                    .retrieve()
+                    .bodyToMono(MemberInfoDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
+        }
+
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
@@ -47,7 +59,7 @@ public class CommentService {
                 .build();
         Comment savedComment = commentRepository.save(comment);
 
-        resumeEventPublisher.publishResumeEvent(memberId, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+        resumeEventPublisher.publishResumeEvent(memberId, memberInfoDTO.nickname(), Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
         return savedComment.getId();
     }
 

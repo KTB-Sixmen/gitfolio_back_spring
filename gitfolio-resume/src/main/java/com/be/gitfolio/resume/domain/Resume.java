@@ -24,7 +24,7 @@ public class Resume extends BaseEntityMongo {
 
     @Id
     private String id;  // 이력서 ID
-    private Long memberId;  // 회원 ID
+    private String memberId;  // 회원 ID
     private String memberName; // 회원 이름
     private String avatarUrl; // 프로필 사진
     private String phoneNumber; // 전화번호
@@ -65,7 +65,7 @@ public class Resume extends BaseEntityMongo {
 
     public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO, Visibility visibility) {
         return Resume.builder()
-                .memberId(memberInfoDTO.memberId())
+                .memberId(String.valueOf(memberInfoDTO.memberId()))
                 .memberName(memberInfoDTO.name())
                 .avatarUrl(memberInfoDTO.avatarUrl())
                 .phoneNumber(memberInfoDTO.phoneNumber())

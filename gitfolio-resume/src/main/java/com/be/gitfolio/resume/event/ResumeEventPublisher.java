@@ -15,9 +15,10 @@ public class ResumeEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // 댓글 및 좋아요 이벤트 발행
-    public void publishResumeEvent(Long senderId, Long receiverId, String resumeId, NotificationType type) {
+    public void publishResumeEvent(Long senderId, String senderNickname, Long receiverId, String resumeId, NotificationType type) {
         ResumeEvent event = ResumeEvent.builder()
                 .senderId(senderId)
+                .senderNickname(senderNickname)
                 .receiverId(receiverId)
                 .resumeId(resumeId)
                 .type(type)

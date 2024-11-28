@@ -49,6 +49,9 @@ public class PaymentService {
 
     /**
      * 결제 준비
+     * @param memberId
+     * @param paidPlanRequest
+     * @return KakaoReadyResponse
      */
     @Transactional
     public KakaoReadyResponse kakaoPayReady(Long memberId, PaidPlanRequest paidPlanRequest) {
@@ -72,6 +75,9 @@ public class PaymentService {
 
     /**
      * 결제 완료 승인
+     * @param memberId
+     * @param pgToken
+     * @return KakaoApproveResponse
      */
     @Transactional
     public KakaoApproveResponse approveResponse(Long memberId, String pgToken) {
@@ -98,25 +104,55 @@ public class PaymentService {
 
     /**
      * 결제 취소
+     * @param memberId
+     * @param paidPlan
      */
     @Transactional
     public void cancelPayment(Long memberId, PaidPlan paidPlan) {
         Payment payment = paymentRepository.findByMemberIdAndPaidPlan(memberId, paidPlan)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_TRANSACTION_INFO));
 
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.cancel(payment.getId());
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.cancel(payment.getId(), "결제중 취소");
         paymentStatusHistoryRepository.save(paymentStatusHistory);
     }
 
     /**
      * 결제 실패
+     * @param memberId
+     * @param paidPlan
      */
     @Transactional
     public void failPayment(Long memberId, PaidPlan paidPlan) {
         Payment payment = paymentRepository.findByMemberIdAndPaidPlan(memberId, paidPlan)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_TRANSACTION_INFO));
 
-        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.fail(payment.getId());
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.fail(payment.getId(), "결제 실패");
+        paymentStatusHistoryRepository.save(paymentStatusHistory);
+    }
+
+    /**
+     * 정기 결제 해지
+     * @param memberId
+     */
+    @Transactional
+    public void terminatePayment(Long memberId) {
+        Payment payment = paymentRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_INFO));
+
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("cid", "TCSUBSCRIP");
+        parameters.put("sid", payment.getSid());
+
+        sendKakaoPaymentRequest(
+                "https://open-api.kakaopay.com/online/v1/payment/manage/subscription/inactive",
+                parameters,
+                Void.class
+        );
+
+        payment.terminate();
+        paymentRepository.save(payment);
+
+        PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.cancel(payment.getId(), "정기 결제 해지");
         paymentStatusHistoryRepository.save(paymentStatusHistory);
     }
 

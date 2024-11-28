@@ -15,9 +15,16 @@ public interface LikeRepository extends JpaRepository<Like, Long> {
 
     void deleteLikesByResumeId(String resumeId);
 
-    @Query("SELECT l.resumeId FROM Like l WHERE l.memberId = :memberId AND l.status = true")
+    void deleteByResumeIdAndMemberId(String resumeId, Long memberId);
+
+    @Query("SELECT l.resumeId FROM Like l WHERE l.memberId = :memberId")
     List<String> findLikedResumeIdsByMemberId(Long memberId);
 
     @Query("SELECT l FROM Like l WHERE l.memberId = :memberId AND l.resumeId IN :resumeIds")
     List<Like> findLikesByMemberIdAndResumeIds(Long memberId, List<String> resumeIds);
+
+    boolean existsByResumeIdAndMemberId(String resumeId, Long memberId);
+
+    @Query("SELECT l.resumeId FROM Like l WHERE l.memberId = :memberId AND l.resumeId IN :resumeIds")
+    List<String> findLikedResumeIdsByMemberIdAndResumeIds(Long memberId, List<String> resumeIds);
 }

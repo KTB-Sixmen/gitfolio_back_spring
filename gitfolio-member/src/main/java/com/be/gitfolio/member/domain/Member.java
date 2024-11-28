@@ -11,7 +11,7 @@ import java.util.Optional;
 
 import static com.be.gitfolio.member.domain.MemberRequest.*;
 
-@Builder
+@Builder(toBuilder = true)
 @Getter
 @Slf4j
 public class Member {
@@ -27,6 +27,7 @@ public class Member {
     private String email;
     private PositionType position;
     private PaidPlan paidPlan;
+    private Integer remainingCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,43 +40,33 @@ public class Member {
                 .role(memberCreate.role())
                 .avatarUrl(memberCreate.avatarUrl())
                 .paidPlan(PaidPlan.FREE)
+                .remainingCount(3)
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
 
     public Member updateMember(MemberUpdate memberUpdate, String avatarUrl) {
-        return Member.builder()
-                .id(id)
-                .username(username)
-                .nickname(nickname)
+        return this.toBuilder()
                 .name(memberUpdate.name())
-                .githubName(githubName)
-                .role(role)
                 .avatarUrl(avatarUrl)
                 .phoneNumber(memberUpdate.phoneNumber())
                 .email(memberUpdate.email())
                 .position(memberUpdate.position())
-                .paidPlan(paidPlan)
-                .createdAt(createdAt)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }
 
     public Member updatePlan(PaidPlan paidPlan) {
-        return Member.builder()
-                .id(id)
-                .username(username)
-                .nickname(nickname)
-                .name(name)
-                .githubName(githubName)
-                .role(role)
-                .avatarUrl(avatarUrl)
-                .phoneNumber(phoneNumber)
-                .email(email)
-                .position(position)
+        return this.toBuilder()
                 .paidPlan(paidPlan)
-                .createdAt(createdAt)
+                .updatedAt(LocalDateTime.now())
+                .build();
+    }
+
+    public Member decreaseRemainingCount() {
+        return this.toBuilder()
+                .remainingCount(remainingCount-1)
                 .updatedAt(LocalDateTime.now())
                 .build();
     }

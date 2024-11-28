@@ -2,10 +2,10 @@ package com.be.gitfolio.resume.dto;
 
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
+import com.be.gitfolio.common.utility.TimeUtils;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -33,14 +33,14 @@ public class ResumeResponseDTO {
         public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    resume.getMemberId(),
+                    Long.valueOf(resume.getMemberId()),
                     avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
                     resume.getTags(),
                     resume.getLikeCount(),
                     resume.getViewCount(),
-                    resume.getUpdatedAt(),
+                    TimeUtils.convertUtcToSeoul(resume.getUpdatedAt()),
                     liked,
                     resume.getVisibility()
             );
@@ -114,7 +114,7 @@ public class ResumeResponseDTO {
                     resume.getLikeCount(),
                     resume.getViewCount(),
                     liked,
-                    resume.getUpdatedAt(),
+                    TimeUtils.convertUtcToSeoul(resume.getUpdatedAt()),
                     resume.getVisibility()
             );
         }
@@ -144,8 +144,8 @@ public class ResumeResponseDTO {
                     nickname,
                     avatarFullUrl,
                     comment.getContent(),
-                    comment.getCreatedAt(),
-                    comment.getUpdatedAt()
+                    TimeUtils.convertUtcToSeoul(comment.getCreatedAt()),
+                    TimeUtils.convertUtcToSeoul(comment.getUpdatedAt())
             );
         }
     }

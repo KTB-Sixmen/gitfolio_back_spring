@@ -1,5 +1,6 @@
 package com.be.gitfolio.member.service;
 
+import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.s3.S3Service;
@@ -14,8 +15,19 @@ import com.be.gitfolio.member.service.port.MemberRepository;
 import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.launch.JobLauncher;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRepository;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -37,6 +49,9 @@ public class MemberServiceImpl implements MemberService {
     private final MemberAdditionalInfoRepository memberAdditionalInfoRepository;
     private final S3Service s3Service;
     private final GithubApi githubApi;
+    private final JobLauncher jobLauncher;
+    private final Job remainingCountResetJob;
+    private final JobRepository jobRepository;
 
     /**
      * 회원 생성
@@ -189,5 +204,75 @@ public class MemberServiceImpl implements MemberService {
     public void deleteMember(Long memberId) {
         memberRepository.deleteById(memberId);
         memberAdditionalInfoRepository.deleteByMemberId(String.valueOf(memberId));
+    }
+
+    /**
+     * 회원 잔여 사용권 차감
+     * @param memberId
+     * @return
+     */
+    @Transactional
+    @Override
+    public Void decreaseRemainingCount(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
+
+        Member updatedMember = member.decreaseRemainingCount();
+        memberRepository.save(updatedMember);
+        return null;
+    }
+
+    /**
+     * 플랜 만료 이벤트 핸들러
+     */
+    @KafkaListener(topics = "expiration-topic", groupId = "member-service-group")
+    @Transactional
+    public void handleExpirationEvent(KafkaEvent.ExpirationEvent event) {
+        Long memberId = event.getMemberId();
+        Optional<Member> memberOpt = memberRepository.findById(memberId);
+
+        if (memberOpt.isPresent()) {
+            Member member = memberOpt.get();
+            Member updatedMember = member.updatePlan(PaidPlan.FREE);
+            memberRepository.save(updatedMember);
+        } else {
+            log.info("존재하지 않는 사용자의 결제 만료");
+        }
+    }
+
+    /**
+     * payment 배치 작업 완료 이벤트 핸들러
+     */
+    @KafkaListener(topics = "payment-batch-complete-topic", groupId = "member-service-group")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void handleBatchCompleteEvent(String message) {
+        if ("BatchCompleted".equals(message)) {
+            try {
+                JobParameters parameters = new JobParametersBuilder()
+                        .addLong("time", System.currentTimeMillis())
+                        .toJobParameters();
+
+                // 별도의 트랜잭션에서 실행
+                runJobInNewTransaction(parameters);
+
+            } catch (BaseException e) {
+                log.error("Error during batch completion handling: {}", e.getMessage());
+            }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW) // 새 트랜잭션에서 실행
+    public void runJobInNewTransaction(JobParameters parameters) {
+        try {
+            jobLauncher.run(remainingCountResetJob, parameters);
+        } catch (JobInstanceAlreadyCompleteException e) {
+            throw new BaseException(ErrorCode.ALREADY_COMPLETED_JOB);
+        } catch (JobExecutionAlreadyRunningException e) {
+            throw new BaseException(ErrorCode.ALREADY_RUNNING_JOB);
+        } catch (JobParametersInvalidException e) {
+            throw new BaseException(ErrorCode.INVALID_JOB_PARAMETER);
+        } catch (JobRestartException e) {
+            throw new BaseException(ErrorCode.CANNOT_RESTART_JOB);
+        }
     }
 }
