@@ -5,6 +5,7 @@ import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.NotificationType;
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
@@ -72,6 +73,10 @@ public class ResumeService {
             throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
         }
 
+        // 사용권 없으면 예외
+        if (memberInfoDTO.remainingCount() <= 0) {
+            throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
+        }
 
         String personalRepo = "https://github.com/" + memberInfoDTO.nickname();
 
@@ -93,12 +98,15 @@ public class ResumeService {
         Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
         String resumeId = resumeRepository.save(resume).getId();
 
-        memberWebClient.patch()
-                .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
-                .retrieve()
-                .bodyToMono(Void.class)
-                .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
-                .subscribe(); // 비동기 요청으로 실행
+        // FREE 사용자면 사용권 차감
+        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
+            memberWebClient.patch()
+                    .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
+                    .subscribe(); // 비동기 요청으로 실행
+        }
 
         return resumeId;
     }

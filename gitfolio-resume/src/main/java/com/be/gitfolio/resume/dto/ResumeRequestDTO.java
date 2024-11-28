@@ -1,5 +1,6 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Resume;
@@ -20,6 +21,8 @@ public class ResumeRequestDTO {
             @Pattern(regexp = "^\\d{3}\\d{3,4}\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. 예시: 01012345678") String phoneNumber,
             @Email(message = "올바른 이메일 형식이어야 합니다.") String email,
             @NotBlank PositionType position,
+            PaidPlan paidPlan,
+            Integer remainingCount,
             List<Resume.WorkExperience> workExperiences,
             List<Resume.Education> educations,
             List<Resume.Certificate> certificates,
