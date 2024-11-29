@@ -1,13 +1,12 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Resume;
 import jakarta.validation.constraints.*;
 
 import java.util.List;
-
-import static com.be.gitfolio.common.grpc.MemberServiceProto.*;
 
 public class ResumeRequestDTO {
 
@@ -22,6 +21,8 @@ public class ResumeRequestDTO {
             @Pattern(regexp = "^\\d{3}\\d{3,4}\\d{4}$", message = "전화번호 형식이 올바르지 않습니다. 예시: 01012345678") String phoneNumber,
             @Email(message = "올바른 이메일 형식이어야 합니다.") String email,
             @NotBlank PositionType position,
+            PaidPlan paidPlan,
+            Integer remainingCount,
             List<Resume.WorkExperience> workExperiences,
             List<Resume.Education> educations,
             List<Resume.Certificate> certificates,
@@ -33,6 +34,26 @@ public class ResumeRequestDTO {
             String requirements,
             @NotNull(message = "공개 여부는 필수 항목입니다.") Visibility visibility
     ) {}
+
+    public record UpdateResumeWithAIRequestDTO(
+            String selectedText,
+            @NotEmpty(message = "요구사항은 필수 항목입니다.") String requirement
+    ) {}
+
+    public record AIUpdateRequestDTO(
+        String selectedText,
+        String requirement,
+        Resume resumeInfo
+    ) {
+        public static AIUpdateRequestDTO of(UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO,
+                                            Resume resumeInfo) {
+            return new AIUpdateRequestDTO(
+                    updateResumeWithAIRequestDTO.selectedText(),
+                    updateResumeWithAIRequestDTO.requirement(),
+                    resumeInfo
+            );
+        }
+    }
 
     public record AIRequestDTO(
             String githubID,    // 회원 깃허브 아이디(nickname 필드)

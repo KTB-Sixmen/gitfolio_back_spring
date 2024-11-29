@@ -32,4 +32,6 @@ public interface MemberService {
     Void updateMemeberPlan(Long memberId, PaidPlan paidPlan);
 
     void deleteMember(Long memberId);
+
+    Void decreaseRemainingCount(Long memberId);
 }

@@ -18,6 +18,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static com.be.gitfolio.member.controller.response.MemberResponse.*;
@@ -97,13 +98,13 @@ class MemberServiceTest {
     }
 
     @Test
-    void 잘못된_username으로_기본정보를_조회하면_에러를_던진다() throws Exception {
+    void 잘못된_username으로_기본정보를_조회하면_null을_반환한다() throws Exception {
         //given
         //when
+        Optional<Member> member = memberService.findMemberIdByUsername("NotExistUsername");
+
         //then
-        assertThatThrownBy(() -> {
-            memberService.findMemberIdByUsername("NotExistUsername");
-        }).isInstanceOf(BaseException.class);
+        assertThat(member).isEmpty();
     }
 
     @Test

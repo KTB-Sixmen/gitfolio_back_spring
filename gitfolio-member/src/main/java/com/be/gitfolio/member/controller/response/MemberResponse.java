@@ -1,5 +1,6 @@
 package com.be.gitfolio.member.controller.response;
 
+import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.*;
 
@@ -21,6 +22,8 @@ public class MemberResponse {
             String phoneNumber,
             String email,
             PositionType position,
+            PaidPlan paidPlan,
+            Integer remainingCount,
             List<WorkExperience> workExperiences,
             List<Education> educations,
             List<Certificate> certificates,
@@ -38,6 +41,8 @@ public class MemberResponse {
                     member.getPhoneNumber(),
                     member.getEmail(),
                     member.getPosition(),
+                    member.getPaidPlan(),
+                    member.getRemainingCount(),
                     memberAdditionalInfo.getWorkExperiences(),
                     memberAdditionalInfo.getEducations(),
                     memberAdditionalInfo.getCertificates(),

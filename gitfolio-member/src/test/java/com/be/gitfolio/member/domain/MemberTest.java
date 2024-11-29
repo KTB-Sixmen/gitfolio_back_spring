@@ -24,7 +24,7 @@ public class MemberTest {
         Member member = Member.from(memberCreate);
         //then
         assertThat(member.getAvatarUrl()).isEqualTo("www.avatar.url.png");
-        assertThat(member.getGithubName()).isNull();
+        assertThat(member.getGithubName()).isEmpty();
         assertThat(member.getRole()).isEqualTo("ROLE_USER");
         assertThat(member.getNickname()).isEqualTo("namkikim0718");
         assertThat(member.getUsername()).isEqualTo("123456789");
@@ -48,7 +48,7 @@ public class MemberTest {
                 .position(PositionType.GAME)
                 .build();
         //when
-        member.updateMember(updateMember, "www.update.url.png");
+        member = member.updateMember(updateMember, "www.update.url.png");
         //then
         assertThat(member.getAvatarUrl()).isEqualTo("www.update.url.png");
         assertThat(member.getName()).isEqualTo(updateMember.name());
@@ -70,8 +70,8 @@ public class MemberTest {
                 .paidPlan(PaidPlan.FREE)
                 .build();
         //when
-        member.updatePlan(PaidPlan.PRO);
+        Member updatedMember = member.updatePlan(PaidPlan.PRO);
         //then
-        assertThat(member.getPaidPlan()).isEqualTo(PaidPlan.PRO);
+        assertThat(updatedMember.getPaidPlan()).isEqualTo(PaidPlan.PRO);
     }
 }
