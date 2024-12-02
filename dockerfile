@@ -16,7 +16,5 @@ COPY . .
 #     cp */build/libs/*-SNAPSHOT.jar build
 
 RUN ./gradlew clean build -x test && \
-    if [ -f .env ]; then
-        cp .env build;
-    fi && \
+    test -f .env && cp .env build || true && \
     cp */build/libs/*-SNAPSHOT.jar build
