@@ -4,7 +4,7 @@ WORKDIR /resume
 
 EXPOSE 8082
 
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
 # 로컬용
