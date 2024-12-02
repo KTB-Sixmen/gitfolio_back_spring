@@ -8,7 +8,7 @@ EXPOSE 8082
 # COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
 # 로컬용
-COPY ../build/.env .env
+# COPY ../build/.env .env
 COPY ../build/*-resume-*-SNAPSHOT.jar resume.jar
 
 # 로컬용

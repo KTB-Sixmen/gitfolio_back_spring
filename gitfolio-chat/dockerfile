@@ -9,7 +9,7 @@ EXPOSE 8083
 # COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-chat-*-SNAPSHOT.jar chat.jar
 # 로컬용
 
-COPY ../build/.env .env
+# COPY ../build/.env .env
 COPY ../build/*-chat-*-SNAPSHOT.jar chat.jar
 
 

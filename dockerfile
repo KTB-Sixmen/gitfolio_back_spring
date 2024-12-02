@@ -11,6 +11,12 @@ RUN chmod +x gradlew && \
 
 COPY . .
 
+# RUN ./gradlew clean build -x test && \
+#     cp .env build && \
+#     cp */build/libs/*-SNAPSHOT.jar build
+
 RUN ./gradlew clean build -x test && \
-    cp .env build && \
+    if [ -f .env ]; then
+        cp .env build;
+    fi && \
     cp */build/libs/*-SNAPSHOT.jar build
