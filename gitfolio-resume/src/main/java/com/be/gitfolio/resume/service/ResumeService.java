@@ -60,7 +60,7 @@ public class ResumeService {
      * 이력서 생성 요청
      */
     @Transactional
-    public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO, Visibility visibility) {
+    public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO) {
 
         MemberInfoDTO memberInfoDTO;
         try {
@@ -92,10 +92,10 @@ public class ResumeService {
                     .bodyToMono(AIResponseDTO.class)
                     .block();
         } catch (WebClientResponseException exception) {
-            throw new InternalException("AIWebClient erorr" + exception.getMessage());
+            throw new InternalException("AIWebClient error" + exception.getMessage());
         }
 
-        Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, visibility);
+        Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, createResumeRequestDTO);
         String resumeId = resumeRepository.save(resume).getId();
 
         // FREE 사용자면 사용권 차감
@@ -191,16 +191,55 @@ public class ResumeService {
     }
 
     /**
-     * 이력서 상세 조회
+     * 이력서 상세 조회(커뮤니티)
      */
     @Transactional
-    public ResumeDetailDTO getResumeDetail(String token, String resumeId, String clientIp) {
+    public ResumeDetailDTO getCommunityResumeDetail(String token, String resumeId, String clientIp) {
         // Token에서 사용자 ID 추출
         Long memberId = extractMemberIdFromToken(token);
 
         // 1. 이력서 조회
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
+        // private 이력서인 경우 예외처리
+        if (resume.getVisibility().equals(Visibility.PRIVATE)) {
+            throw new BaseException(ErrorCode.RESUME_ACCESS_DENIED);
+        }
+
+        // 2. 조회수 증가 및 저장
+        incrementViewCount(resume, clientIp);
+        resumeRepository.save(resume);
+
+        // 3. 좋아요 여부 확인
+        boolean isLiked = likeRepository.existsByResumeIdAndMemberId(resume.getId(), memberId);
+
+        // 4. Avatar URL 가공
+        String avatarUrl = resume.getAvatarUrl();
+        if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
+            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
+        }
+
+        // 5. DTO 생성 및 반환
+        return new ResumeDetailDTO(resume, isLiked, avatarUrl);
+    }
+
+    /**
+     * 내 이력서 상세 조회(내 이력서)
+     */
+    @Transactional
+    public ResumeDetailDTO getMyResumeDetail(String token, String resumeId, String clientIp) {
+        // Token에서 사용자 ID 추출
+        Long memberId = extractMemberIdFromToken(token);
+
+        // 1. 이력서 조회
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+
+        // 내 이력서가 아닌 경우 예외처리
+        if (!resume.getMemberId().equals(String.valueOf(memberId))) {
+            throw new BaseException(ErrorCode.RESUME_ACCESS_DENIED);
+        }
 
         // 2. 조회수 증가 및 저장
         incrementViewCount(resume, clientIp);
@@ -316,7 +355,7 @@ public class ResumeService {
         MemberInfoDTO memberInfoDTO;
         try {
             memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                    .uri("/api/members/{memberId}", memberId)
                     .retrieve()
                     .bodyToMono(MemberInfoDTO.class)
                     .block();

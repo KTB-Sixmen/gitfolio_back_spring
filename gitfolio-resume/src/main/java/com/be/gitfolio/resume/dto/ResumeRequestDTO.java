@@ -4,6 +4,7 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Resume;
+import com.be.gitfolio.resume.type.Template;
 import jakarta.validation.constraints.*;
 
 import java.util.List;
@@ -32,7 +33,8 @@ public class ResumeRequestDTO {
     public record CreateResumeRequestDTO(
             @NotEmpty(message = "적어도 하나의 레포지토리를 선택해야 합니다.") List<String> selectedRepo,
             String requirements,
-            @NotNull(message = "공개 여부는 필수 항목입니다.") Visibility visibility
+            @NotNull(message = "공개 여부는 필수 항목입니다.") Visibility visibility,
+            @NotNull(message = "템플릿 선택은 필수 항목입니다.") Template template
     ) {}
 
     public record UpdateResumeWithAIRequestDTO(

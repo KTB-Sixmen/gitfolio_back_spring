@@ -4,6 +4,7 @@ import com.be.gitfolio.common.config.BaseEntityMongo;
 import com.be.gitfolio.common.type.*;
 import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.dto.ResumeResponseDTO;
+import com.be.gitfolio.resume.type.Template;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import lombok.*;
@@ -42,6 +43,8 @@ public class Resume extends BaseEntityMongo {
     private Visibility visibility; // 공개 여부
     private int likeCount;  // 좋아요 수
     private int viewCount;  // 조회수
+    @Enumerated(EnumType.STRING)
+    private Template template;
 
     public void updateVisibility(Visibility visibility) {
         this.visibility = visibility;
@@ -63,7 +66,7 @@ public class Resume extends BaseEntityMongo {
         this.certificates = updateResumeDTO.certificates();
     }
 
-    public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO, Visibility visibility) {
+    public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO, CreateResumeRequestDTO createResumeRequestDTO) {
         return Resume.builder()
                 .memberId(String.valueOf(memberInfoDTO.memberId()))
                 .memberName(memberInfoDTO.name())
@@ -78,9 +81,10 @@ public class Resume extends BaseEntityMongo {
                 .links(memberInfoDTO.links())
                 .educations(memberInfoDTO.educations())
                 .certificates(memberInfoDTO.certificates())
-                .visibility(visibility)
+                .visibility(createResumeRequestDTO.visibility())
                 .likeCount(0)
                 .viewCount(0)
+                .template(createResumeRequestDTO.template())
                 .build();
     }
 

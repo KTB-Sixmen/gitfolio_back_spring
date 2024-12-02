@@ -43,7 +43,7 @@ public class ResumeController {
                 HttpStatus.CREATED,
                 "201 CREATED",
                 "이력서 생성에 성공했습니다.",
-                resumeService.createResume(memberId, createResumeRequestDTO, createResumeRequestDTO.visibility())
+                resumeService.createResume(memberId, createResumeRequestDTO)
         ));
     }
 
@@ -103,14 +103,14 @@ public class ResumeController {
     }
 
     /**
-     * 이력서 상세 조회
+     * 이력서 상세 조회(커뮤니티)
      */
-    @GetMapping("/{resumeId}")
-    public ResponseEntity<BaseResponse<ResumeDetailDTO>> getResumeDetail(@PathVariable("resumeId") String resumeId,
+    @GetMapping("/{resumeId}/community")
+    public ResponseEntity<BaseResponse<ResumeDetailDTO>> getCommunityResumeDetail(@PathVariable("resumeId") String resumeId,
                                                                          @RequestHeader(value = "Authorization", required = false) String token,
                                                                          HttpServletRequest request) {
         String clientIp = getClientIp(request);
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getResumeDetail(token, resumeId, clientIp)));
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getCommunityResumeDetail(token, resumeId, clientIp)));
     }
 
     // 클라이언트 IP 가져오는 유틸리티 메서드
@@ -120,6 +120,17 @@ public class ResumeController {
             ip = request.getRemoteAddr();
         }
         return ip;
+    }
+
+    /**
+     * 내 이력서 상세 조회(내 이력서)
+     */
+    @GetMapping("/{resumeId}/myResume")
+    public ResponseEntity<BaseResponse<ResumeDetailDTO>> getMyResumeDetail(@PathVariable("resumeId") String resumeId,
+                                                                         @RequestHeader(value = "Authorization", required = false) String token,
+                                                                         HttpServletRequest request) {
+        String clientIp = getClientIp(request);
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.getMyResumeDetail(token, resumeId, clientIp)));
     }
 
     /**

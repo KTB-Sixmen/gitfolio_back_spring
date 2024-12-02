@@ -5,10 +5,14 @@ import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.payment.service.PaymentService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
 
 import static com.be.gitfolio.payment.dto.PaymentRequest.*;
 import static com.be.gitfolio.payment.dto.PaymentResponse.*;
@@ -19,6 +23,8 @@ import static com.be.gitfolio.payment.dto.PaymentResponse.*;
 @Slf4j
 public class PaymentController {
 
+    @Value("${payment.success.redirectUrl}")
+    private String paymentSuccessRedirectUrl;
     private final PaymentService paymentService;
 
     /**
@@ -36,9 +42,11 @@ public class PaymentController {
      * 결제 성공
      */
     @GetMapping("/success")
-    public ResponseEntity<BaseResponse<KakaoApproveResponse>> afterPayRequest(@RequestParam("pg_token") String pgToken,
-                                                                @RequestParam("member_id") Long memberId) {
-        return ResponseEntity.ok().body(new BaseResponse<>(paymentService.approveResponse(memberId, pgToken)));
+    public void afterPayRequest(@RequestParam("pg_token") String pgToken,
+                                @RequestParam("member_id") Long memberId,
+                                HttpServletResponse response) throws IOException {
+        paymentService.approveResponse(memberId, pgToken);
+        response.sendRedirect(paymentSuccessRedirectUrl);
     }
 
     /**

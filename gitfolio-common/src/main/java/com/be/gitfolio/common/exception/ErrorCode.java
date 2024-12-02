@@ -47,6 +47,7 @@ public enum ErrorCode {
      */
     RESUME_NOT_FOUND(HttpStatus.NOT_FOUND, "이력서가 존재하지 않습니다."),
     INVALID_MEMBER_TO_UPDATE_RESUME(HttpStatus.FORBIDDEN, "이력서 작성자만 수정할 수 있습니다."),
+    RESUME_ACCESS_DENIED(HttpStatus.FORBIDDEN, "접근할 수 없는 이력서 입니다."),
 
 
     /**
