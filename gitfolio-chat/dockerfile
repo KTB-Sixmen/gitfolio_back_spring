@@ -2,7 +2,7 @@ FROM amazoncorretto:17 AS runner
 
 WORKDIR /chat
 
-EXPOSE 8083
+EXPOSE 8080
 
 # 빌드된 JAR 파일 복사
 COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
