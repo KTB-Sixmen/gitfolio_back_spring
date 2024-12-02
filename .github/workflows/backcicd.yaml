@@ -96,29 +96,6 @@ jobs:
           --timeout-seconds 600 \
           --region ap-northeast-2
 
-      - name: Verify .env file creation
-        run: |
-          # 환경 변수 파일이 성공적으로 생성되었는지 확인
-          # test -f 명령어로 파일 존재 여부를 체크하고, 파일 크기도 확인합니다
-          aws ssm send-command \
-            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
-            --document-name "AWS-RunShellScript" \
-            --comment "Verifying .env file for ${{ matrix.module }} module" \
-            --parameters commands='
-              if [[ ! -f /home/ec2-user/.env ]]; then
-                echo "Error: .env file not found"
-                exit 1
-              fi
-          
-              if [[ ! -s /home/ec2-user/.env ]]; then
-                echo "Error: .env file is empty"
-                exit 1
-              fi
-          
-              echo "Success: .env file exists and has content"' \
-            --timeout-seconds 600 \
-            --region ap-northeast-2
-
       - name: Deploy to EC2 instances
         run: |
           if [ -z "${{ steps.get_instances.outputs.instance_ids }}" ]; then
