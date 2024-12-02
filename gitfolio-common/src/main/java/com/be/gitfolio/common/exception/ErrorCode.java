@@ -57,6 +57,7 @@ public enum ErrorCode {
     /**
      * 멤버 에러
      */
+    REMAINING_COUNT_EXCEEDED(HttpStatus.BAD_REQUEST, "잔여 사용권이 존재하지 않습니다."),
     NO_MEMBER_INFO(HttpStatus.NOT_FOUND, "회원 정보가 존재하지 않습니다."),
     BAD_INPUT(HttpStatus.BAD_REQUEST, "입력 형식이 잘못되었습니다."),
     ALREADY_EXIST_MEMBER_ADDITIONAL_INFO(HttpStatus.CONFLICT, "이미 회원의 추가정보가 존재합니다."),
