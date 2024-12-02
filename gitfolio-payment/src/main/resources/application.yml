@@ -61,6 +61,8 @@ kakaopay:
 payment:
   server:
     url: ${PAYMENT_SERVER_URL}
+  success:
+    redirectUrl: ${PAYMENT_SUCCESS_REDIRECT_URL}
 
 github:
   api:
