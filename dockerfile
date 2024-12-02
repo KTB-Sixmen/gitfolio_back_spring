@@ -6,10 +6,10 @@ COPY settings.gradle build.gradle ./
 COPY gradle ./gradle
 COPY gradlew ./
 
+COPY . .
+
 RUN chmod +x gradlew && \
     ./gradlew dependencies
-
-COPY . .
 
 # RUN ./gradlew clean build -x test && \
 #     cp .env build && \
