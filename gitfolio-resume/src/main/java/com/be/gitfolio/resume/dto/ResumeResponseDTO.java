@@ -5,6 +5,7 @@ import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.common.utility.TimeUtils;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
+import com.be.gitfolio.resume.type.Template;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -93,7 +94,8 @@ public class ResumeResponseDTO {
             int viewCount,
             @JsonProperty("isLiked") boolean liked,
             LocalDateTime updatedAt,
-            Visibility visibility
+            Visibility visibility,
+            Template template
     ) {
         public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
@@ -115,7 +117,8 @@ public class ResumeResponseDTO {
                     resume.getViewCount(),
                     liked,
                     TimeUtils.convertUtcToSeoul(resume.getUpdatedAt()),
-                    resume.getVisibility()
+                    resume.getVisibility(),
+                    resume.getTemplate()
             );
         }
     }
