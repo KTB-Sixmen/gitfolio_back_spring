@@ -1,6 +1,5 @@
 package com.be.gitfolio.member.domain;
 
-import com.be.gitfolio.member.infrastructure.memberAdditionalInfo.MemberAdditionalInfoEntity;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,7 +7,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import static com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.*;
 
 @Builder
 @Getter

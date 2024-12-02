@@ -27,6 +27,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: '*'
+    listener:
+      concurrency: 10
 
   jwt:
     secret: ${JWT_SECRET_KEY}
@@ -62,3 +64,6 @@ kakao:
 ai:
   server:
     url: ${AI_SERVER_URL}
+notification:
+  server:
+    url: ${NOTIFICATION_SERVER_URL}

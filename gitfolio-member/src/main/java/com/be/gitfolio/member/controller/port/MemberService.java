@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.be.gitfolio.member.controller.response.MemberResponse.*;
-import static com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.*;
-import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 
 public interface MemberService {
 

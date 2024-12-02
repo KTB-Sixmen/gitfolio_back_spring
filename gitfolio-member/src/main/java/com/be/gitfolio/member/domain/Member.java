@@ -9,7 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
-import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 
 @Builder(toBuilder = true)
 @Getter

@@ -16,14 +16,12 @@ import org.mockito.BDDMockito;
 import org.mockito.Mockito;
 import org.springframework.mock.web.MockMultipartFile;
 
-import java.io.IOException;
 import java.util.Collections;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static com.be.gitfolio.member.controller.response.MemberResponse.*;
-import static com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.*;
-import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 import static org.assertj.core.api.Assertions.*;
 
 class MemberServiceTest {

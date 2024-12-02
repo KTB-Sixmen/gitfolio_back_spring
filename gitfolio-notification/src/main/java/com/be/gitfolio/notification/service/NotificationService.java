@@ -1,6 +1,7 @@
 package com.be.gitfolio.notification.service;
 
 
+import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.notification.domain.Notification;
@@ -33,7 +34,7 @@ public class NotificationService {
     @Transactional
     @KafkaListener(topics = "resumeEventTopic", groupId = "notification-group")
     public void consumeResumeEvent(ResumeEvent resumeEvent) {
-        log.info("Kafka 메시지 도착 : {}", resumeEvent.getType());
+        log.info("Kafka 메시지 도착 : {}", resumeEvent.getSenderNickname());
         if (!Objects.equals(resumeEvent.getSenderId(), resumeEvent.getReceiverId())) {
             Notification notification = Notification.from(resumeEvent);
             notificationRepository.save(notification);
@@ -70,5 +71,11 @@ public class NotificationService {
         notificationRepository.save(notification);
 
         return NotificationListDTO.from(notification);
+    }
+
+    @Transactional
+    public void create(ResumeEvent resumeEvent) {
+        Notification notification = Notification.from(resumeEvent);
+        notificationRepository.save(notification);
     }
 }

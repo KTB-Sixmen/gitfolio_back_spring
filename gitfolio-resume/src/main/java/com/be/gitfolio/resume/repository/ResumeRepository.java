@@ -11,7 +11,6 @@ import java.util.List;
 
 @Repository
 public interface ResumeRepository extends MongoRepository<Resume, String>, ResumeRepositoryCustom {
-    List<Resume> findAllByMemberId(String memberId, Sort sort);
 
-    Page<Resume> findAllByMemberId(Long memberId, Pageable pageable);
+    Page<Resume> findAllByMemberId(String memberId, Pageable pageable);
 }
