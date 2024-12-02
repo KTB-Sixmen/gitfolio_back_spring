@@ -7,10 +7,9 @@ import com.be.gitfolio.common.type.WorkType;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class MemberAdditionalInfoTest {

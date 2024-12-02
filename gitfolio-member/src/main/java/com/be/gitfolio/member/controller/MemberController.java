@@ -5,7 +5,7 @@ import com.be.gitfolio.common.config.BaseResponse;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
-import com.be.gitfolio.member.domain.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
+import com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
-import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 import static com.be.gitfolio.member.controller.response.MemberResponse.*;
 
 @RestController
