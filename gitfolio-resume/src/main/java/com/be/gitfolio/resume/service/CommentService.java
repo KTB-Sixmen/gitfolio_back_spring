@@ -1,5 +1,6 @@
 package com.be.gitfolio.resume.service;
 
+import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.s3.S3Service;
@@ -32,34 +33,55 @@ public class CommentService {
     private final ResumeEventPublisher resumeEventPublisher;
     private final S3Service s3Service;
     private final WebClient memberWebClient;
+    private final WebClient notificationWebClient;
+
+//    // 테스트용(webClient)
+//    @Transactional
+//    public Long createCommentWithHttp(String resumeId, Long senderId, String senderNickname, CommentRequestDTO commentRequestDTO) {
+//
+//        Resume resume = resumeRepository.findById(resumeId)
+//                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
+//
+//        Comment comment = Comment.builder()
+//                .resumeId(resumeId)
+//                .memberId(senderId)
+//                .content(commentRequestDTO.content())
+//                .build();
+//        Comment savedComment = commentRepository.save(comment);
+//
+//        KafkaEvent.ResumeEvent resumeEvent = new KafkaEvent.ResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+//        try {
+//            notificationWebClient.post()
+//                    .uri("/api/notifications")
+//                    .bodyValue(resumeEvent)
+//                    .retrieve()
+//                    .toBodilessEntity()
+//                    .block();
+//        } catch (WebClientResponseException exception) {
+//            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
+//        }
+//
+//        return savedComment.getId();
+//    }
+
 
     /**
      * 댓글 작성
      */
     @Transactional
-    public Long createComment(String resumeId, Long memberId, CommentRequestDTO commentRequestDTO) {
-        MemberInfoDTO memberInfoDTO;
-        try {
-            memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", memberId)
-                    .retrieve()
-                    .bodyToMono(MemberInfoDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-        }
+    public Long createComment(String resumeId, Long senderId, String senderNickname, CommentRequestDTO commentRequestDTO) {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         Comment comment = Comment.builder()
                 .resumeId(resumeId)
-                .memberId(memberId)
+                .memberId(senderId)
                 .content(commentRequestDTO.content())
                 .build();
         Comment savedComment = commentRepository.save(comment);
 
-        resumeEventPublisher.publishResumeEvent(memberId, memberInfoDTO.nickname(), Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+        resumeEventPublisher.publishResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
         return savedComment.getId();
     }
 

@@ -2,6 +2,7 @@ package com.be.gitfolio.notification.controller;
 
 import com.be.gitfolio.common.aop.AuthRequired;
 import com.be.gitfolio.common.config.BaseResponse;
+import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.notification.dto.NotificationResponseDTO;
 import com.be.gitfolio.notification.service.NotificationService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,6 +20,12 @@ import static com.be.gitfolio.notification.dto.NotificationResponseDTO.*;
 public class NotificationController {
 
     private final NotificationService notificationService;
+
+    @PostMapping()
+    public ResponseEntity<BaseResponse<String>> newNotification(@RequestBody KafkaEvent.ResumeEvent resumeEvent) {
+        notificationService.create(resumeEvent);
+        return ResponseEntity.ok().body(new BaseResponse<>("알림이 생성되었습니다."));
+    }
 
     /**
      * 내 알림 전체 조회

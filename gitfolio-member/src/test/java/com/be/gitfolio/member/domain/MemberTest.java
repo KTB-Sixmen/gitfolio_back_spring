@@ -2,10 +2,9 @@ package com.be.gitfolio.member.domain;
 
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static com.be.gitfolio.member.domain.MemberRequest.*;
+import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 import static org.assertj.core.api.Assertions.*;
 
 public class MemberTest {

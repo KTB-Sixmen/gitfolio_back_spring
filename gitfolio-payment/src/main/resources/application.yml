@@ -75,3 +75,6 @@ kakao:
 ai:
   server:
     url: ${AI_SERVER_URL}
+notification:
+  server:
+    url: ${NOTIFICATION_SERVER_URL}

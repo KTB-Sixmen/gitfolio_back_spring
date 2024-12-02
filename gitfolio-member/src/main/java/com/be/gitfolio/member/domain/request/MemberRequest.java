@@ -1,4 +1,4 @@
-package com.be.gitfolio.member.domain;
+package com.be.gitfolio.member.domain.request;
 
 import com.be.gitfolio.common.type.PositionType;
 import jakarta.validation.constraints.Email;

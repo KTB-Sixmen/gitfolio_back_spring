@@ -58,6 +58,9 @@ kakao:
 ai:
   server:
     url: ${AI_SERVER_URL}
+notification:
+  server:
+    url: ${NOTIFICATION_SERVER_URL}
 
 server:
   port: ${RESUME_SERVER_PORT}

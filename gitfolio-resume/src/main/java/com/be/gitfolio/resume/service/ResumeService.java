@@ -227,7 +227,7 @@ public class ResumeService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         // 1. MySQL에서 사용자의 이력서 목록을 페이지네이션으로 조회
-        Page<Resume> resumePage = resumeRepository.findAllByMemberId(memberId, pageable);
+        Page<Resume> resumePage = resumeRepository.findAllByMemberId(String.valueOf(memberId), pageable);
 
         // 2. 사용자의 모든 이력서 ID를 추출
         List<String> resumeIds = resumePage.getContent().stream()
@@ -379,7 +379,7 @@ public class ResumeService {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
-        if (!Objects.equals(resume.getMemberId(), memberId)) {
+        if (!Objects.equals(resume.getMemberId(), String.valueOf(memberId))) {
             throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
         }
 

@@ -19,6 +19,9 @@ public class WebClientConfig {
     @Value("${ai.server.url}")
     private String aiServiceBaseUrl;
 
+    @Value("${notification.server.url}")
+    private String notificationServiceBaseUrl;
+
     @Value("${github.api.url}")
     private String githubBaseUrl;
 
@@ -41,6 +44,13 @@ public class WebClientConfig {
                                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 20000) // 연결 타임아웃 20초
                                 .responseTimeout(Duration.ofMinutes(5)) // 응답 대기 타임아웃 5분
                 ))
+                .build();
+    }
+
+    @Bean
+    public WebClient notificationWebClient(WebClient.Builder builder) {
+        return builder
+                .baseUrl(notificationServiceBaseUrl)
                 .build();
     }
 
