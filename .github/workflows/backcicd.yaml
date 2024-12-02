@@ -89,11 +89,6 @@ jobs:
 
       - name: Update .env file on EC2 instances
         run: |
-          # 특수문자가 포함된 변수들을 개별적으로 이스케이프 처리
-          KAFKA_LISTENERS_ESC=$(echo '${{ secrets.KAFKA_LISTENERS }}' | sed 's/"/\\"/g')
-          KAFKA_ADVERTISED_LISTENERS_ESC=$(echo '${{ secrets.KAFKA_ADVERTISED_LISTENERS }}' | sed 's/"/\\"/g')
-          KAFKA_LISTENER_SECURITY_PROTOCOL_MAP_ESC=$(echo '${{ secrets.KAFKA_LISTENER_SECURITY_PROTOCOL_MAP }}' | sed 's/"/\\"/g')
-          
           aws ssm send-command \
             --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
             --document-name "AWS-RunShellScript" \
@@ -190,11 +185,6 @@ jobs:
             KAFKA_INTERNAL_PORT=${{ secrets.KAFKA_INTERNAL_PORT }}
             KAFKA_EXTERNAL_PORT=${{ secrets.KAFKA_EXTERNAL_PORT }}
             KAFKA_ZOOKEEPER_PORT=${{ secrets.KAFKA_ZOOKEEPER_PORT }}
-          
-            # 특수 처리가 필요한 Kafka 변수들
-            KAFKA_LISTENERS='"${KAFKA_LISTENERS_ESC}"'
-            KAFKA_ADVERTISED_LISTENERS='"${KAFKA_ADVERTISED_LISTENERS_ESC}"'
-            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP='"${KAFKA_LISTENER_SECURITY_PROTOCOL_MAP_ESC}"'
           
             KAFKA_INTER_BROKER_LISTENER_NAME=${{ secrets.KAFKA_INTER_BROKER_LISTENER_NAME }}
             KAFKA_ZOOKEEPER_CONNECT=${{ secrets.KAFKA_ZOOKEEPER_CONNECT }}
