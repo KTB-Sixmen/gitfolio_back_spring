@@ -176,6 +176,35 @@ public class ResumeController {
         }
     }
 
+//    // 테스트용(kafka)
+//    @PostMapping("/{resumeId}/commentsWithKafka")
+//    public ResponseEntity<BaseResponse<Long>> createCommentTestKafka(@PathVariable("resumeId") String resumeId,
+//                                                            HttpServletRequest request,
+//                                                            @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
+//        Long memberId = 2L;
+//        String nickname = "namkikim0718";
+//        return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
+//                HttpStatus.CREATED,
+//                "201 CREATED",
+//                "댓글 생성에 성공했습니다.",
+//                commentService.createComment(resumeId, memberId, nickname, commentRequestDTO)
+//        ));
+//    }
+//
+//    // 테스트용(webClient)
+//    @PostMapping("/{resumeId}/commentsWithHttp")
+//    public ResponseEntity<BaseResponse<Long>> createCommentTestWebClient(@PathVariable("resumeId") String resumeId,
+//                                                                HttpServletRequest request,
+//                                                                @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
+//        Long memberId = 2L;
+//        String nickname = "namkikim0718";
+//        return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
+//                HttpStatus.CREATED,
+//                "201 CREATED",
+//                "댓글 생성에 성공했습니다.",
+//                commentService.createCommentWithHttp(resumeId, memberId, nickname, commentRequestDTO)
+//        ));
+//    }
 
     /**
      * 댓글 작성
@@ -185,12 +214,13 @@ public class ResumeController {
     public ResponseEntity<BaseResponse<Long>> createComment(@PathVariable("resumeId") String resumeId,
                                                             HttpServletRequest request,
                                                             @Valid @RequestBody CommentRequestDTO commentRequestDTO) {
-        String memberId = request.getAttribute("memberId").toString();
+        String senderId = request.getAttribute("memberId").toString();
+        String senderNickname = request.getAttribute("nickname").toString();
         return ResponseEntity.status(HttpStatus.CREATED).body(new BaseResponse<>(
                 HttpStatus.CREATED,
                 "201 CREATED",
                 "댓글 생성에 성공했습니다.",
-                commentService.createComment(resumeId, Long.valueOf(memberId), commentRequestDTO)
+                commentService.createComment(resumeId, Long.valueOf(senderId), senderNickname, commentRequestDTO)
         ));
     }
 

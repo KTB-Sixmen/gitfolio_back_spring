@@ -13,7 +13,7 @@ public class Comment extends BaseEntityMySQL {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "like_id")
+    @Column(name = "comment_id")
     private Long id;
 
     private String resumeId;
