@@ -6,37 +6,8 @@ on:
       - 48-Develop브랜치-푸시시-CI/CD-구현
 
 jobs:
-  build_builder:
-    name: Build Builder Image
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ap-northeast-2
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-      - name: Build and push builder image
-        run: |
-          docker build \
-            -f ./dockerfile \
-            -t aida0/gitfolio_builder:test \
-            .
-          docker push aida0/gitfolio_builder:test
-
   build_and_deploy:
     name: Build and Deploy Modules
-    needs: build_builder  # builder 이미지가 먼저 빌드되어야 함
     runs-on: ubuntu-latest
     strategy:
       matrix:
