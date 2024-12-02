@@ -77,7 +77,11 @@ jobs:
         run: |
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-northeast-2 \
-            --filters '[{"Name":"tag:Service","Values":["back"]},{"Name":"tag:Index","Values":["${{ matrix.instance_index }}"]},{"Name":"tag:Environment","Values":["dev"]},{"Name":"tag:instance-state-name","Values":["running"]},{"Name":"tag:Type","Values":["ec2"]}]' \
+            --filters 'Name=tag:Service,Values=back' \
+              'Name=tag:Index,Values=${{ matrix.instance_index }}' \
+              'Name=tag:Environment,Values=dev' \
+              'Name=instance-state-name,Values=running' \
+              'Name=tag:Type,Values=ec2' \
             --query 'Reservations[].Instances[].InstanceId' \
             --output text)
           echo "INSTANCE_IDS=$INSTANCE_IDS"
