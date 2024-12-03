@@ -207,12 +207,12 @@ class MemberServiceTest {
     void 회원의_결제_플랜을_변경할_수_있다() throws Exception {
         //given
         Long memberId = 1L;
-        PaidPlan paidPlan = PaidPlan.STANDARD;
+        PaidPlan paidPlan = PaidPlan.PRO;
         //when
         memberService.updateMemeberPlan(memberId, paidPlan);
         //then
         Optional<Member> member = fakeMemberRepository.findById(1L);
-        assertThat(member.get().getPaidPlan()).isEqualTo(PaidPlan.STANDARD);
+        assertThat(member.get().getPaidPlan()).isEqualTo(PaidPlan.PRO);
     }
 
     @Test
