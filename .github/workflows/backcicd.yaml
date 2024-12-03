@@ -32,8 +32,18 @@ jobs:
             build_context: ./gitfolio-resume
             image_name: aida0/gitfolio_resume:test
             instance_index: '2'
-#  '48-Develop브랜치')의 코드를 GitHub Actions 실행 환경으로 복사
-#    그동안 localhost 8080 에 떳었던 이유는 develop 브랜치가 아닌 내 브랜치의 코드를 가져와서 그랬음
+          - module: notification
+            dockerfile_path: ./gitfolio-notification/dockerfile
+            build_context: ./gitfolio-notification
+            image_name: aida0/gitfolio_notification:test
+            instance_index: '3'
+          - module: chat
+            dockerfile_path: ./gitfolio-chat/dockerfile
+            build_context: ./gitfolio-chat
+            image_name: aida0/gitfolio_chat:test
+            instance_index: '4'
+    #  '48-Develop브랜치')의 코드를 GitHub Actions 실행 환경으로 복사
+    #    그동안 localhost 8080 에 떳었던 이유는 develop 브랜치가 아닌 내 브랜치의 코드를 가져와서 그랬음
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -68,9 +78,10 @@ jobs:
           INSTANCE_IDS=$(aws ec2 describe-instances \
             --region ap-northeast-2 \
             --filters 'Name=tag:Service,Values=back' \
-                      'Name=tag:Index,Values=${{ matrix.instance_index }}' \
-                      'Name=tag:Environment,Values=dev' \
-                      'Name=tag:Type,Values=ec2' \
+              'Name=tag:Index,Values=${{ matrix.instance_index }}' \
+              'Name=tag:Environment,Values=dev' \
+              'Name=instance-state-name,Values=running' \
+              'Name=tag:Type,Values=ec2' \
             --query 'Reservations[].Instances[].InstanceId' \
             --output text)
           echo "INSTANCE_IDS=$INSTANCE_IDS"

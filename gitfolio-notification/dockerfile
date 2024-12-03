@@ -1,0 +1,15 @@
+FROM amazoncorretto:17 AS runner
+
+WORKDIR /notification
+
+EXPOSE 8080
+
+# 빌드된 JAR 파일 복사
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
+# 로컬용
+# COPY ../build/.env .env
+# COPY ../build/*-notification-*-SNAPSHOT.jar notification.jar
+
+
+CMD [ "java", "-jar", "notification.jar" ]

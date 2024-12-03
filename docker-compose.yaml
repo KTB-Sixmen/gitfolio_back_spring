@@ -84,6 +84,42 @@ services:
     profiles:
       - run
 
+  notification:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-notification
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_notification:test
+    container_name: gitfolio_notification
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
+  chat:
+    platform: linux/amd64
+    build:
+      context: ./gitfolio-chat
+      dockerfile: dockerfile
+      target: runner
+    image: aida0/gitfolio_chat:test
+    container_name: gitfolio_chat
+    ports:
+      - target: 8080
+        published: 80
+        protocol: tcp
+      - target: 8080
+        published: 443
+        protocol: tcp
+    profiles:
+      - run
+
 volumes:
   gradle-cache:
   build-output:
