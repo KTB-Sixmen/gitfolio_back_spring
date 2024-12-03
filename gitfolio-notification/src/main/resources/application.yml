@@ -27,8 +27,8 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: '*'
-    listener:
-      concurrency: 10
+#    listener:
+#      concurrency: 50
 
   jwt:
     secret: ${JWT_SECRET_KEY}
