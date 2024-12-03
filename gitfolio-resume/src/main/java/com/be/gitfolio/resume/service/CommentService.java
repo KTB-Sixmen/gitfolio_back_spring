@@ -49,18 +49,17 @@ public class CommentService {
 //                .build();
 //        Comment savedComment = commentRepository.save(comment);
 //
+//        log.info("저장 성공!");
 //        KafkaEvent.ResumeEvent resumeEvent = new KafkaEvent.ResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
-//        try {
-//            notificationWebClient.post()
-//                    .uri("/api/notifications")
-//                    .bodyValue(resumeEvent)
-//                    .retrieve()
-//                    .toBodilessEntity()
-//                    .block();
-//        } catch (WebClientResponseException exception) {
-//            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-//        }
-//
+//        notificationWebClient.post()
+//                .uri("/api/notifications")
+//                .bodyValue(resumeEvent)
+//                .retrieve()
+//                .toBodilessEntity()
+//                .doOnSuccess(response -> log.info("Notification 전송 성공"))
+//                .doOnError(error -> log.error("Notification 전송 실패", error))
+//                .subscribe(); // 비동기로 실행;
+//        log.info("webClient 요청 성공");
 //        return savedComment.getId();
 //    }
 

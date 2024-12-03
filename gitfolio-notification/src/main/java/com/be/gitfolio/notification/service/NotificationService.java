@@ -1,11 +1,10 @@
 package com.be.gitfolio.notification.service;
 
 
-import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.notification.domain.Notification;
-import com.be.gitfolio.notification.repository.NotificationRepository;
+import com.be.gitfolio.notification.service.port.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -33,12 +32,13 @@ public class NotificationService {
      */
     @Transactional
     @KafkaListener(topics = "resumeEventTopic", groupId = "notification-group")
-    public void consumeResumeEvent(ResumeEvent resumeEvent) {
+    public Notification createNotification(ResumeEvent resumeEvent) {
         log.info("Kafka 메시지 도착 : {}", resumeEvent.getSenderNickname());
         if (!Objects.equals(resumeEvent.getSenderId(), resumeEvent.getReceiverId())) {
             Notification notification = Notification.from(resumeEvent);
-            notificationRepository.save(notification);
+            return notificationRepository.save(notification);
         }
+        return null;
     }
 
     /**
@@ -73,8 +73,13 @@ public class NotificationService {
         return NotificationListDTO.from(notification);
     }
 
+    /**
+     * 알림 생성 (webClient용)
+     * @param resumeEvent
+     */
     @Transactional
     public void create(ResumeEvent resumeEvent) {
+        log.info("webClient요청 도착");
         Notification notification = Notification.from(resumeEvent);
         notificationRepository.save(notification);
     }

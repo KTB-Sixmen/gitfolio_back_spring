@@ -22,7 +22,7 @@ public class NotificationController {
     private final NotificationService notificationService;
 
     @PostMapping()
-    public ResponseEntity<BaseResponse<String>> newNotification(@RequestBody KafkaEvent.ResumeEvent resumeEvent) {
+    public ResponseEntity<BaseResponse<String>> createNotification(@RequestBody KafkaEvent.ResumeEvent resumeEvent) {
         notificationService.create(resumeEvent);
         return ResponseEntity.ok().body(new BaseResponse<>("알림이 생성되었습니다."));
     }
