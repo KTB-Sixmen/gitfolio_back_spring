@@ -171,10 +171,23 @@ ENV KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${KAFKA_OFFSETS_TOPIC_REPLICATION_FAC
 
 WORKDIR /gitfolio_back
 
+# Gradle Wrapper 파일들을 먼저 복사합니다
+COPY gradle gradle
+COPY gradlew .
+COPY gradlew.bat .
+COPY gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties
 
+# gradle wrapper jar 파일이 없다면 gradle wrapper를 새로 생성합니다
+RUN if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then \
+    gradle wrapper; \
+    fi
+
+# 이제 나머지 빌드 설정 파일들을 복사합니다
 COPY settings.gradle build.gradle ./
-COPY gradle ./gradle
-COPY gradlew ./
+
+# COPY settings.gradle build.gradle ./
+# COPY gradle ./gradle
+# COPY gradlew ./
 
 RUN chmod +x gradlew && \
     ./gradlew dependencies
