@@ -8,8 +8,14 @@ WORKDIR /auth
 EXPOSE 8080
 
 # # 빌드된 JAR 파일 복사
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+
+# 테스트용 빌더파일
+COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+
+
 
 # COPY ../build/.env .env
 # COPY ../build/*-auth-*-SNAPSHOT.jar auth.jar
