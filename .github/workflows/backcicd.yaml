@@ -195,88 +195,97 @@ jobs:
           echo "INSTANCE_IDS=$INSTANCE_IDS"
           echo "instance_ids=$INSTANCE_IDS" >> $GITHUB_OUTPUT
 
-#      - name: Update .env file on EC2 instances
-#        run: |
-#          aws ssm send-command \
-#            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
-#            --document-name "AWS-RunShellScript" \
-#            --comment "Updating .env for ${{ matrix.module }} module" \
-#            --parameters commands="
-#              cat <<EOF > /home/ec2-user/.env
-#              REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }}
-#              REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }}
-#              MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }}
-#              PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }}
-#              AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
-#              MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }}
-#              AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}
-#              MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }}
-#              RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }}
-#              PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }}
-#              NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}
-#              CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}
-#              GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
-#              GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
-#              GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
-#              GH_API_TOKEN=${{ secrets.GH_API_TOKEN }}
-#              JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
-#              ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }}
-#              REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }}
-#              AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }}
-#              AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }}
-#              RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }}
-#              RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }}
-#              MEMBER_MYSQL_DB_HOST=${{ secrets.MEMBER_MYSQL_DB_HOST }}
-#              MEMBER_MYSQL_DB_PORT=${{ secrets.MEMBER_MYSQL_DB_PORT }}
-#              MEMBER_MYSQL_DB_NAME=${{ secrets.MEMBER_MYSQL_DB_NAME }}
-#              MEMBER_MYSQL_DB_PASSWORD=${{ secrets.MEMBER_MYSQL_DB_PASSWORD }}
-#              MEMBER_MYSQL_DB_USERNAME=${{ secrets.MEMBER_MYSQL_DB_USERNAME }}
-#              LIKE_MYSQL_DB_HOST=${{ secrets.LIKE_MYSQL_DB_HOST }}
-#              LIKE_MYSQL_DB_PORT=${{ secrets.LIKE_MYSQL_DB_PORT }}
-#              LIKE_MYSQL_DB_NAME=${{ secrets.LIKE_MYSQL_DB_NAME }}
-#              LIKE_MYSQL_DB_PASSWORD=${{ secrets.LIKE_MYSQL_DB_PASSWORD }}
-#              LIKE_MYSQL_DB_USERNAME=${{ secrets.LIKE_MYSQL_DB_USERNAME }}
-#              PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }}
-#              PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }}
-#              PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }}
-#              PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}
-#              PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}
-#              NOTIFICATION_MYSQL_DB_HOST=${{ secrets.NOTIFICATION_MYSQL_DB_HOST }}
-#              NOTIFICATION_MYSQL_DB_PORT=${{ secrets.NOTIFICATION_MYSQL_DB_PORT }}
-#              NOTIFICATION_MYSQL_DB_NAME=${{ secrets.NOTIFICATION_MYSQL_DB_NAME }}
-#              NOTIFICATION_MYSQL_DB_PASSWORD=${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }}
-#              NOTIFICATION_MYSQL_DB_USERNAME=${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }}
-#              MEMBER_MONGO_DB_HOST=${{ secrets.MEMBER_MONGO_DB_HOST }}
-#              MEMBER_MONGO_DB_PORT=${{ secrets.MEMBER_MONGO_DB_PORT }}
-#              MEMBER_MONGO_DB_DATABASE=${{ secrets.MEMBER_MONGO_DB_DATABASE }}
-#              MEMBER_MONGO_DB_USERNAME=${{ secrets.MEMBER_MONGO_DB_USERNAME }}
-#              MEMBER_MONGO_DB_PASSWORD=${{ secrets.MEMBER_MONGO_DB_PASSWORD }}
-#              RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }}
-#              RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }}
-#              RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }}
-#              RESUME_MONGO_DB_PASSWORD=${{ secrets.RESUME_MONGO_DB_PASSWORD }}
-#              CHAT_MONGO_DB_HOST=${{ secrets.CHAT_MONGO_DB_HOST }}
-#              CHAT_MONGO_DB_PORT=${{ secrets.CHAT_MONGO_DB_PORT }}
-#              CHAT_MONGO_DB_DATABASE=${{ secrets.CHAT_MONGO_DB_DATABASE }}
-#              CHAT_MONGO_DB_USERNAME=${{ secrets.CHAT_MONGO_DB_USERNAME }}
-#              CHAT_MONGO_DB_PASSWORD=${{ secrets.CHAT_MONGO_DB_PASSWORD }}
-#              S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
-#              S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
-#              S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }}
-#              KAKAO_API_URL=${{ secrets.KAKAO_API_URL }}
-#              KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }}
-#              KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }}
-#              KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }}
-#              NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
-#              NEXT_PUBLIC_S3_URL=${{ secrets.NEXT_PUBLIC_S3_URL }}
-#              AUTH_SERVER_URL=${{ secrets.AUTH_SERVER_URL }}
-#              MEMBERS_SERVER_URL=${{ secrets.MEMBERS_SERVER_URL }}
-#              RESUMES_SERVER_URL=${{ secrets.RESUMES_SERVER_URL }}
-#              NOTIFICATIONS_SERVER_URL=${{ secrets.NOTIFICATIONS_SERVER_URL }}
-#              EOF
-#            " \
-#            --timeout-seconds 600 \
-#            --region ap-northeast-2
+      - name: Update .env file on EC2 instances
+        run: |
+          aws ssm send-command \
+            --instance-ids "${{ steps.get_instances.outputs.instance_ids }}" \
+            --document-name "AWS-RunShellScript" \
+            --comment "Updating .env for ${{ matrix.module }} module" \
+            --parameters commands="
+              cat <<EOF > /home/ec2-user/.env
+              REDIRECT_ONBOARDING_URL=${{ secrets.REDIRECT_ONBOARDING_URL }}
+              REDIRECT_MAIN_URL=${{ secrets.REDIRECT_MAIN_URL }}
+              MEMBER_SERVER_URL=${{ secrets.MEMBER_SERVER_URL }}
+              PAYMENT_SERVER_URL=${{ secrets.PAYMENT_SERVER_URL }}
+              AI_SERVER_URL=${{ secrets.AI_SERVER_URL }}
+              MEMBER_GRPC_PORT=${{ secrets.MEMBER_GRPC_PORT }}
+              AUTH_SERVER_PORT=${{ secrets.AUTH_SERVER_PORT }}
+              MEMBER_SERVER_PORT=${{ secrets.MEMBER_SERVER_PORT }}
+              RESUME_SERVER_PORT=${{ secrets.RESUME_SERVER_PORT }}
+              PAYMENT_SERVER_PORT=${{ secrets.PAYMENT_SERVER_PORT }}
+              NOTIFICATION_SERVER_PORT=${{ secrets.NOTIFICATION_SERVER_PORT }}
+              CHAT_SERVER_PORT=${{ secrets.CHAT_SERVER_PORT }}
+              GH_CLIENT_ID=${{ secrets.GH_CLIENT_ID }}
+              GH_CLIENT_SECRET=${{ secrets.GH_CLIENT_SECRET }}
+              GH_REDIRECT_URI=${{ secrets.GH_REDIRECT_URI }}
+              GH_API_TOKEN=${{ secrets.GH_API_TOKEN }}
+              JWT_SECRET_KEY=${{ secrets.JWT_SECRET_KEY }}
+              ACCESS_TOKEN_EXPIRY=${{ secrets.ACCESS_TOKEN_EXPIRY }}
+              REFRESH_TOKEN_EXPIRY=${{ secrets.REFRESH_TOKEN_EXPIRY }}
+              AUTH_REDIS_HOST=${{ secrets.AUTH_REDIS_HOST }}
+              AUTH_REDIS_PORT=${{ secrets.AUTH_REDIS_PORT }}
+              RESUME_REDIS_HOST=${{ secrets.RESUME_REDIS_HOST }}
+              RESUME_REDIS_PORT=${{ secrets.RESUME_REDIS_PORT }}
+              MEMBER_MYSQL_DB_HOST=${{ secrets.MEMBER_MYSQL_DB_HOST }}
+              MEMBER_MYSQL_DB_PORT=${{ secrets.MEMBER_MYSQL_DB_PORT }}
+              MEMBER_MYSQL_DB_NAME=${{ secrets.MEMBER_MYSQL_DB_NAME }}
+              MEMBER_MYSQL_DB_PASSWORD=${{ secrets.MEMBER_MYSQL_DB_PASSWORD }}
+              MEMBER_MYSQL_DB_USERNAME=${{ secrets.MEMBER_MYSQL_DB_USERNAME }}
+              LIKE_MYSQL_DB_HOST=${{ secrets.LIKE_MYSQL_DB_HOST }}
+              LIKE_MYSQL_DB_PORT=${{ secrets.LIKE_MYSQL_DB_PORT }}
+              LIKE_MYSQL_DB_NAME=${{ secrets.LIKE_MYSQL_DB_NAME }}
+              LIKE_MYSQL_DB_PASSWORD=${{ secrets.LIKE_MYSQL_DB_PASSWORD }}
+              LIKE_MYSQL_DB_USERNAME=${{ secrets.LIKE_MYSQL_DB_USERNAME }}
+              PAYMENT_MYSQL_DB_HOST=${{ secrets.PAYMENT_MYSQL_DB_HOST }}
+              PAYMENT_MYSQL_DB_PORT=${{ secrets.PAYMENT_MYSQL_DB_PORT }}
+              PAYMENT_MYSQL_DB_NAME=${{ secrets.PAYMENT_MYSQL_DB_NAME }}
+              PAYMENT_MYSQL_DB_PASSWORD=${{ secrets.PAYMENT_MYSQL_DB_PASSWORD }}
+              PAYMENT_MYSQL_DB_USERNAME=${{ secrets.PAYMENT_MYSQL_DB_USERNAME }}
+              NOTIFICATION_MYSQL_DB_HOST=${{ secrets.NOTIFICATION_MYSQL_DB_HOST }}
+              NOTIFICATION_MYSQL_DB_PORT=${{ secrets.NOTIFICATION_MYSQL_DB_PORT }}
+              NOTIFICATION_MYSQL_DB_NAME=${{ secrets.NOTIFICATION_MYSQL_DB_NAME }}
+              NOTIFICATION_MYSQL_DB_PASSWORD=${{ secrets.NOTIFICATION_MYSQL_DB_PASSWORD }}
+              NOTIFICATION_MYSQL_DB_USERNAME=${{ secrets.NOTIFICATION_MYSQL_DB_USERNAME }}
+              MEMBER_MONGO_DB_HOST=${{ secrets.MEMBER_MONGO_DB_HOST }}
+              MEMBER_MONGO_DB_PORT=${{ secrets.MEMBER_MONGO_DB_PORT }}
+              MEMBER_MONGO_DB_DATABASE=${{ secrets.MEMBER_MONGO_DB_DATABASE }}
+              MEMBER_MONGO_DB_USERNAME=${{ secrets.MEMBER_MONGO_DB_USERNAME }}
+              MEMBER_MONGO_DB_PASSWORD=${{ secrets.MEMBER_MONGO_DB_PASSWORD }}
+              RESUME_MONGO_DB_PORT=${{ secrets.RESUME_MONGO_DB_PORT }}
+              RESUME_MONGO_DB_DATABASE=${{ secrets.RESUME_MONGO_DB_DATABASE }}
+              RESUME_MONGO_DB_USERNAME=${{ secrets.RESUME_MONGO_DB_USERNAME }}
+              RESUME_MONGO_DB_PASSWORD=${{ secrets.RESUME_MONGO_DB_PASSWORD }}
+              CHAT_MONGO_DB_HOST=${{ secrets.CHAT_MONGO_DB_HOST }}
+              CHAT_MONGO_DB_PORT=${{ secrets.CHAT_MONGO_DB_PORT }}
+              CHAT_MONGO_DB_DATABASE=${{ secrets.CHAT_MONGO_DB_DATABASE }}
+              CHAT_MONGO_DB_USERNAME=${{ secrets.CHAT_MONGO_DB_USERNAME }}
+              CHAT_MONGO_DB_PASSWORD=${{ secrets.CHAT_MONGO_DB_PASSWORD }}
+              S3_ACCESS_KEY=${{ secrets.S3_ACCESS_KEY }}
+              S3_SECRET_KEY=${{ secrets.S3_SECRET_KEY }}
+              S3_URL_PREFIX=${{ secrets.S3_URL_PREFIX }}
+              KAKAO_API_URL=${{ secrets.KAKAO_API_URL }}
+              KAKAOPAY_SECRET_KEY=${{ secrets.KAKAOPAY_SECRET_KEY }}
+              KAFKA_HOST1=${{ secrets.KAFKA_HOST1 }}
+              KAFKA_PORT1=${{ secrets.KAFKA_PORT1 }}
+              
+              # 서버 URL 관련 환경변수
+              NOTIFICATION_SERVER_URL=${{ secrets.NOTIFICATION_SERVER_URL }}
+              PAYMENT_SUCCESS_REDIRECT_URL=${{ secrets.PAYMENT_SUCCESS_REDIRECT_URL }}
+              
+              # Kafka 관련 환경변수
+              KAFKA_BROKER_ID=${{ secrets.KAFKA_BROKER_ID }}
+              KAFKA_ZOOKEEPER_CONNECT=${{ secrets.KAFKA_ZOOKEEPER_CONNECT }}
+              KAFKA_LISTENER_DOCKER=${{ secrets.KAFKA_LISTENER_DOCKER }}
+              KAFKA_LISTENER_EXTERNAL=${{ secrets.KAFKA_LISTENER_EXTERNAL }}
+              KAFKA_ADVERTISED_LISTENER_DOCKER=${{ secrets.KAFKA_ADVERTISED_LISTENER_DOCKER }}
+              KAFKA_ADVERTISED_LISTENER_EXTERNAL=${{ secrets.KAFKA_ADVERTISED_LISTENER_EXTERNAL }}
+              KAFKA_INTER_BROKER_LISTENER_NAME=${{ secrets.KAFKA_INTER_BROKER_LISTENER_NAME }}
+              KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${{ secrets.KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR }}
+
+              EOF
+            " \
+            --timeout-seconds 600 \
+            --region ap-northeast-2
 
       - name: Deploy to EC2 instances
         run: |
