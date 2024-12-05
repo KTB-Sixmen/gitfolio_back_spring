@@ -4,15 +4,13 @@ import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import com.be.gitfolio.common.s3.S3Service;
-import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.event.ResumeEventPublisher;
-import com.be.gitfolio.resume.repository.CommentRepository;
-import com.be.gitfolio.resume.repository.LikeRepository;
-import com.be.gitfolio.resume.repository.ResumeRepository;
+import com.be.gitfolio.resume.repository.comment.CommentJpaRepository;
+import com.be.gitfolio.resume.service.port.LikeRepository;
+import com.be.gitfolio.resume.service.port.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.logging.log4j.util.InternalException;
@@ -20,10 +18,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,14 +41,13 @@ public class ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final LikeRepository likeRepository;
-    private final CommentRepository commentRepository;
+    private final CommentJpaRepository commentJpaRepository;
     private final RedisTemplate<String, String> redisTemplate;
     private final WebClient aiWebClient;
     private final WebClient memberWebClient;
     private final JWTUtil jwtUtil;
-    private final ResumeEventPublisher resumeEventPublisher;
     private final S3Service s3Service;
-    private final MongoTemplate mongoTemplate;
+
 
     /**
      * 이력서 생성 요청
@@ -74,7 +67,7 @@ public class ResumeService {
         }
 
         // 사용권 없으면 예외
-        if (memberInfoDTO.remainingCount() <= 0) {
+        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE) && memberInfoDTO.remainingCount() <= 0) {
             throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
         }
 
@@ -115,7 +108,7 @@ public class ResumeService {
      * 이력서 수정 (AI로)
      */
     @Transactional
-    public String updateResumeWithAI(String memberId, String resumeId, UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
+    public ResumeInfoForAiDTO updateResumeWithAI(String memberId, String resumeId, UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
@@ -125,12 +118,50 @@ public class ResumeService {
             throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
         }
 
-        AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resume);
+        MemberInfoDTO memberInfoDTO;
+        try {
+            memberInfoDTO = memberWebClient.get()
+                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(MemberInfoDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
+        }
 
-        // TODO: 11/21/24 AI모듈 연동 해야함(통째로 덮어씌우기)
-        Resume updateResume = resume;
-        return resumeRepository.save(updateResume).getId();
-        // TODO: 11/25/24 Member모듈 사용권 차감 요청 추가해야함 
+        // 사용권 없으면 예외
+        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE) && memberInfoDTO.remainingCount() <= 0) {
+            throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
+        }
+
+        ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume);
+        log.info("resumeInfo : {}", resumeInfo);
+
+        AIUpdateRequestDTO aiUpdateRequestDTO = AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resumeInfo);
+
+        ResumeInfoForAiDTO updateResumeInfo;
+        try {
+            updateResumeInfo = aiWebClient.put()
+                    .uri("/api/resumes")
+                    .bodyValue(aiUpdateRequestDTO)
+                    .retrieve()
+                    .bodyToMono(ResumeInfoForAiDTO.class)
+                    .block();
+        } catch (WebClientResponseException exception) {
+            throw new InternalException("AIWebClient error" + exception.getMessage());
+        }
+
+        // FREE 사용자면 사용권 차감
+        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
+            memberWebClient.patch()
+                    .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
+                    .retrieve()
+                    .bodyToMono(Void.class)
+                    .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
+                    .subscribe(); // 비동기 요청으로 실행
+        }
+
+        return updateResumeInfo;
     }
 
 
@@ -305,7 +336,7 @@ public class ResumeService {
     @Transactional
     public void deleteResume(String resumeId) {
         likeRepository.deleteLikesByResumeId(resumeId); // 해당 이력서의 좋아요 전부 삭제
-        commentRepository.deleteCommentsByResumeId(resumeId); // 해당 이력서의 댓글 전부 삭제
+        commentJpaRepository.deleteCommentsByResumeId(resumeId); // 해당 이력서의 댓글 전부 삭제
         resumeRepository.deleteById(resumeId); // 이력서 삭제
     }
 
@@ -344,67 +375,6 @@ public class ResumeService {
             // 1시간 동안 조회수 증가 안되도록 설정
             redisTemplate.opsForValue().set(redisKey, "1", 1, TimeUnit.HOURS);
         }
-    }
-
-    /**
-     * 좋아요 기능
-     */
-    @Transactional
-    public boolean toggleLike(String resumeId, Long memberId) {
-
-        MemberInfoDTO memberInfoDTO;
-        try {
-            memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", memberId)
-                    .retrieve()
-                    .bodyToMono(MemberInfoDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-        }
-
-        Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
-
-        Optional<Like> existingLikeOpt = likeRepository.findByResumeIdAndMemberId(resumeId, memberId);
-
-        if (existingLikeOpt.isPresent()) {
-            // 좋아요 취소 (삭제)
-            likeRepository.deleteByResumeIdAndMemberId(resumeId, memberId);
-            decreaseLikeCount(resumeId);
-            return false;
-        } else {
-            // 좋아요 추가
-            Like newLike = Like.of(resumeId, memberId);
-            likeRepository.save(newLike);
-            increaseLikeCount(resumeId);
-            resumeEventPublisher.publishResumeEvent(
-                    memberId,
-                    memberInfoDTO.nickname(),
-                    Long.valueOf(resume.getMemberId()),
-                    resumeId,
-                    NotificationType.LIKE
-            );
-            return true;
-        }
-    }
-
-    /**
-     * 좋아요 수 증가 (findAndModify)
-     */
-    private void increaseLikeCount(String resumeId) {
-        Query query = new Query(Criteria.where("_id").is(resumeId));
-        Update update = new Update().inc("likeCount", 1);
-        mongoTemplate.findAndModify(query, update, Resume.class);
-    }
-
-    /**
-     * 좋아요 수 감소 (MongoTemplate 활용)
-     */
-    private void decreaseLikeCount(String resumeId) {
-        Query query = new Query(Criteria.where("_id").is(resumeId));
-        Update update = new Update().inc("likeCount", -1);
-        mongoTemplate.findAndModify(query, update, Resume.class);
     }
 
     /**
