@@ -170,7 +170,8 @@ ENV KAFKA_INTER_BROKER_LISTENER_NAME=${KAFKA_INTER_BROKER_LISTENER_NAME}
 ENV KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=${KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR}
 
 WORKDIR /gitfolio_back
-
+# 이제 나머지 빌드 설정 파일들을 복사합니다
+COPY settings.gradle build.gradle ./
 # Gradle Wrapper 파일들을 먼저 복사합니다
 COPY gradle gradle
 COPY gradlew .
@@ -182,8 +183,7 @@ RUN if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then \
     gradle wrapper; \
     fi
 
-# 이제 나머지 빌드 설정 파일들을 복사합니다
-COPY settings.gradle build.gradle ./
+
 
 # COPY settings.gradle build.gradle ./
 # COPY gradle ./gradle
