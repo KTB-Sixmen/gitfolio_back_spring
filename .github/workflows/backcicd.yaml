@@ -3,7 +3,7 @@ name: Backend CI/CD Pipeline
 on:
   push:
     branches:
-      - develop
+      - 48-Develop브랜치-푸시시-CI/CD-구현
 
 jobs:
   build_builder:

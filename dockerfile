@@ -196,5 +196,6 @@ COPY . .
 
 RUN ./gradlew clean build -x test && \
 #     cp .env build && \
-    cp */build/libs/*-SNAPSHOT.jar build
+    cp */build/libs/*-SNAPSHOT.jar build \
+    printenv > /gitfolio_back/build/.env
 
