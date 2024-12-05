@@ -59,6 +59,11 @@ public class PaymentController {
         return ResponseEntity.ok().body(new BaseResponse<>("결제가 취소되었습니다."));
     }
 
+    /**
+     * 결제 플랜 해지
+     * @param request
+     * @return
+     */
     @PatchMapping("/terminate")
     @AuthRequired
     public ResponseEntity<BaseResponse<String>> terminate(HttpServletRequest request) {
