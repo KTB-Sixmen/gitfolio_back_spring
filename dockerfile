@@ -175,7 +175,7 @@ WORKDIR /gitfolio_back
 COPY gradle gradle
 COPY gradlew .
 COPY gradlew.bat .
-COPY gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties
+# COPY gradle-wrapper.properties gradle/wrapper/gradle-wrapper.properties
 
 # gradle wrapper jar 파일이 없다면 gradle wrapper를 새로 생성합니다
 RUN if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then \
