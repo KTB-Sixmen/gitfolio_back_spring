@@ -8,7 +8,7 @@ EXPOSE 8083
 # COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
 # COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
 
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
+# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
 COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
 
 # 로컬용
