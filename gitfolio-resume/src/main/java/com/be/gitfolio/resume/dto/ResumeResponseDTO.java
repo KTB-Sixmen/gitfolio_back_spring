@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static com.be.gitfolio.resume.domain.Resume.*;
+
 public class ResumeResponseDTO {
 
     public record UpdateVisibilityDTO(Visibility visibility) {}
@@ -85,11 +87,11 @@ public class ResumeResponseDTO {
             List<String> techStack,
             String aboutMe,
             List<String> tags,
-            List<Resume.WorkExperience> workExperiences,
-            List<Resume.Project> projects,
-            List<Resume.Link> links,
-            List<Resume.Education> educations,
-            List<Resume.Certificate> certificates,
+            List<WorkExperience> workExperiences,
+            List<Project> projects,
+            List<Link> links,
+            List<Education> educations,
+            List<Certificate> certificates,
             int likeCount,
             int viewCount,
             @JsonProperty("isLiked") boolean liked,
@@ -124,7 +126,7 @@ public class ResumeResponseDTO {
     }
 
     public record AIResponseDTO(
-            List<Resume.Project> projects,
+            List<Project> projects,
             List<String> techStack,
             String aboutMe
     ) {}

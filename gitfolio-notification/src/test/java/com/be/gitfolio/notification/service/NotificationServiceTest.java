@@ -74,7 +74,7 @@ public class NotificationServiceTest {
         NotificationListDTO notification = notificationService.getNotification(1L, 1L);
         //then
         assertThat(notification.read()).isTrue();
-        assertThat(notification.senderNickName()).isEqualTo("fakeSender");
+        assertThat(notification.senderNickname()).isEqualTo("fakeSender");
     }
 
     @Test
