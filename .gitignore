@@ -49,6 +49,7 @@ out/
 gradlew.*
 ### envs ###
 .env
+.env*
 
 ### Java ###
 # Compiled class file
