@@ -2,12 +2,15 @@ package com.be.gitfolio.resume.dto;
 
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
+import com.be.gitfolio.common.type.SchoolType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.type.Template;
 import jakarta.validation.constraints.*;
 
 import java.util.List;
+
+import static com.be.gitfolio.resume.domain.Resume.*;
 
 public class ResumeRequestDTO {
 
@@ -24,10 +27,10 @@ public class ResumeRequestDTO {
             @NotBlank PositionType position,
             PaidPlan paidPlan,
             Integer remainingCount,
-            List<Resume.WorkExperience> workExperiences,
-            List<Resume.Education> educations,
-            List<Resume.Certificate> certificates,
-            List<Resume.Link> links
+            List<WorkExperience> workExperiences,
+            List<Education> educations,
+            List<Certificate> certificates,
+            List<Link> links
     ) {}
 
     public record CreateResumeRequestDTO(
@@ -42,13 +45,49 @@ public class ResumeRequestDTO {
             @NotEmpty(message = "요구사항은 필수 항목입니다.") String requirement
     ) {}
 
+    public record ResumeInfoForAiDTO(
+            String resumeId,
+            Long memberId,
+            String memberName,
+            String avatarUrl,
+            String email,
+            PositionType position,
+            List<String> techStack,
+            String aboutMe,
+            List<String> tags,
+            List<WorkExperience> workExperiences,
+            List<Project> projects,
+            List<Link> links,
+            List<Education> educations,
+            List<Certificate> certificates
+    ) {
+        public static ResumeInfoForAiDTO from(Resume resume) {
+            return new ResumeInfoForAiDTO(
+                    resume.getId(),
+                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberName(),
+                    resume.getAvatarUrl(),
+                    resume.getEmail(),
+                    resume.getPosition(),
+                    resume.getTechStack(),
+                    resume.getAboutMe(),
+                    resume.getTags(),
+                    resume.getWorkExperiences(),
+                    resume.getProjects(),
+                    resume.getLinks(),
+                    resume.getEducations(),
+                    resume.getCertificates()
+            );
+        }
+    }
+
     public record AIUpdateRequestDTO(
         String selectedText,
         String requirement,
-        Resume resumeInfo
+        ResumeInfoForAiDTO resumeInfo
     ) {
         public static AIUpdateRequestDTO of(UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO,
-                                            Resume resumeInfo) {
+                                            ResumeInfoForAiDTO resumeInfo) {
             return new AIUpdateRequestDTO(
                     updateResumeWithAIRequestDTO.selectedText(),
                     updateResumeWithAIRequestDTO.requirement(),
@@ -79,11 +118,11 @@ public class ResumeRequestDTO {
             List<String> techStack,  // 기술 스택
             String aboutMe,  // 자기소개
             List<String> tags,  // 태그 (회사명 등)
-            List<Resume.WorkExperience> workExperiences,  // 경력
-            List<Resume.Project> projects,  // 프로젝트
-            List<Resume.Link> links,  // 개인 링크
-            List<Resume.Education> educations,  // 학력
-            List<Resume.Certificate> certificates  // 자격증
+            List<WorkExperience> workExperiences,  // 경력
+            List<Project> projects,  // 프로젝트
+            List<Link> links,  // 개인 링크
+            List<Education> educations,  // 학력
+            List<Certificate> certificates  // 자격증
     ) {}
 
     public record CommentRequestDTO(
@@ -92,9 +131,9 @@ public class ResumeRequestDTO {
 
     public record ResumeFilterDTO(
             String tag, // 회사별
-            String position, // 직군별
+            PositionType position, // 직군별
             String techStack, // 기술 스택별
-            String schoolType, // 학력별
+            SchoolType schoolType, // 학력별
             String sortOrder, // 정렬기준
             Boolean liked, // 좋아요 필터링
             @Min(0) int page,

@@ -1,6 +1,5 @@
 package com.be.gitfolio.resume.service;
 
-import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.s3.S3Service;
@@ -8,14 +7,13 @@ import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
-import com.be.gitfolio.resume.repository.CommentRepository;
-import com.be.gitfolio.resume.repository.ResumeRepository;
+import com.be.gitfolio.resume.service.port.CommentRepository;
+import com.be.gitfolio.resume.service.port.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.List;
 
@@ -33,7 +31,7 @@ public class CommentService {
     private final ResumeEventPublisher resumeEventPublisher;
     private final S3Service s3Service;
     private final WebClient memberWebClient;
-    private final WebClient notificationWebClient;
+//    private final WebClient notificationWebClient;
 
 //    // 테스트용(webClient)
 //    @Transactional
@@ -68,7 +66,7 @@ public class CommentService {
      * 댓글 작성
      */
     @Transactional
-    public Long createComment(String resumeId, Long senderId, String senderNickname, CommentRequestDTO commentRequestDTO) {
+    public Comment createComment(String resumeId, Long senderId, String senderNickname, CommentRequestDTO commentRequestDTO) {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
@@ -81,7 +79,7 @@ public class CommentService {
         Comment savedComment = commentRepository.save(comment);
 
         resumeEventPublisher.publishResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
-        return savedComment.getId();
+        return savedComment;
     }
 
     /**
@@ -92,9 +90,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.COMMENT_NOT_FOUND));
 
-        if (!comment.getMemberId().equals(memberId)) {
-            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_COMMENT);
-        }
+        comment.validateOwnership(memberId);
 
         comment.updateContent(commentRequestDTO.content());
         commentRepository.save(comment);
@@ -108,9 +104,7 @@ public class CommentService {
         Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new BaseException(ErrorCode.COMMENT_NOT_FOUND));
 
-        if (!comment.getMemberId().equals(memberId)) {
-            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_COMMENT);
-        }
+        comment.validateOwnership(memberId);
 
         commentRepository.deleteById(commentId);
     }

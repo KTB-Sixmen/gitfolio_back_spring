@@ -1,16 +1,13 @@
-package com.be.gitfolio.resume.repository;
+package com.be.gitfolio.resume.repository.resume;
 
 import com.be.gitfolio.resume.domain.Resume;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public interface ResumeRepository extends MongoRepository<Resume, String>, ResumeRepositoryCustom {
+public interface ResumeMongoRepository extends MongoRepository<Resume, String> {
 
     Page<Resume> findAllByMemberId(String memberId, Pageable pageable);
 }

@@ -139,6 +139,11 @@ public class PaymentService {
         Payment payment = paymentRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_PAYMENT_INFO));
 
+        // 중복 해지 방지
+        if (payment.getStatus().equals(PaymentStatus.CANCELED)) {
+            throw new BaseException(ErrorCode.ALREADY_CANCELED_PAYMENT);
+        }
+
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("cid", "TCSUBSCRIP");
         parameters.put("sid", payment.getSid());
