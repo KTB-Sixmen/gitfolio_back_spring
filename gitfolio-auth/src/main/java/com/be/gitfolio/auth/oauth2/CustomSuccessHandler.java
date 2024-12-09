@@ -1,7 +1,7 @@
 package com.be.gitfolio.auth.oauth2;
 
 import com.be.gitfolio.auth.dto.CustomOAuth2User;
-import com.be.gitfolio.auth.repository.RedisTokenRepository;
+import com.be.gitfolio.auth.infrastructure.RedisTokenRepository;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
