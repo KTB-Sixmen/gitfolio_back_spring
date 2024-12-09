@@ -12,6 +12,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
@@ -22,7 +23,7 @@ import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Document(collection = "resume")
-public class Resume extends BaseEntityMongo {
+public class Resume {
 
     @Id
     private String id;  // 이력서 ID
@@ -46,6 +47,8 @@ public class Resume extends BaseEntityMongo {
     private int viewCount;  // 조회수
     @Enumerated(EnumType.STRING)
     private Template template;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
     public void validateVisibility() {
         if (this.getVisibility().equals(Visibility.PRIVATE)) {
@@ -61,6 +64,7 @@ public class Resume extends BaseEntityMongo {
 
     public void updateVisibility(Visibility visibility) {
         this.visibility = visibility;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void increaseView() {
@@ -77,6 +81,7 @@ public class Resume extends BaseEntityMongo {
         this.links = updateResumeDTO.links();
         this.educations = updateResumeDTO.educations();
         this.certificates = updateResumeDTO.certificates();
+        this.updatedAt = LocalDateTime.now();
     }
 
     public static Resume of(MemberInfoDTO memberInfoDTO, AIResponseDTO aiResponseDTO, CreateResumeRequestDTO createResumeRequestDTO) {
@@ -98,6 +103,8 @@ public class Resume extends BaseEntityMongo {
                 .likeCount(0)
                 .viewCount(0)
                 .template(createResumeRequestDTO.template())
+                .createdAt(LocalDateTime.now())
+                .updatedAt(LocalDateTime.now())
                 .build();
     }
 

@@ -40,7 +40,7 @@ public class ResumeResponseDTO {
         public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberId(),
                     avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
@@ -106,7 +106,7 @@ public class ResumeResponseDTO {
         public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberId(),
                     resume.getMemberName(),
                     avatarFullUrl,
                     resume.getEmail(),

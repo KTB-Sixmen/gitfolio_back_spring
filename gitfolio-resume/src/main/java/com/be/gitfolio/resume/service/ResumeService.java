@@ -66,7 +66,7 @@ public class ResumeService {
 
         // FREE 사용자면 사용권 차감
         if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
-            memberClient.decreaseRemainingCount(Long.valueOf(memberId));
+            memberClient.decreaseRemainingCount(memberId);
         }
 
         return savedResume;
@@ -89,7 +89,7 @@ public class ResumeService {
         // 사용권 없으면 예외
         memberInfoDTO.validateRemainingCount();
 
-        ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume);
+        ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume, s3Service.getProcessAvatarUrl(resume.getAvatarUrl()));
         log.info("resumeInfo : {}", resumeInfo);
 
         AIUpdateRequestDTO aiUpdateRequestDTO = AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resumeInfo);

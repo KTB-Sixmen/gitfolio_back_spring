@@ -74,12 +74,12 @@ public class ResumeRequestDTO {
             List<Education> educations,
             List<Certificate> certificates
     ) {
-        public static ResumeInfoForAiDTO from(Resume resume) {
+        public static ResumeInfoForAiDTO from(Resume resume, String avatarUrl) {
             return new ResumeInfoForAiDTO(
                     resume.getId(),
                     resume.getMemberId(),
                     resume.getMemberName(),
-                    resume.getAvatarUrl(),
+                    avatarUrl,
                     resume.getEmail(),
                     resume.getPosition(),
                     resume.getTechStack(),
