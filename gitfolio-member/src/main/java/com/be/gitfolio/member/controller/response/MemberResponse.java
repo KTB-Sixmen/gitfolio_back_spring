@@ -1,5 +1,9 @@
 package com.be.gitfolio.member.controller.response;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.*;

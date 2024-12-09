@@ -6,8 +6,10 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.payment.config.KakaoPayProperties;
 import com.be.gitfolio.payment.domain.Payment;
 import com.be.gitfolio.payment.domain.PaymentStatusHistory;
-import com.be.gitfolio.payment.repository.PaymentRepository;
-import com.be.gitfolio.payment.repository.PaymentStatusHistoryRepository;
+import com.be.gitfolio.payment.infrastructure.PaymentRepository;
+import com.be.gitfolio.payment.infrastructure.PaymentStatusHistoryRepository;
+import com.be.gitfolio.payment.service.port.KakaoClient;
+import com.be.gitfolio.payment.service.port.MemberClient;
 import com.be.gitfolio.payment.type.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static com.be.gitfolio.payment.dto.PaymentRequest.*;
-import static com.be.gitfolio.payment.dto.PaymentResponse.*;
+import static com.be.gitfolio.payment.dto.KakaoResponse.*;
 
 
 @Service
@@ -35,17 +37,9 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final PaymentStatusHistoryRepository paymentStatusHistoryRepository;
     private final KakaoPayProperties payProperties;
-    private final WebClient kakaoWebClient;
-    private final WebClient memberWebClient;
+    private final KakaoClient kakaoClient;
+    private final MemberClient memberClient;
     private KakaoReadyResponse kakaoReady;
-
-    private HttpHeaders getHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        String auth = "SECRET_KEY " + payProperties.getSecretKey();
-        headers.set("Authorization", auth);
-        headers.set("Content-Type", "application/json");
-        return headers;
-    }
 
     /**
      * 결제 준비
@@ -58,10 +52,11 @@ public class PaymentService {
         Map<String, Object> parameters = createPaymentParameters(memberId, paidPlanRequest.paidPlan());
 
         // 카카오페이 결제 준비 API 호출
-        kakaoReady = sendKakaoPaymentRequest(
+        kakaoReady = kakaoClient.sendKakaoPaymentRequest(
                 "https://open-api.kakaopay.com/online/v1/payment/ready",
                 parameters,
-                KakaoReadyResponse.class
+                KakaoReadyResponse.class,
+                payProperties.getSecretKey()
         );
 
         Payment payment = Payment.of(memberId, paidPlanRequest, kakaoReady);
@@ -92,12 +87,7 @@ public class PaymentService {
         PaymentStatusHistory paymentStatusHistory = PaymentStatusHistory.approve(payment.getId());
         paymentStatusHistoryRepository.save(paymentStatusHistory);
 
-        memberWebClient.patch()
-                .uri("/api/members/{memberId}/updatePlan", memberId)
-                .bodyValue(PaidPlan.fromPlanName(kakaoApproveResponse.item_name()))
-                .retrieve()
-                .toBodilessEntity()
-                .block();
+        memberClient.updateMemberPaidPlan(memberId, kakaoApproveResponse);
 
         return kakaoApproveResponse;
     }
@@ -148,10 +138,11 @@ public class PaymentService {
         parameters.put("cid", "TCSUBSCRIP");
         parameters.put("sid", payment.getSid());
 
-        sendKakaoPaymentRequest(
+        kakaoClient.sendKakaoPaymentRequest(
                 "https://open-api.kakaopay.com/online/v1/payment/manage/subscription/inactive",
                 parameters,
-                Void.class
+                Void.class,
+                payProperties.getSecretKey()
         );
 
         payment.terminate();
@@ -187,21 +178,11 @@ public class PaymentService {
         parameters.put("partner_user_id", String.valueOf(memberId));
         parameters.put("pg_token", pgToken);
 
-        return sendKakaoPaymentRequest(
+        return kakaoClient.sendKakaoPaymentRequest(
                 "https://open-api.kakaopay.com/online/v1/payment/approve",
                 parameters,
-                KakaoApproveResponse.class
+                KakaoApproveResponse.class,
+                payProperties.getSecretKey()
         );
-    }
-
-    // 카카오페이 API 요청 전송
-    private <T> T sendKakaoPaymentRequest(String url, Map<String, ?> parameters, Class<T> responseType) {
-        return kakaoWebClient.post()
-                .uri(url)
-                .headers(headers -> headers.addAll(getHeaders()))
-                .bodyValue(parameters)
-                .retrieve()
-                .bodyToMono(responseType)
-                .block(); // 비동기 방식 사용 시 block() 제거 가능
     }
 }

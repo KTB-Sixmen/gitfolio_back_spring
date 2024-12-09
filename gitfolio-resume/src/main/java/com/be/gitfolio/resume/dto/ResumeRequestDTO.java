@@ -1,5 +1,9 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.dto.*;
+import com.be.gitfolio.common.exception.BaseException;
+import com.be.gitfolio.common.exception.ErrorCode;
+import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.SchoolType;
@@ -7,6 +11,7 @@ import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.type.Template;
 import jakarta.validation.constraints.*;
+import lombok.Builder;
 
 import java.util.List;
 
@@ -14,6 +19,7 @@ import static com.be.gitfolio.resume.domain.Resume.*;
 
 public class ResumeRequestDTO {
 
+    @Builder
     public record MemberInfoDTO(
             @NotBlank Long memberId,
             String memberAdditionalInfoId,
@@ -31,7 +37,13 @@ public class ResumeRequestDTO {
             List<Education> educations,
             List<Certificate> certificates,
             List<Link> links
-    ) {}
+    ) {
+        public void validateRemainingCount() {
+            if (this.paidPlan().equals(PaidPlan.FREE) && this.remainingCount() <= 0) {
+                throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
+            }
+        }
+    }
 
     public record CreateResumeRequestDTO(
             @NotEmpty(message = "적어도 하나의 레포지토리를 선택해야 합니다.") List<String> selectedRepo,
@@ -45,6 +57,7 @@ public class ResumeRequestDTO {
             @NotEmpty(message = "요구사항은 필수 항목입니다.") String requirement
     ) {}
 
+    @Builder
     public record ResumeInfoForAiDTO(
             String resumeId,
             Long memberId,
@@ -61,12 +74,12 @@ public class ResumeRequestDTO {
             List<Education> educations,
             List<Certificate> certificates
     ) {
-        public static ResumeInfoForAiDTO from(Resume resume) {
+        public static ResumeInfoForAiDTO from(Resume resume, String avatarUrl) {
             return new ResumeInfoForAiDTO(
                     resume.getId(),
-                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberId(),
                     resume.getMemberName(),
-                    resume.getAvatarUrl(),
+                    avatarUrl,
                     resume.getEmail(),
                     resume.getPosition(),
                     resume.getTechStack(),
@@ -130,9 +143,7 @@ public class ResumeRequestDTO {
     ) {}
 
     public record ResumeFilterDTO(
-            String tag, // 회사별
             PositionType position, // 직군별
-            String techStack, // 기술 스택별
             SchoolType schoolType, // 학력별
             String sortOrder, // 정렬기준
             Boolean liked, // 좋아요 필터링

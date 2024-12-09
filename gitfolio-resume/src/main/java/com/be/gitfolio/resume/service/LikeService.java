@@ -1,11 +1,12 @@
 package com.be.gitfolio.resume.service;
 
+import com.be.gitfolio.resume.dto.ResumeRequestDTO;
+import com.be.gitfolio.resume.service.port.MemberClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.type.NotificationType;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.dto.ResumeRequestDTO;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.service.port.LikeRepository;
 import com.be.gitfolio.resume.service.port.ResumeRepository;
@@ -17,10 +18,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.Optional;
+
+import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 
 @Service
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class LikeService {
     private final LikeRepository likeRepository;
     private final MongoTemplate mongoTemplate;
     private final ResumeEventPublisher resumeEventPublisher;
-    private final WebClient memberWebClient;
+    private final MemberClient memberClient;
 
     /**
      * 좋아요 기능
@@ -40,16 +41,7 @@ public class LikeService {
     @Transactional
     public boolean toggleLike(String resumeId, Long memberId) {
 
-        ResumeRequestDTO.MemberInfoDTO memberInfoDTO;
-        try {
-            memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", memberId)
-                    .retrieve()
-                    .bodyToMono(ResumeRequestDTO.MemberInfoDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-        }
+        MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(memberId);
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
@@ -57,23 +49,11 @@ public class LikeService {
         Optional<Like> existingLikeOpt = likeRepository.findByResumeIdAndMemberId(resumeId, memberId);
 
         if (existingLikeOpt.isPresent()) {
-            // 좋아요 취소 (삭제)
-            likeRepository.deleteByResumeIdAndMemberId(resumeId, memberId);
-            decreaseLikeCount(resumeId);
-            return false;
+            handleUnlike(resumeId, memberId);
+            return false; // 좋아요 취소
         } else {
-            // 좋아요 추가
-            Like newLike = Like.of(resumeId, memberId);
-            likeRepository.save(newLike);
-            increaseLikeCount(resumeId);
-            resumeEventPublisher.publishResumeEvent(
-                    memberId,
-                    memberInfoDTO.nickname(),
-                    Long.valueOf(resume.getMemberId()),
-                    resumeId,
-                    NotificationType.LIKE
-            );
-            return true;
+            handleLike(resumeId, memberId, memberInfoDTO, resume);
+            return true; // 좋아요 추가
         }
     }
 
@@ -93,5 +73,23 @@ public class LikeService {
         Query query = new Query(Criteria.where("_id").is(resumeId));
         Update update = new Update().inc("likeCount", -1);
         mongoTemplate.findAndModify(query, update, Resume.class);
+    }
+
+    private void handleUnlike(String resumeId, Long memberId) {
+        likeRepository.deleteByResumeIdAndMemberId(resumeId, memberId); // 좋아요 삭제
+        decreaseLikeCount(resumeId); // 좋아요 수 감소
+    }
+
+    private void handleLike(String resumeId, Long memberId, MemberInfoDTO memberInfoDTO, Resume resume) {
+        Like newLike = Like.of(resumeId, memberId); // 새로운 좋아요 객체 생성
+        likeRepository.save(newLike); // 좋아요 저장
+        increaseLikeCount(resumeId); // 좋아요 수 증가
+        resumeEventPublisher.publishResumeEvent( // 좋아요 이벤트 발행
+                memberId,
+                memberInfoDTO.nickname(),
+                resume.getMemberId(),
+                resumeId,
+                NotificationType.LIKE
+        );
     }
 }

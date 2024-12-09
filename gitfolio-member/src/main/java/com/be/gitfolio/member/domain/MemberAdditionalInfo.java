@@ -1,5 +1,9 @@
 package com.be.gitfolio.member.domain;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,7 +18,7 @@ import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.
 public class MemberAdditionalInfo {
 
     private String id;
-    private String memberId;
+    private Long memberId;
     private List<WorkExperience> workExperiences;
     private List<Education> educations;
     private List<Certificate> certificates;
@@ -24,7 +28,7 @@ public class MemberAdditionalInfo {
 
     public static MemberAdditionalInfo from(Long memberId) {
         return MemberAdditionalInfo.builder()
-                .memberId(String.valueOf(memberId))
+                .memberId(memberId)
                 .workExperiences(Collections.emptyList())
                 .educations(Collections.emptyList())
                 .certificates(Collections.emptyList())

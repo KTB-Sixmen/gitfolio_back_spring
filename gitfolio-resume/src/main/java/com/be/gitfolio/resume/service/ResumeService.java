@@ -5,15 +5,11 @@ import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.jwt.JWTUtil;
 import com.be.gitfolio.common.s3.S3Service;
 import com.be.gitfolio.common.type.PaidPlan;
-import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.resume.domain.Like;
 import com.be.gitfolio.resume.domain.Resume;
-import com.be.gitfolio.resume.repository.comment.CommentJpaRepository;
-import com.be.gitfolio.resume.service.port.LikeRepository;
-import com.be.gitfolio.resume.service.port.ResumeRepository;
+import com.be.gitfolio.resume.service.port.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.InternalException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,8 +18,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.io.IOException;
 import java.util.*;
@@ -41,10 +35,10 @@ public class ResumeService {
 
     private final ResumeRepository resumeRepository;
     private final LikeRepository likeRepository;
-    private final CommentJpaRepository commentJpaRepository;
+    private final CommentRepository commentRepository;
     private final RedisTemplate<String, String> redisTemplate;
-    private final WebClient aiWebClient;
-    private final WebClient memberWebClient;
+    private final AiClient aiClient;
+    private final MemberClient memberClient;
     private final JWTUtil jwtUtil;
     private final S3Service s3Service;
 
@@ -53,112 +47,58 @@ public class ResumeService {
      * 이력서 생성 요청
      */
     @Transactional
-    public String createResume(String memberId, CreateResumeRequestDTO createResumeRequestDTO) {
+    public Resume createResume(Long memberId, CreateResumeRequestDTO createResumeRequestDTO) {
 
-        MemberInfoDTO memberInfoDTO;
-        try {
-            memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
-                    .retrieve()
-                    .bodyToMono(MemberInfoDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-        }
+        MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(memberId);
 
         // 사용권 없으면 예외
-        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE) && memberInfoDTO.remainingCount() <= 0) {
-            throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
-        }
+        memberInfoDTO.validateRemainingCount();
 
         String personalRepo = "https://github.com/" + memberInfoDTO.nickname();
 
         // AI에 요청할 DTO 생성
         AIRequestDTO aiRequestDTO = AIRequestDTO.of(memberInfoDTO, personalRepo, createResumeRequestDTO);
 
-        AIResponseDTO aiResponseDTO;
-        try {
-            aiResponseDTO = aiWebClient.post()
-                    .uri("/api/resumes")
-                    .bodyValue(aiRequestDTO)
-                    .retrieve()
-                    .bodyToMono(AIResponseDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new InternalException("AIWebClient error" + exception.getMessage());
-        }
+        AIResponseDTO aiResponseDTO = aiClient.create(aiRequestDTO);
 
         Resume resume = Resume.of(memberInfoDTO, aiResponseDTO, createResumeRequestDTO);
-        String resumeId = resumeRepository.save(resume).getId();
+        Resume savedResume = resumeRepository.save(resume);
 
         // FREE 사용자면 사용권 차감
         if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
-            memberWebClient.patch()
-                    .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
-                    .retrieve()
-                    .bodyToMono(Void.class)
-                    .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
-                    .subscribe(); // 비동기 요청으로 실행
+            memberClient.decreaseRemainingCount(memberId);
         }
 
-        return resumeId;
+        return savedResume;
     }
 
     /**
      * 이력서 수정 (AI로)
      */
     @Transactional
-    public ResumeInfoForAiDTO updateResumeWithAI(String memberId, String resumeId, UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
+    public ResumeInfoForAiDTO updateResumeWithAI(Long memberId, String resumeId, UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         // 이력서 생성한 사람이 본인인지 확인
-        if (!resume.getMemberId().equals(memberId)) {
-            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
-        }
+        resume.validateOwnerShip(memberId);
 
-        MemberInfoDTO memberInfoDTO;
-        try {
-            memberInfoDTO = memberWebClient.get()
-                    .uri("/api/members/{memberId}", Long.valueOf(memberId))
-                    .retrieve()
-                    .bodyToMono(MemberInfoDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new BaseException(ErrorCode.MEMBER_SERVER_ERROR);
-        }
+        MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(memberId);
 
         // 사용권 없으면 예외
-        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE) && memberInfoDTO.remainingCount() <= 0) {
-            throw new BaseException(ErrorCode.REMAINING_COUNT_EXCEEDED);
-        }
+        memberInfoDTO.validateRemainingCount();
 
-        ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume);
+        ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume, s3Service.getProcessAvatarUrl(resume.getAvatarUrl()));
         log.info("resumeInfo : {}", resumeInfo);
 
         AIUpdateRequestDTO aiUpdateRequestDTO = AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resumeInfo);
 
-        ResumeInfoForAiDTO updateResumeInfo;
-        try {
-            updateResumeInfo = aiWebClient.put()
-                    .uri("/api/resumes")
-                    .bodyValue(aiUpdateRequestDTO)
-                    .retrieve()
-                    .bodyToMono(ResumeInfoForAiDTO.class)
-                    .block();
-        } catch (WebClientResponseException exception) {
-            throw new InternalException("AIWebClient error" + exception.getMessage());
-        }
+        ResumeInfoForAiDTO updateResumeInfo = aiClient.update(aiUpdateRequestDTO);
 
         // FREE 사용자면 사용권 차감
         if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
-            memberWebClient.patch()
-                    .uri("/api/members/{memberId}/remainingCount/decrease", Long.valueOf(memberId))
-                    .retrieve()
-                    .bodyToMono(Void.class)
-                    .doOnError(e -> log.error("Failed to decrease usage for memberId {}: {}", memberId, e.getMessage()))
-                    .subscribe(); // 비동기 요청으로 실행
+            memberClient.decreaseRemainingCount(memberId);
         }
 
         return updateResumeInfo;
@@ -193,10 +133,7 @@ public class ResumeService {
         List<ResumeListDTO> resumeListDTOs = resumePage.stream()
                 .map(resume -> {
                     // Avatar URL 가공
-                    String avatarUrl = resume.getAvatarUrl();
-                    if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
-                    }
+                    String avatarUrl = s3Service.getProcessAvatarUrl(resume.getAvatarUrl());
 
                     // 좋아요 여부 확인
                     boolean isLiked = likedResumeSet.contains(resume.getId());
@@ -234,9 +171,7 @@ public class ResumeService {
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         // private 이력서인 경우 예외처리
-        if (resume.getVisibility().equals(Visibility.PRIVATE)) {
-            throw new BaseException(ErrorCode.RESUME_ACCESS_DENIED);
-        }
+        resume.validateVisibility();
 
         // 2. 조회수 증가 및 저장
         incrementViewCount(resume, clientIp);
@@ -246,10 +181,7 @@ public class ResumeService {
         boolean isLiked = likeRepository.existsByResumeIdAndMemberId(resume.getId(), memberId);
 
         // 4. Avatar URL 가공
-        String avatarUrl = resume.getAvatarUrl();
-        if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
-        }
+        String avatarUrl = s3Service.getProcessAvatarUrl(resume.getAvatarUrl());
 
         // 5. DTO 생성 및 반환
         return new ResumeDetailDTO(resume, isLiked, avatarUrl);
@@ -268,9 +200,7 @@ public class ResumeService {
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         // 내 이력서가 아닌 경우 예외처리
-        if (!resume.getMemberId().equals(String.valueOf(memberId))) {
-            throw new BaseException(ErrorCode.RESUME_ACCESS_DENIED);
-        }
+        resume.validateOwnerShip(memberId);
 
         // 2. 조회수 증가 및 저장
         incrementViewCount(resume, clientIp);
@@ -280,10 +210,7 @@ public class ResumeService {
         boolean isLiked = likeRepository.existsByResumeIdAndMemberId(resume.getId(), memberId);
 
         // 4. Avatar URL 가공
-        String avatarUrl = resume.getAvatarUrl();
-        if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-            avatarUrl = s3Service.getFullFileUrl(avatarUrl);
-        }
+        String avatarUrl = s3Service.getProcessAvatarUrl(resume.getAvatarUrl());
 
         // 5. DTO 생성 및 반환
         return new ResumeDetailDTO(resume, isLiked, avatarUrl);
@@ -297,7 +224,7 @@ public class ResumeService {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         // 1. MySQL에서 사용자의 이력서 목록을 페이지네이션으로 조회
-        Page<Resume> resumePage = resumeRepository.findAllByMemberId(String.valueOf(memberId), pageable);
+        Page<Resume> resumePage = resumeRepository.findAllByMemberId(memberId, pageable);
 
         // 2. 사용자의 모든 이력서 ID를 추출
         List<String> resumeIds = resumePage.getContent().stream()
@@ -317,10 +244,7 @@ public class ResumeService {
                     boolean isLiked = likedResumeIds.contains(resume.getId());
 
                     // Avatar URL 가공
-                    String avatarUrl = resume.getAvatarUrl();
-                    if (avatarUrl != null && !avatarUrl.contains("avatars.githubusercontent.com")) {
-                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
-                    }
+                    String avatarUrl = s3Service.getProcessAvatarUrl(resume.getAvatarUrl());
 
                     return new ResumeListDTO(resume, isLiked, avatarUrl);
                 })
@@ -336,7 +260,7 @@ public class ResumeService {
     @Transactional
     public void deleteResume(String resumeId) {
         likeRepository.deleteLikesByResumeId(resumeId); // 해당 이력서의 좋아요 전부 삭제
-        commentJpaRepository.deleteCommentsByResumeId(resumeId); // 해당 이력서의 댓글 전부 삭제
+        commentRepository.deleteCommentsByResumeId(resumeId); // 해당 이력서의 댓글 전부 삭제
         resumeRepository.deleteById(resumeId); // 이력서 삭제
     }
 
@@ -344,14 +268,12 @@ public class ResumeService {
      * 이력서 직접 수정
      */
     @Transactional
-    public void updateResume(String memberId, String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO, MultipartFile imageFile) throws IOException {
+    public void updateResume(Long memberId, String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO, MultipartFile imageFile) throws IOException {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
         // 이력서 생성한 사람이 본인인지 확인
-        if (!resume.getMemberId().equals(memberId)) {
-            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
-        }
+        resume.validateOwnerShip(memberId);
 
         String avatarUrl = resume.getAvatarUrl();
 
@@ -370,7 +292,7 @@ public class ResumeService {
         String redisKey = "resume:view:" + resume.getId() + ":" + clientIp;
 
         if (Boolean.FALSE.equals(redisTemplate.hasKey(redisKey))) {
-            resume.updateView(); // 조회수 증가
+            resume.increaseView(); // 조회수 증가
 
             // 1시간 동안 조회수 증가 안되도록 설정
             redisTemplate.opsForValue().set(redisKey, "1", 1, TimeUnit.HOURS);
@@ -388,9 +310,7 @@ public class ResumeService {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
-        if (!Objects.equals(resume.getMemberId(), String.valueOf(memberId))) {
-            throw new BaseException(ErrorCode.INVALID_MEMBER_TO_UPDATE_RESUME);
-        }
+        resume.validateOwnerShip(memberId);
 
         resume.updateVisibility(updateVisibilityDTO.visibility());
         resumeRepository.save(resume);

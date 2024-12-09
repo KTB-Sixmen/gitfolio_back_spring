@@ -7,7 +7,7 @@ import java.util.Optional;
 public interface MemberAdditionalInfoRepository {
     MemberAdditionalInfo save(MemberAdditionalInfo memberAdditionalInfo);
 
-    Optional<MemberAdditionalInfo> findByMemberId(String memberId);
+    Optional<MemberAdditionalInfo> findByMemberId(Long memberId);
 
-    void deleteByMemberId(String memberId);
+    void deleteByMemberId(Long memberId);
 }

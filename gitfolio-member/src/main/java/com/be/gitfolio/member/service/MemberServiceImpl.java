@@ -9,7 +9,7 @@ import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
-import com.be.gitfolio.member.service.port.GithubApi;
+import com.be.gitfolio.member.service.port.GithubClient;
 import com.be.gitfolio.member.service.port.MemberAdditionalInfoRepository;
 import com.be.gitfolio.member.service.port.MemberRepository;
 import lombok.Builder;
@@ -48,7 +48,7 @@ public class MemberServiceImpl implements MemberService {
     private final MemberRepository memberRepository;
     private final MemberAdditionalInfoRepository memberAdditionalInfoRepository;
     private final S3Service s3Service;
-    private final GithubApi githubApi;
+    private final GithubClient githubClient;
     private final JobLauncher jobLauncher;
     private final Job remainingCountResetJob;
     private final JobRepository jobRepository;
@@ -88,7 +88,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
 
         // MongoDB에서 추가 정보 조회
-        Optional<MemberAdditionalInfo> additionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(String.valueOf(member.getId()));
+        Optional<MemberAdditionalInfo> additionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(member.getId());
 
         // 추가 정보가 없으면 기본값으로 처리
         MemberAdditionalInfo additionalInfo = additionalInfoOpt
@@ -106,7 +106,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
 
         // MongoDB에서 추가 정보 조회
-        Optional<MemberAdditionalInfo> additionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(String.valueOf(member.getId()));
+        Optional<MemberAdditionalInfo> additionalInfoOpt = memberAdditionalInfoRepository.findByMemberId(member.getId());
 
         // 추가 정보가 없으면 기본값으로 처리
         MemberAdditionalInfo additionalInfo = additionalInfoOpt
@@ -147,7 +147,7 @@ public class MemberServiceImpl implements MemberService {
         memberRepository.save(updateMember);
 
         // 추가 정보 수정
-        MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoRepository.findByMemberId(String.valueOf(memberId))
+        MemberAdditionalInfo memberAdditionalInfo = memberAdditionalInfoRepository.findByMemberId(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_ADDITIONAL_INFO));
 
         MemberAdditionalInfo updateMemberAdditionalInfo = memberAdditionalInfo.updateMemberAdditionalInfo(memberAdditionalInfoUpdate);
@@ -162,14 +162,14 @@ public class MemberServiceImpl implements MemberService {
     public List<MemberGithubRepository> getUserRepositoriesWithLanguages(String username) {
 
         // 1. 사용자 개인 레포지토리 조회
-        List<MemberGithubRepository> userRepositories = new ArrayList<>(githubApi.getRepositoriesForUser(username));
+        List<MemberGithubRepository> userRepositories = new ArrayList<>(githubClient.getRepositoriesForUser(username));
 
         // 2. 사용자가 속한 조직 리스트 조회
-        List<String> organizations = githubApi.getOrganizationsForUser(username);
+        List<String> organizations = githubClient.getOrganizationsForUser(username);
 
         // 3. 각 조직의 레포지토리 조회 및 추가
         for (String org : organizations) {
-            userRepositories.addAll(githubApi.getRepositoriesForOrganization(org));
+            userRepositories.addAll(githubClient.getRepositoriesForOrganization(org));
         }
 
         // 4. updatedAt 기준으로 정렬
@@ -203,7 +203,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public void deleteMember(Long memberId) {
         memberRepository.deleteById(memberId);
-        memberAdditionalInfoRepository.deleteByMemberId(String.valueOf(memberId));
+        memberAdditionalInfoRepository.deleteByMemberId(memberId);
     }
 
     /**
