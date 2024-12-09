@@ -8,7 +8,7 @@ public interface MemberAdditionalInfoMongoRepository extends MongoRepository<Mem
 
 
 
-    Optional<MemberAdditionalInfoEntity> findByMemberId(String memberId);
+    Optional<MemberAdditionalInfoEntity> findByMemberId(Long memberId);
 
-    void deleteByMemberId(String memberId);
+    void deleteByMemberId(Long memberId);
 }

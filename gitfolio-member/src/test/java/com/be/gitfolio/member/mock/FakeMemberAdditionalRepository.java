@@ -30,12 +30,12 @@ public class FakeMemberAdditionalRepository implements MemberAdditionalInfoRepos
     }
 
     @Override
-    public Optional<MemberAdditionalInfo> findByMemberId(String memberId) {
+    public Optional<MemberAdditionalInfo> findByMemberId(Long memberId) {
         return data.stream().filter(item -> item.getMemberId().equals(memberId)).findAny();
     }
 
     @Override
-    public void deleteByMemberId(String memberId) {
+    public void deleteByMemberId(Long memberId) {
         data.removeIf(item -> item.getMemberId().equals(memberId));
     }
 }

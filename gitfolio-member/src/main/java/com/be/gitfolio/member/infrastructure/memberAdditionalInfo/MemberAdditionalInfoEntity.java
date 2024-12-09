@@ -1,5 +1,9 @@
 package com.be.gitfolio.member.infrastructure.memberAdditionalInfo;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import com.be.gitfolio.member.domain.*;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -17,7 +21,7 @@ public class MemberAdditionalInfoEntity {
 
     @Id
     private String id;
-    private String memberId; // 회원 ID
+    private Long memberId; // 회원 ID
     private List<WorkExperience> workExperiences;
     private List<Education> educations;
     private List<Certificate> certificates;

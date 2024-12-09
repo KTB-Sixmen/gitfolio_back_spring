@@ -1,10 +1,10 @@
 package com.be.gitfolio.member.domain.request;
 
 
-import com.be.gitfolio.member.domain.Certificate;
-import com.be.gitfolio.member.domain.Education;
-import com.be.gitfolio.member.domain.Link;
-import com.be.gitfolio.member.domain.WorkExperience;
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import lombok.Builder;
 
 import java.util.List;

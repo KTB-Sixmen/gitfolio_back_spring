@@ -1,5 +1,9 @@
 package com.be.gitfolio.member.domain;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import com.be.gitfolio.common.type.EmploymentStatus;
 import com.be.gitfolio.common.type.GraduationStatus;
 import com.be.gitfolio.common.type.SchoolType;
@@ -21,7 +25,7 @@ public class MemberAdditionalInfoTest {
         //when
         MemberAdditionalInfo memberAdditionalInfo = MemberAdditionalInfo.from(memberId);
         //then
-        assertThat(memberAdditionalInfo.getMemberId()).isEqualTo(String.valueOf(memberId));
+        assertThat(memberAdditionalInfo.getMemberId()).isEqualTo(memberId);
         assertThat(memberAdditionalInfo.getWorkExperiences()).isEmpty();
         assertThat(memberAdditionalInfo.getEducations()).isEmpty();
         assertThat(memberAdditionalInfo.getCertificates()).isEmpty();
