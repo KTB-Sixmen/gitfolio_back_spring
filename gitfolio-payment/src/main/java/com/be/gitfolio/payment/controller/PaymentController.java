@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 import static com.be.gitfolio.payment.dto.PaymentRequest.*;
-import static com.be.gitfolio.payment.dto.PaymentResponse.*;
+import static com.be.gitfolio.payment.dto.KakaoResponse.*;
 
 @RestController
 @RequiredArgsConstructor
