@@ -9,10 +9,10 @@ EXPOSE 8080
 # COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
 
 # 로컬용
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-chat-*-SNAPSHOT.jar auth.jar
-# COPY ../build/.env .env
-# COPY ../build/*-chat-*-SNAPSHOT.jar chat.jar
+# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
+# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-chat-*-SNAPSHOT.jar auth.jar
+COPY ../build/.env .env
+COPY ../build/*-chat-*-SNAPSHOT.jar chat.jar
 
 
 CMD [ "java", "-jar", "chat.jar" ]
