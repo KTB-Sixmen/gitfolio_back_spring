@@ -1,5 +1,7 @@
 package com.be.gitfolio.resume.service;
 
+import com.be.gitfolio.common.event.KafkaEvent;
+import com.be.gitfolio.resume.service.port.MemberClient;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.s3.S3Service;
@@ -8,12 +10,12 @@ import com.be.gitfolio.resume.domain.Comment;
 import com.be.gitfolio.resume.domain.Resume;
 import com.be.gitfolio.resume.event.ResumeEventPublisher;
 import com.be.gitfolio.resume.service.port.CommentRepository;
+import com.be.gitfolio.resume.service.port.NotificationClient;
 import com.be.gitfolio.resume.service.port.ResumeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.List;
 
@@ -30,8 +32,8 @@ public class CommentService {
     private final CommentRepository commentRepository;
     private final ResumeEventPublisher resumeEventPublisher;
     private final S3Service s3Service;
-    private final WebClient memberWebClient;
-//    private final WebClient notificationWebClient;
+    private final MemberClient memberClient;
+//    private final NotificationClient notificationClient;
 
 //    // 테스트용(webClient)
 //    @Transactional
@@ -40,23 +42,12 @@ public class CommentService {
 //        Resume resume = resumeRepository.findById(resumeId)
 //                .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 //
-//        Comment comment = Comment.builder()
-//                .resumeId(resumeId)
-//                .memberId(senderId)
-//                .content(commentRequestDTO.content())
-//                .build();
+//        Comment comment = Comment.of(resumeId, senderId, commentRequestDTO);
 //        Comment savedComment = commentRepository.save(comment);
 //
 //        log.info("저장 성공!");
-//        KafkaEvent.ResumeEvent resumeEvent = new KafkaEvent.ResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
-//        notificationWebClient.post()
-//                .uri("/api/notifications")
-//                .bodyValue(resumeEvent)
-//                .retrieve()
-//                .toBodilessEntity()
-//                .doOnSuccess(response -> log.info("Notification 전송 성공"))
-//                .doOnError(error -> log.error("Notification 전송 실패", error))
-//                .subscribe(); // 비동기로 실행;
+//        ResumeEvent resumeEvent = new ResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+//        notificationClient.sendNotification(resumeEvent);
 //        log.info("webClient 요청 성공");
 //        return savedComment.getId();
 //    }
@@ -71,14 +62,10 @@ public class CommentService {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
-        Comment comment = Comment.builder()
-                .resumeId(resumeId)
-                .memberId(senderId)
-                .content(commentRequestDTO.content())
-                .build();
+        Comment comment = Comment.of(resumeId, senderId, commentRequestDTO);
         Comment savedComment = commentRepository.save(comment);
 
-        resumeEventPublisher.publishResumeEvent(senderId, senderNickname, Long.valueOf(resume.getMemberId()), resumeId, NotificationType.COMMENT);
+        resumeEventPublisher.publishResumeEvent(senderId, senderNickname, resume.getMemberId(), resumeId, NotificationType.COMMENT);
         return savedComment;
     }
 
@@ -116,16 +103,9 @@ public class CommentService {
         List<Comment> comments = commentRepository.findAllByResumeId(resumeId);
         return comments.stream()
                 .map(comment -> {
-                    MemberInfoDTO memberInfoDTO = memberWebClient.get()
-                            .uri("/api/members/{memberId}", comment.getMemberId())
-                            .retrieve()
-                            .bodyToMono(MemberInfoDTO.class)
-                            .block();
+                    MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(comment.getMemberId());
                     // Avatar URL 가공
-                    String avatarUrl = memberInfoDTO.avatarUrl();
-                    if (!avatarUrl.contains("avatars.githubusercontent.com")) {
-                        avatarUrl = s3Service.getFullFileUrl(avatarUrl);
-                    }
+                    String avatarUrl = s3Service.getProcessAvatarUrl(memberInfoDTO.avatarUrl());
                     return new CommentResponseDTO(comment, memberInfoDTO.nickname(), avatarUrl);
                 })
                 .toList();

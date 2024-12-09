@@ -17,7 +17,7 @@ public interface ResumeRepository {
 
     Optional<Resume> findById(String resumeId);
 
-    Page<Resume> findAllByMemberId(String memberId, Pageable pageable);
+    Page<Resume> findAllByMemberId(Long memberId, Pageable pageable);
 
     void deleteById(String resumeId);
 }

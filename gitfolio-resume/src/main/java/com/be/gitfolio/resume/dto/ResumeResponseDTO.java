@@ -1,5 +1,9 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.common.utility.TimeUtils;
