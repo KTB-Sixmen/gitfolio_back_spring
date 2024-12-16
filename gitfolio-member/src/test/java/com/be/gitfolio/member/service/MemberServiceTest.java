@@ -8,7 +8,7 @@ import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import com.be.gitfolio.member.mock.FakeMemberAdditionalRepository;
 import com.be.gitfolio.member.mock.FakeMemberRepository;
-import com.be.gitfolio.member.service.port.GithubApi;
+import com.be.gitfolio.member.service.port.GithubClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -28,7 +28,7 @@ class MemberServiceTest {
 
     private MemberServiceImpl memberService;
     private S3Service s3Service;
-    private GithubApi githubApi;
+    private GithubClient githubClient;
     private FakeMemberRepository fakeMemberRepository;
     private FakeMemberAdditionalRepository fakeMemberAdditionalRepository;
 
@@ -37,12 +37,12 @@ class MemberServiceTest {
         fakeMemberRepository = new FakeMemberRepository();
         fakeMemberAdditionalRepository = new FakeMemberAdditionalRepository();
         this.s3Service = Mockito.mock(S3Service.class);
-        this.githubApi = Mockito.mock(GithubApi.class);
+        this.githubClient = Mockito.mock(GithubClient.class);
         this.memberService = MemberServiceImpl.builder()
                 .memberRepository(fakeMemberRepository)
                 .memberAdditionalInfoRepository(fakeMemberAdditionalRepository)
                 .s3Service(s3Service)
-                .githubApi(githubApi)
+                .githubClient(githubClient)
                 .build();
         fakeMemberRepository.save(Member.builder()
                 .id(1L)

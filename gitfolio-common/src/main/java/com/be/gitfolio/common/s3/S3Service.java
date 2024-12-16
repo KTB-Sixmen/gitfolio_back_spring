@@ -74,5 +74,12 @@ public class S3Service {
     public String getFullFileUrl(String filename) {
         return s3UrlPrefix + filename;
     }
+
+    public String getProcessAvatarUrl(String avatarUrl) {
+        if (!avatarUrl.contains("avatars.githubusercontent.com")) {
+            return getFullFileUrl(avatarUrl);
+        }
+        return avatarUrl;
+    }
 }
 

@@ -19,12 +19,12 @@ public class MemberAdditionalInfoRepositoryImpl implements MemberAdditionalInfoR
     }
 
     @Override
-    public Optional<MemberAdditionalInfo> findByMemberId(String memberId) {
+    public Optional<MemberAdditionalInfo> findByMemberId(Long memberId) {
         return memberAdditionalInfoMongoRepository.findByMemberId(memberId).map(MemberAdditionalInfoEntity::toModel);
     }
 
     @Override
-    public void deleteByMemberId(String memberId) {
+    public void deleteByMemberId(Long memberId) {
         memberAdditionalInfoMongoRepository.deleteByMemberId(memberId);
     }
 }

@@ -13,4 +13,6 @@ public interface CommentRepository {
     void deleteById(Long commentId);
 
     List<Comment> findAllByResumeId(String resumeId);
+
+    void deleteCommentsByResumeId(String resumeId);
 }

@@ -2,9 +2,10 @@ package com.be.gitfolio.payment.config;
 
 import com.be.gitfolio.payment.domain.Payment;
 import com.be.gitfolio.payment.domain.PaymentStatusHistory;
-import com.be.gitfolio.payment.repository.PaymentRepository;
-import com.be.gitfolio.payment.repository.PaymentStatusHistoryRepository;
+import com.be.gitfolio.payment.infrastructure.PaymentRepository;
+import com.be.gitfolio.payment.infrastructure.PaymentStatusHistoryRepository;
 import com.be.gitfolio.payment.service.PaymentJobCompletionListener;
+import com.be.gitfolio.payment.service.port.KakaoClient;
 import com.be.gitfolio.payment.type.PaymentStatus;
 import jakarta.persistence.EntityManagerFactory;
 import lombok.RequiredArgsConstructor;
@@ -40,18 +41,11 @@ public class PaymentBatchConfig {
     private final JobRepository jobRepository;
     private final EntityManagerFactory entityManagerFactory;
     private final KafkaTemplate<String, ExpirationEvent> kafkaTemplate;
-    private final WebClient kakaoWebClient;
+    private final KakaoClient kakaoClient;
     private final KakaoPayProperties payProperties;
     private final PaymentStatusHistoryRepository paymentStatusHistoryRepository;
     private final PaymentRepository paymentRepository;
 
-    private HttpHeaders getHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        String auth = "SECRET_KEY " + payProperties.getSecretKey();
-        headers.set("Authorization", auth);
-        headers.set("Content-Type", "application/json");
-        return headers;
-    }
 
     @Bean
     public Job paymentExpirationJob(Step paymentExpirationStep, PaymentJobCompletionListener jobCompletionListener) {
@@ -148,13 +142,13 @@ public class PaymentBatchConfig {
                     "tax_free_amount", 0
             );
 
-            kakaoWebClient.post()
-                    .uri("https://open-api.kakaopay.com/online/v1/payment/subscription")
-                    .headers(headers -> headers.addAll(getHeaders()))
-                    .bodyValue(parameters)
-                    .retrieve()
-                    .toBodilessEntity()
-                    .block();
+
+            kakaoClient.sendKakaoPaymentRequest(
+                    "https://open-api.kakaopay.com/online/v1/payment/subscription", // URL
+                    parameters, // 요청 파라미터
+                    Void.class, // 응답 타입 (Bodyless)
+                    payProperties.getSecretKey()
+            );
 
             return true; // 결제 성공
         } catch (Exception e) {

@@ -1,5 +1,9 @@
 package com.be.gitfolio.resume.dto;
 
+import com.be.gitfolio.common.dto.Certificate;
+import com.be.gitfolio.common.dto.Education;
+import com.be.gitfolio.common.dto.Link;
+import com.be.gitfolio.common.dto.WorkExperience;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.common.type.Visibility;
 import com.be.gitfolio.common.utility.TimeUtils;
@@ -36,7 +40,7 @@ public class ResumeResponseDTO {
         public ResumeListDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberId(),
                     avatarFullUrl,
                     resume.getPosition(),
                     resume.getAboutMe(),
@@ -102,7 +106,7 @@ public class ResumeResponseDTO {
         public ResumeDetailDTO(Resume resume, boolean liked, String avatarFullUrl) {
             this(
                     resume.getId(),
-                    Long.valueOf(resume.getMemberId()),
+                    resume.getMemberId(),
                     resume.getMemberName(),
                     avatarFullUrl,
                     resume.getEmail(),

@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static com.be.gitfolio.payment.dto.PaymentRequest.*;
-import static com.be.gitfolio.payment.dto.PaymentResponse.*;
+import static com.be.gitfolio.payment.dto.KakaoResponse.*;
 
 @Entity
 @Getter

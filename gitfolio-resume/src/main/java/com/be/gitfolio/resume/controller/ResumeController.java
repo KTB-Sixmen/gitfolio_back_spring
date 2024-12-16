@@ -43,7 +43,7 @@ public class ResumeController {
                 HttpStatus.CREATED,
                 "201 CREATED",
                 "이력서 생성에 성공했습니다.",
-                resumeService.createResume(memberId, createResumeRequestDTO)
+                resumeService.createResume(Long.valueOf(memberId), createResumeRequestDTO).getId()
         ));
     }
 
@@ -56,7 +56,7 @@ public class ResumeController {
                                                        @PathVariable("resumeId") String resumeId,
                                                        @Valid @RequestBody UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO) {
         String memberId = request.getAttribute("memberId").toString();
-        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.updateResumeWithAI(memberId, resumeId, updateResumeWithAIRequestDTO)));
+        return ResponseEntity.ok().body(new BaseResponse<>(resumeService.updateResumeWithAI(Long.valueOf(memberId), resumeId, updateResumeWithAIRequestDTO)));
     }
 
     /**
@@ -89,9 +89,7 @@ public class ResumeController {
             @RequestHeader(value = "Authorization", required = false) String token
     ) {
         ResumeFilterDTO resumeFilterDTO = new ResumeFilterDTO(
-                tag,
                 position,
-                techStack,
                 schoolType,
                 sortOrder,
                 liked,
@@ -167,7 +165,7 @@ public class ResumeController {
                                                              @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
 
         String memberId = request.getAttribute("memberId").toString();
-        resumeService.updateResume(memberId,resumeId, updateResumeRequestDTO, imageFile);
+        resumeService.updateResume(Long.valueOf(memberId), resumeId, updateResumeRequestDTO, imageFile);
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
 

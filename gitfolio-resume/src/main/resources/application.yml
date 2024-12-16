@@ -5,6 +5,10 @@ spring:
   data:
     mongodb:
       uri: mongodb://${RESUME_MONGO_DB_USERNAME}:${RESUME_MONGO_DB_PORT}/${RESUME_MONGO_DB_DATABASE}
+    redis:
+      host: ${RESUME_REDIS_HOST}
+      port: ${RESUME_REDIS_PORT}
+
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${LIKE_MYSQL_DB_HOST}:${LIKE_MYSQL_DB_PORT}/${LIKE_MYSQL_DB_NAME}?serverTimezone=UTC&characterEncoding=UTF-8
