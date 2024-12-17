@@ -19,7 +19,7 @@ public class PaymentBatchScheduler {
     private final JobLauncher jobLauncher;
     private final Job paymentExpirationJob;
 
-    @Scheduled(cron = "0 0 0 * * *") // 매일 자정에 실행
+    @Scheduled(cron = "0 55 15 * * *") // 매일 자정에 실행
     public void runPaymentExpirationJob() throws Exception {
         log.info("Payment Job Start");
 
