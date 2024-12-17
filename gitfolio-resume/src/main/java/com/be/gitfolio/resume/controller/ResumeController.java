@@ -160,12 +160,13 @@ public class ResumeController {
     @AuthRequired
     @PutMapping("/{resumeId}")
     public ResponseEntity<BaseResponse<String>> updateResume(HttpServletRequest request,
+                                                             @RequestParam(value = "isAiFixed", required = false) Boolean isAiFixed,
                                                              @PathVariable("resumeId") String resumeId,
                                                              @RequestPart("updateResumeRequestDTO") UpdateResumeRequestDTO updateResumeRequestDTO,
                                                              @RequestPart(value = "imageFile", required = false) MultipartFile imageFile) throws IOException {
 
         String memberId = request.getAttribute("memberId").toString();
-        resumeService.updateResume(Long.valueOf(memberId), resumeId, updateResumeRequestDTO, imageFile);
+        resumeService.updateResume(Long.valueOf(memberId), resumeId, updateResumeRequestDTO, imageFile, isAiFixed);
         return ResponseEntity.ok().body(new BaseResponse<>("이력서 수정이 완료되었습니다."));
     }
 
