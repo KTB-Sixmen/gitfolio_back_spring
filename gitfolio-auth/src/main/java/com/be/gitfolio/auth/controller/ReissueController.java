@@ -47,7 +47,7 @@ public class ReissueController {
 
         if (refresh == null) {
             //response status code
-            return new ResponseEntity<>("Refresh Token null", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("인증 정보가 만료되었습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         // Refresh 토큰 만료 확인
@@ -55,9 +55,9 @@ public class ReissueController {
             jwtUtil.isExpired(refresh);
         } catch (ExpiredJwtException e) {
             //response status code
-            return new ResponseEntity<>("Refresh Token Expired", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("인증 정보가 만료되었습니다.", HttpStatus.UNAUTHORIZED);
         } catch (SignatureException e) {
-            return new ResponseEntity<>("Refresh Signature Does Not Match", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("인증 정보가 만료되었습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         // 토큰이 refresh인지 확인 (발급시 페이로드에 명시)
@@ -65,7 +65,7 @@ public class ReissueController {
 
         if (!category.equals("refresh")) {
             // response status code
-            return new ResponseEntity<>("Category is NOT Refresh", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("인증 정보가 만료되었습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         String username = jwtUtil.getUsername(refresh);
@@ -75,7 +75,7 @@ public class ReissueController {
 
         // Redis에서 토큰 존재 여부 확인
         if (!redisTokenRepository.existsByRefreshToken(username)) {
-            return new ResponseEntity<>("Token is NOT in Redis", HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<>("인증 정보가 만료되었습니다.", HttpStatus.UNAUTHORIZED);
         }
 
         // make new JWT
