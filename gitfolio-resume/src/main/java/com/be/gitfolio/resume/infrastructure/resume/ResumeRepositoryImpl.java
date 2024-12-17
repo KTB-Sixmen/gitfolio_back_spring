@@ -91,4 +91,9 @@ public class ResumeRepositoryImpl implements ResumeRepository {
     public void deleteById(String resumeId) {
         resumeMongoRepository.deleteById(resumeId);
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        resumeMongoRepository.deleteAllByMemberId(memberId);
+    }
 }

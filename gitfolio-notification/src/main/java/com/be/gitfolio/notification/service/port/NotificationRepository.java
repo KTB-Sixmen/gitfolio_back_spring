@@ -11,4 +11,6 @@ public interface NotificationRepository {
     Optional<Notification> findById(Long notificationId);
 
     List<Notification> findAllByReceiverIdAndReadFalse(Long receiverId);
+
+    void deleteAllByMemberId(Long memberId);
 }

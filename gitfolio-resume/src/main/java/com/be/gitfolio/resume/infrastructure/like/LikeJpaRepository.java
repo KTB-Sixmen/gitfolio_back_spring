@@ -26,4 +26,6 @@ public interface LikeJpaRepository extends JpaRepository<Like, Long> {
 
     @Query("SELECT l.resumeId FROM Like l WHERE l.memberId = :memberId AND l.resumeId IN :resumeIds")
     List<String> findLikedResumeIdsByMemberIdAndResumeIds(Long memberId, List<String> resumeIds);
+
+    void deleteAllByMemberId(Long memberId);
 }
