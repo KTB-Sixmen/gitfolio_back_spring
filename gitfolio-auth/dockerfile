@@ -1,25 +1,8 @@
-# 베이스 이미지 설정
 FROM amazoncorretto:17 AS runner
-
-# 작업 디렉토리 설정
 WORKDIR /auth
-
-# 애플리케이션 포트 노출 (예: 8080)
 EXPOSE 8080
 
-# # 빌드된 JAR 파일 복사
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
 
-# 테스트용 빌더파일
-# 이제 .env 필요없음~~ 빌더에서 어차피 받아오니까
-# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
-
-
-
-# COPY ../build/.env .env
-# COPY ../build/*-auth-*-SNAPSHOT.jar auth.jar
-
-# 애플리케이션 실행
 CMD [ "java", "-jar", "auth.jar" ]

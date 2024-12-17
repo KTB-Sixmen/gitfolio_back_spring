@@ -1,20 +1,8 @@
 FROM amazoncorretto:17 AS runner
-
 WORKDIR /resume
-
 EXPOSE 8082
 
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
-
-# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
-# 로컬용
-# COPY ../build/.env .env
-# COPY ../build/*-resume-*-SNAPSHOT.jar resume.jar
-
-# 로컬용
-# COPY ../build/.env .env
-# COPY ../build/*-resume-*-SNAPSHOT.jar resume.jar
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
 CMD [ "java", "-jar", "resume.jar" ]

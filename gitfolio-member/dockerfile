@@ -1,20 +1,8 @@
-# 베이스 이미지 설정
 FROM amazoncorretto:17 AS runner
-
-# 작업 디렉토리 설정
 WORKDIR /member
-
-# 애플리케이션 포트 노출 (예: 8081)
 EXPOSE 8081
 
-# # 빌드된 JAR 파일 복사
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-# COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
+COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
 
-# COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:backup /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
-# COPY ../build/.env .env
-# COPY ../build/*-member-*-SNAPSHOT.jar member.jar
-
-# 애플리케이션 실행
 CMD [ "java", "-jar", "member.jar" ]
