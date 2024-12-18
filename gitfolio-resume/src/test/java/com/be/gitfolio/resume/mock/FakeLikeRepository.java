@@ -81,4 +81,9 @@ public class FakeLikeRepository implements LikeRepository {
             return like;
         }
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        data.removeIf(item -> Objects.equals(item.getMemberId(), memberId));
+    }
 }
