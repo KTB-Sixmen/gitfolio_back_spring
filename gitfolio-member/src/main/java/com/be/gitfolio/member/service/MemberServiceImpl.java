@@ -206,9 +206,11 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
         memberRepository.deleteById(memberId);
         memberAdditionalInfoRepository.deleteByMemberId(memberId);
-        memberEventPublisher.publishResumeEvent(memberId);
+        memberEventPublisher.publishResumeEvent(memberId, member.getUsername());
     }
 
     /**

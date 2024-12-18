@@ -15,8 +15,8 @@ public class MemberEventPublisher {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     // 댓글 및 좋아요 이벤트 발행
-    public void publishResumeEvent(Long memberId) {
-        MemberDeletedEvent event = MemberDeletedEvent.builder().memberId(memberId).build();
+    public void publishResumeEvent(Long memberId, String username) {
+        MemberDeletedEvent event = MemberDeletedEvent.builder().memberId(memberId).username(username).build();
         kafkaTemplate.send("memberDeletedEventTopic", event);
     }
 }

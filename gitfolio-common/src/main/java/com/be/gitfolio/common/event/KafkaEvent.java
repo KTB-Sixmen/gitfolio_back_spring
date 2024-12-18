@@ -31,5 +31,6 @@ public class KafkaEvent {
     @NoArgsConstructor(access = AccessLevel.PROTECTED)
     public static class MemberDeletedEvent {
         private Long memberId;
+        private String username;
     }
 }
