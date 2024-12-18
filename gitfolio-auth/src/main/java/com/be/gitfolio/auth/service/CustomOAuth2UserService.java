@@ -2,17 +2,22 @@ package com.be.gitfolio.auth.service;
 
 import com.be.gitfolio.auth.dto.CustomOAuth2User;
 import com.be.gitfolio.auth.dto.GithubResponse;
+import com.be.gitfolio.auth.infrastructure.RedisTokenRepository;
 import com.be.gitfolio.auth.service.port.MemberClient;
+import com.be.gitfolio.common.event.KafkaEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import static com.be.gitfolio.auth.dto.MemberDTO.*;
+import static com.be.gitfolio.common.event.KafkaEvent.*;
 
 @Service
 @RequiredArgsConstructor
@@ -20,6 +25,20 @@ import static com.be.gitfolio.auth.dto.MemberDTO.*;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final MemberClient memberClient;
+    private final RedisTokenRepository redisTokenRepository;
+
+    /**
+     * 회원 탈퇴 이벤트 핸들러
+     * @param event
+     */
+    @Transactional
+    @KafkaListener(topics = "memberDeletedEventTopic", groupId = "notification-group")
+    public void memberDeleteEventHandler(MemberDeletedEvent event) {
+        Long memberId = event.getMemberId();
+        String username = event.getUsername();
+        log.info("Kafka 메시지 도착 : {}", memberId);
+        redisTokenRepository.deleteRefreshToken(username);
+    }
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {

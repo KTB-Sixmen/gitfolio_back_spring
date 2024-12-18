@@ -82,11 +82,11 @@ public class ReissueController {
         String newAccess = jwtUtil.createJwt("access", username, nickname, role, memberId, accessTokenExpiry);
 
         // refreshToken이 만료 기한의 절반보다 적게 남았을때만 재발급
-        if (jwtUtil.isRefreshHaveToReissue(refresh)) {
+        if (Boolean.TRUE.equals(jwtUtil.isRefreshHaveToReissue(refresh))) {
             String newRefresh = jwtUtil.createJwt("refresh", username, nickname, role, memberId, refreshTokenExpiry);
 
             //Refresh 토큰 저장 DB에 기존의 Refresh 토큰 삭제 후 새 Refresh 토큰 저장
-            redisTokenRepository.deleteRefreshToken(refresh);
+            redisTokenRepository.deleteRefreshToken(username);
             redisTokenRepository.saveRefreshToken(username, newRefresh, refreshTokenExpiry);
 
             // 쿠키와 헤더에 토큰 설정
