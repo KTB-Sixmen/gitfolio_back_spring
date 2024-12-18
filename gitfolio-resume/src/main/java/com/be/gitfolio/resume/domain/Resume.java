@@ -117,7 +117,32 @@ public class Resume {
         private String projectStartedAt;
         private String projectEndedAt;
         private String skillSet;
-        private String projectDescription;
+        //        private String projectDescription;
+        private List<String> roleAndTask; //Basic Template
+        private Star star; //Star Template
+        private TroubleShooting troubleShooting; // Gitfolio Template
         private String repoLink;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class Star {
+        String situation;
+        String task;
+        String action;
+        String result;
+    }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class TroubleShooting {
+        String problem;
+        String hypothesis;
+        String tring;
+        String result;
     }
 }

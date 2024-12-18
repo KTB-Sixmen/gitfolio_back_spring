@@ -114,7 +114,8 @@ public class ResumeRequestDTO {
             String githubName,  // 회원 깃허브 이름(설정 안하면 null)
             String personalRepo,    // 개인레포(깃허브 자기 소개페이지?)
             List<String> selectedRepo,  // 이력서 생성에 사용할 레포 목록
-            String requirements    // 요구사항(강조사항)
+            String requirements,    // 요구사항(강조사항)
+            Template template
     ) {
         public static AIRequestDTO of(MemberInfoDTO memberInfoDTO, String personalRepo, CreateResumeRequestDTO createResumeRequestDTO) {
             return new AIRequestDTO(
@@ -122,7 +123,8 @@ public class ResumeRequestDTO {
                     memberInfoDTO.githubName(),
                     personalRepo,
                     createResumeRequestDTO.selectedRepo(),
-                    createResumeRequestDTO.requirements()
+                    createResumeRequestDTO.requirements(),
+                    createResumeRequestDTO.template()
             );
         }
     }
