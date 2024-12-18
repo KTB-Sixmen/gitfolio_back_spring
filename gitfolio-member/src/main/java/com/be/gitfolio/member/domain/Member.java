@@ -65,9 +65,13 @@ public class Member {
     }
 
     public Member decreaseRemainingCount() {
-        return this.toBuilder()
-                .remainingCount(remainingCount-1)
-                .updatedAt(LocalDateTime.now())
-                .build();
+        if (this.paidPlan.equals(PaidPlan.FREE)) {
+            return this.toBuilder()
+                    .remainingCount(remainingCount - 1)
+                    .updatedAt(LocalDateTime.now())
+                    .build();
+        } else {
+            return this;
+        }
     }
 }

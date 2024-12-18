@@ -10,4 +10,6 @@ import org.springframework.stereotype.Repository;
 public interface ResumeMongoRepository extends MongoRepository<Resume, String> {
 
     Page<Resume> findAllByMemberId(Long memberId, Pageable pageable);
+
+    void deleteAllByMemberId(Long memberId);
 }

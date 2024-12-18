@@ -38,4 +38,9 @@ public class CommentRepositoryImpl implements CommentRepository {
     public void deleteCommentsByResumeId(String resumeId) {
         commentJpaRepository.deleteCommentsByResumeId(resumeId);
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        commentJpaRepository.deleteAllByMemberId(memberId);
+    }
 }

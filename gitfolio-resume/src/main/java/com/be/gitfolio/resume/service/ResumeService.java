@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +25,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.be.gitfolio.common.event.KafkaEvent.*;
 import static com.be.gitfolio.resume.dto.ResumeRequestDTO.*;
 import static com.be.gitfolio.resume.dto.ResumeResponseDTO.*;
 
@@ -84,24 +86,12 @@ public class ResumeService {
         // 이력서 생성한 사람이 본인인지 확인
         resume.validateOwnerShip(memberId);
 
-        MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(memberId);
-
-        // 사용권 없으면 예외
-        memberInfoDTO.validateRemainingCount();
-
         ResumeInfoForAiDTO resumeInfo = ResumeInfoForAiDTO.from(resume, s3Service.getProcessAvatarUrl(resume.getAvatarUrl()));
         log.info("resumeInfo : {}", resumeInfo);
 
         AIUpdateRequestDTO aiUpdateRequestDTO = AIUpdateRequestDTO.of(updateResumeWithAIRequestDTO, resumeInfo);
 
-        ResumeInfoForAiDTO updateResumeInfo = aiClient.update(aiUpdateRequestDTO);
-
-        // FREE 사용자면 사용권 차감
-        if (memberInfoDTO.paidPlan().equals(PaidPlan.FREE)) {
-            memberClient.decreaseRemainingCount(memberId);
-        }
-
-        return updateResumeInfo;
+        return aiClient.update(aiUpdateRequestDTO);
     }
 
 
@@ -268,7 +258,7 @@ public class ResumeService {
      * 이력서 직접 수정
      */
     @Transactional
-    public void updateResume(Long memberId, String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO, MultipartFile imageFile) throws IOException {
+    public void updateResume(Long memberId, String resumeId, UpdateResumeRequestDTO updateResumeRequestDTO, MultipartFile imageFile, Boolean isAiFixed) throws IOException {
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new BaseException(ErrorCode.RESUME_NOT_FOUND));
 
@@ -282,7 +272,27 @@ public class ResumeService {
         }
 
         resume.updateResume(updateResumeRequestDTO, avatarUrl);
+
         resumeRepository.save(resume);
+
+        handleMemberRemainingCount(memberId, isAiFixed);
+    }
+
+    /**
+     * 사용권 핸들링 메서드
+     * @param memberId
+     * @param isAiFixed
+     */
+    private void handleMemberRemainingCount(Long memberId, Boolean isAiFixed) {
+        if (Boolean.TRUE.equals(isAiFixed)) {
+            MemberInfoDTO memberInfoDTO = memberClient.getMemberInfo(memberId);
+
+            // 사용권 없으면 예외
+            memberInfoDTO.validateRemainingCount();
+
+            // 사용권 감소
+            memberClient.decreaseRemainingCount(memberId);
+        }
     }
 
     /**
@@ -314,5 +324,19 @@ public class ResumeService {
 
         resume.updateVisibility(updateVisibilityDTO.visibility());
         resumeRepository.save(resume);
+    }
+
+    /**
+     * 회원 탈퇴 이벤트 핸들러
+     * @param event
+     */
+    @Transactional
+    @KafkaListener(topics = "memberDeletedEventTopic", groupId = "resume-group")
+    public void memberDeleteEventHandler(MemberDeletedEvent event) {
+        Long memberId = event.getMemberId();
+        log.info("Kafka 메시지 도착 : {}", memberId);
+        resumeRepository.deleteAllByMemberId(memberId);
+        likeRepository.deleteAllByMemberId(memberId);
+        commentRepository.deleteAllByMemberId(memberId);
     }
 }

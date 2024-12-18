@@ -42,6 +42,18 @@ public class NotificationService {
     }
 
     /**
+     * 회원 탈퇴 이벤트 핸들러
+     * @param event
+     */
+    @Transactional
+    @KafkaListener(topics = "memberDeletedEventTopic", groupId = "notification-group")
+    public void memberDeleteEventHandler(MemberDeletedEvent event) {
+        Long memberId = event.getMemberId();
+        log.info("Kafka 메시지 도착 : {}", memberId);
+        notificationRepository.deleteAllByMemberId(memberId);
+    }
+
+    /**
      * 내 알림 전체 조회
      * @param receiverId
      * @return List<NotificationListDTO>

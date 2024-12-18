@@ -20,4 +20,6 @@ public interface ResumeRepository {
     Page<Resume> findAllByMemberId(Long memberId, Pageable pageable);
 
     void deleteById(String resumeId);
+
+    void deleteAllByMemberId(Long memberId);
 }

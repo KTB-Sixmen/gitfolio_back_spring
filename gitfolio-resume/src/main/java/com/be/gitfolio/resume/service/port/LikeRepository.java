@@ -21,4 +21,6 @@ public interface LikeRepository {
     void deleteByResumeIdAndMemberId(String resumeId, Long memberId);
 
     Like save(Like like);
+
+    void deleteAllByMemberId(Long memberId);
 }

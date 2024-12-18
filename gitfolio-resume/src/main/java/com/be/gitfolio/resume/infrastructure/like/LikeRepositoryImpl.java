@@ -53,4 +53,9 @@ public class LikeRepositoryImpl implements LikeRepository {
     public Like save(Like like) {
         return likeJpaRepository.save(like);
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        likeJpaRepository.deleteAllByMemberId(memberId);
+    }
 }

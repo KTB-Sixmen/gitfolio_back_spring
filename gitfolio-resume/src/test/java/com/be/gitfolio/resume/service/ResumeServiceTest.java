@@ -632,7 +632,7 @@ public class ResumeServiceTest {
         Mockito.when(s3Service.uploadFile(any())).thenReturn("updatedAvatarUrl");
 
         //when
-        resumeService.updateResume(1L, "testResume123", updateResumeRequestDTO, imageFile);
+        resumeService.updateResume(1L, "testResume123", updateResumeRequestDTO, imageFile, isAiFixed);
 
         //then
         Optional<Resume> resume = resumeRepository.findById("testResume123");
@@ -652,7 +652,7 @@ public class ResumeServiceTest {
         //when
         //then
         assertThatThrownBy(() -> {
-            resumeService.updateResume(2L, "testResume123", updateResumeRequestDTO, imageFile);
+            resumeService.updateResume(2L, "testResume123", updateResumeRequestDTO, imageFile, isAiFixed);
         }).isInstanceOf(BaseException.class);
 
     }

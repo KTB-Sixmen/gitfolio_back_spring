@@ -106,4 +106,9 @@ public class FakeResumeRepository implements ResumeRepository {
     public void deleteById(String resumeId) {
         data.removeIf(item -> Objects.equals(item.getId(), resumeId));
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        data.removeIf(item -> Objects.equals(item.getMemberId(), memberId));
+    }
 }

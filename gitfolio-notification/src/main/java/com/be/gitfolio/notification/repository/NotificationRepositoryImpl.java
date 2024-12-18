@@ -28,4 +28,9 @@ public class NotificationRepositoryImpl implements NotificationRepository {
     public List<Notification> findAllByReceiverIdAndReadFalse(Long receiverId) {
         return notificationJpaRepository.findAllByReceiverIdAndReadFalse(receiverId);
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        notificationJpaRepository.deleteAllByMemberId(memberId);
+    }
 }
