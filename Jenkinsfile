@@ -31,7 +31,7 @@ pipeline {
                        error "환경 파일을 찾을 수 없습니다: ${envFile}"
                    }
 
-                   // Docker Hub 로그인
+                   // Docker Hub 로그인 - AI 파이프라인 방식으로 변경
                    withCredentials([usernamePassword(credentialsId: 'docker-credentials',
                                    usernameVariable: 'DOCKER_USER',
                                    passwordVariable: 'DOCKER_PASS')]) {
@@ -47,7 +47,12 @@ pipeline {
            steps {
                script {
                    sh """
-                       docker-compose --profile build up --build builder
+                       docker build \
+                           -f dockerfile \
+                           -t aida0/gitfolio_builder:${DOCKER_TAG} \
+                           --platform linux/amd64 \
+                           .
+                       docker push aida0/gitfolio_builder:${DOCKER_TAG}
                    """
                }
            }
@@ -77,11 +82,15 @@ pipeline {
                                def config = moduleConfig[MODULE]
 
                                sh """
-                                   docker-compose build ${MODULE}
-                                   docker-compose push ${MODULE}
+                                   docker build \
+                                       -f ${config.path}/dockerfile \
+                                       -t ${config.image}:${DOCKER_TAG} \
+                                       ${config.path}
+
+                                   docker push ${config.image}:${DOCKER_TAG}
                                """
 
-                               // AWS 자격증명 처리
+                               // AWS 자격증명 처리를 AI 파이프라인 방식으로 변경
                                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                                credentialsId: 'aws-credentials',
                                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -111,6 +120,8 @@ pipeline {
                                                --parameters commands='
                                                    cd /home/ec2-user
                                                    docker-compose down -v --rmi all
+                                                   docker builder prune -f --filter until=24h
+                                                   docker image prune -f
                                                    docker-compose pull
                                                    docker-compose up -d
                                                ' \
@@ -134,6 +145,8 @@ pipeline {
            script {
                sh """
                    docker-compose down -v
+                   docker builder prune -f --filter until=24h
+                   docker image prune -f
                    docker logout
                    rm -f .env
                """
