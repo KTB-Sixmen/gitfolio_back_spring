@@ -52,9 +52,12 @@ pipeline {
                     sh """
                         docker build \
                             -f dockerfile \
-                            -t ${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG} \
+                            -t builder:${DOCKER_TAG} \
                             --platform linux/amd64 \
                             .
+
+                        # ECR용 태그 추가
+                        docker tag builder:${DOCKER_TAG} ${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG}
                     """
                 }
             }
@@ -87,7 +90,6 @@ pipeline {
                                     docker build \
                                         -f ${config.path}/Dockerfile \
                                         -t ${imageTag} \
-                                        --build-arg BUILDER_IMAGE=${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG} \
                                         --platform linux/amd64 \
                                         .
 
