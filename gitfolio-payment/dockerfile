@@ -2,10 +2,8 @@ FROM amazoncorretto:17 AS runner
 WORKDIR /payment
 EXPOSE 8083
 
-# 빌더 이미지 참조를 build-arg로 받아옵니다
-ARG BUILDER_IMAGE
-# 로컬 빌더 이미지에서 파일을 복사합니다
-COPY --from=${BUILDER_IMAGE} /gitfolio_back/build/.env .env
-COPY --from=${BUILDER_IMAGE} /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
+# 빌더 스테이지에서 파일 복사
+COPY --from=builder /gitfolio_back/build/.env .env
+COPY --from=builder /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
 
 CMD [ "java", "-jar", "payment.jar" ]
