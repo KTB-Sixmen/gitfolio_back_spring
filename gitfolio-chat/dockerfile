@@ -1,8 +1,0 @@
-FROM amazoncorretto:17 AS runner
-WORKDIR /chat
-EXPOSE 8080
-
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-chat-*-SNAPSHOT.jar chat.jar
-
-CMD [ "java", "-jar", "chat.jar" ]

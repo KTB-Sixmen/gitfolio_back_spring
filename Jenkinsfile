@@ -3,7 +3,9 @@ pipeline {
 
     environment {
         AWS_REGION = 'ap-northeast-2'
-        ECR_REGISTRY = '727646500036.dkr.ecr.ap-northeast-2.amazonaws.com'
+        ECR_REGISTRY = credentials('ecr-registry')
+        DISCORD_CI_WEBHOOK = credentials('dev-discord-ci-webhook')
+        DISCORD_CD_WEBHOOK = credentials('dev-discord-cd-webhook')
         DOCKER_TAG = 'dev'
     }
 
@@ -11,9 +13,8 @@ pipeline {
         stage('소스코드 체크아웃') {
             steps {
                 script {
-                    // 이전 빌드 정리 및 새로운 소스코드 체크아웃
                     deleteDir()
-                    git branch: 'develop',
+                    git branch: '48-Develop브랜치-푸시시-CI/CD-구현',
                         url: 'https://github.com/KTB-Sixmen/gitfolio_back_spring.git'
                 }
             }
@@ -22,9 +23,7 @@ pipeline {
         stage('환경 설정') {
             steps {
                 script {
-                    // 환경 설정 파일 복사
                     def envFile = '/var/lib/jenkins/environments/.env.back.dev'
-
                     if (fileExists(envFile)) {
                         sh """
                             cp ${envFile} .env
@@ -34,7 +33,6 @@ pipeline {
                         error "환경 파일을 찾을 수 없습니다: ${envFile}"
                     }
 
-                    // AWS ECR 로그인 - Jenkins에 설정된 AWS 자격 증명 사용
                     withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                     credentialsId: 'aws-credentials',
                                     accessKeyVariable: 'AWS_ACCESS_KEY_ID',
@@ -51,14 +49,12 @@ pipeline {
         stage('Builder 이미지 빌드') {
             steps {
                 script {
-                    // 로컬에서만 사용할 Builder 이미지 빌드
                     sh """
                         docker build \
                             -f dockerfile \
-                            -t gitfolio_builder:${DOCKER_TAG} \
+                            -t ${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG} \
                             --platform linux/amd64 \
                             .
-                        echo 'Builder 이미지 빌드 완료'
                     """
                 }
             }
@@ -69,47 +65,40 @@ pipeline {
                 axes {
                     axis {
                         name 'MODULE'
-                        values 'auth', 'member', 'payment', 'resume', 'notification', 'chat'
+                        values 'auth', 'member', 'payment', 'resume', 'notification'
                     }
                 }
                 stages {
-                    stage('모듈 빌드') {
+                    stage('모듈 빌드 및 푸시') {
                         steps {
                             script {
-                                // 각 모듈별 설정 정보
                                 def moduleConfig = [
-                                    auth: [path: './gitfolio-auth', image: "${ECR_REGISTRY}/gitfolio/auth", index: '1'],
-                                    member: [path: './gitfolio-member', image: "${ECR_REGISTRY}/gitfolio/member", index: '1'],
-                                    payment: [path: './gitfolio-payment', image: "${ECR_REGISTRY}/gitfolio/payment", index: '2'],
-                                    resume: [path: './gitfolio-resume', image: "${ECR_REGISTRY}/gitfolio/resume", index: '2'],
-                                    notification: [path: './gitfolio-notification', image: "${ECR_REGISTRY}/gitfolio/notification", index: '3'],
-                                    chat: [path: './gitfolio-chat', image: "${ECR_REGISTRY}/gitfolio/chat", index: '4']
+                                    auth: [path: './gitfolio-auth', index: '1'],
+                                    member: [path: './gitfolio-member', index: '1'],
+                                    payment: [path: './gitfolio-payment', index: '2'],
+                                    resume: [path: './gitfolio-resume', index: '2'],
+                                    notification: [path: './gitfolio-notification', index: '3']
                                 ]
 
                                 def config = moduleConfig[MODULE]
+                                def imageTag = "${ECR_REGISTRY}/gitfolio/${MODULE}:${DOCKER_TAG}"
 
-                                // 각 모듈 도커 이미지 빌드 및 ECR 푸시
                                 sh """
-                                    echo '${MODULE} 모듈 빌드 시작'
-
                                     docker build \
-                                        -f ${config.path}/dockerfile \
-                                        -t ${config.image}:${DOCKER_TAG} \
-                                        --build-arg BUILDER_IMAGE=gitfolio_builder:${DOCKER_TAG} \
-                                        ${config.path}
+                                        -f ${config.path}/Dockerfile \
+                                        -t ${imageTag} \
+                                        --build-arg BUILDER_IMAGE=${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG} \
+                                        --platform linux/amd64 \
+                                        .
 
-                                    docker push ${config.image}:${DOCKER_TAG}
-
-                                    echo '${MODULE} 모듈 빌드 및 푸시 완료'
+                                    docker push ${imageTag}
                                 """
 
-                                // AWS EC2 인스턴스 배포
                                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding',
                                                 credentialsId: 'aws-credentials',
                                                 accessKeyVariable: 'AWS_ACCESS_KEY_ID',
                                                 secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
 
-                                    // EC2 인스턴스 조회
                                     def instanceIds = sh(
                                         script: """
                                             aws ec2 describe-instances \
@@ -126,7 +115,6 @@ pipeline {
                                     ).trim()
 
                                     if (instanceIds) {
-                                        // SSM Run Command를 통한 배포 명령 실행
                                         sh """
                                             aws ssm send-command \
                                                 --instance-ids "${instanceIds}" \
@@ -137,7 +125,6 @@ pipeline {
                                                     docker-compose down -v --rmi all
                                                     docker builder prune -f --filter until=24h
                                                     docker image prune -f
-                                                    aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com
                                                     docker-compose pull
                                                     docker-compose up -d
                                                 ' \
@@ -159,22 +146,12 @@ pipeline {
     post {
         always {
             script {
-                // 빌드 완료 후 정리 작업
                 sh """
-                    docker-compose down -v
                     docker builder prune -f --filter until=24h
                     docker image prune -f
-                    docker logout ${ECR_REGISTRY}
                     rm -f .env
-                    echo '정리 작업 완료'
                 """
             }
-        }
-        success {
-            echo "파이프라인이 성공적으로 완료되었습니다."
-        }
-        failure {
-            echo "파이프라인이 실패했습니다. 로그를 확인해주세요."
         }
     }
 }

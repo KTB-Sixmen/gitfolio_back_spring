@@ -2,7 +2,10 @@ FROM amazoncorretto:17 AS runner
 WORKDIR /auth
 EXPOSE 8080
 
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+# 빌더 이미지 참조를 build-arg로 받아옵니다
+ARG BUILDER_IMAGE
+# 로컬 빌더 이미지에서 파일을 복사합니다
+COPY --from=${BUILDER_IMAGE} /gitfolio_back/build/.env .env
+COPY --from=${BUILDER_IMAGE} /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
 
 CMD [ "java", "-jar", "auth.jar" ]

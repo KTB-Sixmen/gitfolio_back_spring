@@ -12,13 +12,11 @@ services:
     profiles:
       - build
 
+# 1번 모듈
+services:
   auth:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-auth
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_auth:test
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/auth:dev
     container_name: gitfolio_auth
     ports:
       - target: 8080
@@ -27,16 +25,11 @@ services:
       - target: 8080
         published: 443
         protocol: tcp
-    profiles:
-      - run
-
+    networks:
+      - back
   member:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-member
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_member:test
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/member:dev
     container_name: gitfolio_member
     ports:
       - target: 8080
@@ -45,17 +38,19 @@ services:
       - target: 8080
         published: 444
         protocol: tcp
-    profiles:
-      - run
+    networks:
+      - back
+networks:
+  back:
+    driver: bridge
+    attachable: true
 
-  payment:
+#2번 모듈
+services:
+  resume:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-payment
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_payment:test
-    container_name: gitfolio_payment
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/resume:dev
+    container_name: gitfolio_resume
     ports:
       - target: 8080
         published: 80
@@ -63,17 +58,12 @@ services:
       - target: 8080
         published: 443
         protocol: tcp
-    profiles:
-      - run
-
-  resume:
+    networks:
+      - back
+  payment:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-resume
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_resume:test
-    container_name: gitfolio_resume
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/payment:dev
+    container_name: gitfolio_payment
     ports:
       - target: 8080
         published: 81
@@ -81,16 +71,18 @@ services:
       - target: 8080
         published: 444
         protocol: tcp
-    profiles:
-      - run
+    networks:
+      - back
+networks:
+  back:
+    driver: overlay
+    attachable: true
 
+#3번모듈
+services:
   notification:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-notification
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_notification:test
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/notification:dev
     container_name: gitfolio_notification
     ports:
       - target: 8080
@@ -99,27 +91,41 @@ services:
       - target: 8080
         published: 443
         protocol: tcp
-    profiles:
-      - run
-
-  chat:
+    networks:
+      - back
+  zookeeper:
     platform: linux/amd64
-    build:
-      context: ./gitfolio-chat
-      dockerfile: dockerfile
-      target: runner
-    image: aida0/gitfolio_chat:test
-    container_name: gitfolio_chat
+    image: zookeeper:3.6
+    container_name: gitfolio_zookeeper
     ports:
-      - target: 8080
-        published: 80
+      - target: 2181
+        published: 2181
         protocol: tcp
-      - target: 8080
-        published: 443
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - back
+  kafka:
+    platform: linux/amd64
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: gitfolio_kafka
+    ports:
+      - target: 9092
+        published: 9092
         protocol: tcp
-    profiles:
-      - run
-
+      - target: 29092
+        published: 29092
+        protocol: tcp
+    depends_on:
+      - zookeeper
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - back
 volumes:
-  gradle-cache:
-  build-output:
+  zookeeper_data:
+  kafka_data:
+networks:
+  back:
+    driver: overlay
+    attachable: true
