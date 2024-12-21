@@ -4,7 +4,7 @@ spring:
     import: optional:file:.env[.properties]
   data:
     mongodb:
-      uri: mongodb://${RESUME_MONGO_DB_USERNAME}:${RESUME_MONGO_DB_PORT}/${RESUME_MONGO_DB_DATABASE}
+      uri: ${RESUME_MONGO_DB_URI}
     redis:
       host: ${RESUME_REDIS_HOST}
       port: ${RESUME_REDIS_PORT}
@@ -30,6 +30,13 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+    consumer:
+      group-id: resume-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
 
   jwt:
     secret: ${JWT_SECRET_KEY}

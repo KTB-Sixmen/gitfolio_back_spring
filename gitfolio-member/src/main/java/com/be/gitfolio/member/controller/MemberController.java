@@ -6,7 +6,9 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -122,9 +124,16 @@ public class MemberController {
      */
     @AuthRequired
     @DeleteMapping("/me")
-    public ResponseEntity<BaseResponse<String>> deleteMember(HttpServletRequest request) {
+    public ResponseEntity<BaseResponse<String>> deleteMember(HttpServletRequest request, HttpServletResponse response) {
         Long memberId = (Long) request.getAttribute("memberId");
         memberService.deleteMember(memberId);
+
+        // Refresh 토큰 쿠키 삭제 (Set-Cookie 헤더로 삭제 지시)
+        Cookie deleteCookie = new Cookie("refreshToken", null); // 쿠키 이름 동일
+        deleteCookie.setMaxAge(0); // 만료 시간 0으로 설정
+        deleteCookie.setPath("/"); // 쿠키의 유효 경로 설정 (적절히 변경 가능)
+        response.addCookie(deleteCookie);
+
         return ResponseEntity.ok().body(new BaseResponse<>("회원 삭제가 완료되었습니다."));
     }
 }

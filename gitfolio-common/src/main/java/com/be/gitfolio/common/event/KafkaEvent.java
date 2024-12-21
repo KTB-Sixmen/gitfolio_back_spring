@@ -24,4 +24,13 @@ public class KafkaEvent {
     public static class ExpirationEvent {
         private Long memberId;
     }
+
+    @Getter
+    @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PROTECTED)
+    public static class MemberDeletedEvent {
+        private Long memberId;
+        private String username;
+    }
 }

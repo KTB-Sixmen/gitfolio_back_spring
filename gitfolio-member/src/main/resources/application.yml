@@ -4,7 +4,7 @@ spring:
     import: optional:file:.env[.properties]
   data:
     mongodb:
-      uri: mongodb://${MEMBER_MONGO_DB_USERNAME}:${MEMBER_MONGO_DB_PORT}/${MEMBER_MONGO_DB_DATABASE}
+      uri: ${MEMBER_MONGO_DB_URI}
     redis:
       host: ${RESUME_REDIS_HOST}
       port: ${RESUME_REDIS_PORT}
@@ -23,6 +23,11 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_HOST1}:${KAFKA_PORT1}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.trusted.packages: "*"
     consumer:
       group-id: member-group
       auto-offset-reset: earliest

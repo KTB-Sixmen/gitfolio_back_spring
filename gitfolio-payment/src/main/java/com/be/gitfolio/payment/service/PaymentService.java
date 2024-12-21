@@ -1,5 +1,6 @@
 package com.be.gitfolio.payment.service;
 
+import com.be.gitfolio.common.event.KafkaEvent;
 import com.be.gitfolio.common.exception.BaseException;
 import com.be.gitfolio.common.exception.ErrorCode;
 import com.be.gitfolio.common.type.PaidPlan;
@@ -14,14 +15,14 @@ import com.be.gitfolio.payment.type.PaymentStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.be.gitfolio.common.event.KafkaEvent.*;
 import static com.be.gitfolio.payment.dto.PaymentRequest.*;
 import static com.be.gitfolio.payment.dto.KakaoResponse.*;
 
@@ -152,6 +153,17 @@ public class PaymentService {
         paymentStatusHistoryRepository.save(paymentStatusHistory);
     }
 
+    /**
+     * 회원 탈퇴 이벤트 핸들러
+     * @param event
+     */
+    @Transactional
+    @KafkaListener(topics = "memberDeletedEventTopic", groupId = "payment-group")
+    public void memberDeleteEventHandler(MemberDeletedEvent event) {
+        Long memberId = event.getMemberId();
+        log.info("Kafka 메시지 도착 : {}", memberId);
+        paymentRepository.deleteAllByMemberId(memberId);
+    }
 
     // 결제 요청 파라미터 생성
     private Map<String, Object> createPaymentParameters(Long memberId, PaidPlan paidPlan) {

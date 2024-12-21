@@ -9,6 +9,7 @@ import com.be.gitfolio.member.controller.port.MemberService;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
 import com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.MemberAdditionalInfoUpdate;
+import com.be.gitfolio.member.event.MemberEventPublisher;
 import com.be.gitfolio.member.service.port.GithubClient;
 import com.be.gitfolio.member.service.port.MemberAdditionalInfoRepository;
 import com.be.gitfolio.member.service.port.MemberRepository;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+import static com.be.gitfolio.common.event.KafkaEvent.*;
 import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 import static com.be.gitfolio.member.controller.response.MemberResponse.*;
 
@@ -52,6 +54,7 @@ public class MemberServiceImpl implements MemberService {
     private final JobLauncher jobLauncher;
     private final Job remainingCountResetJob;
     private final JobRepository jobRepository;
+    private final MemberEventPublisher memberEventPublisher;
 
     /**
      * 회원 생성
@@ -101,6 +104,7 @@ public class MemberServiceImpl implements MemberService {
     /**
      * 회원 정보 상세 조회
      */
+    @Override
     public MemberDetail getMemberDetails(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
@@ -202,8 +206,11 @@ public class MemberServiceImpl implements MemberService {
     @Transactional
     @Override
     public void deleteMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new BaseException(ErrorCode.NO_MEMBER_INFO));
         memberRepository.deleteById(memberId);
         memberAdditionalInfoRepository.deleteByMemberId(memberId);
+        memberEventPublisher.publishResumeEvent(memberId, member.getUsername());
     }
 
     /**
@@ -227,7 +234,7 @@ public class MemberServiceImpl implements MemberService {
      */
     @KafkaListener(topics = "expiration-topic", groupId = "member-service-group")
     @Transactional
-    public void handleExpirationEvent(KafkaEvent.ExpirationEvent event) {
+    public void handleExpirationEvent(ExpirationEvent event) {
         Long memberId = event.getMemberId();
         Optional<Member> memberOpt = memberRepository.findById(memberId);
 

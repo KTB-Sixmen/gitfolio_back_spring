@@ -54,4 +54,9 @@ public class FakeCommentRepository implements CommentRepository {
     public void deleteCommentsByResumeId(String resumeId) {
         data.removeIf(item -> Objects.equals(item.getResumeId(), resumeId));
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        data.removeIf(item -> Objects.equals(item.getMemberId(), memberId));
+    }
 }

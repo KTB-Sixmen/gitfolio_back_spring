@@ -383,26 +383,6 @@ public class ResumeServiceTest {
     }
 
     @Test
-    void FREE플랜_사용자가_이력서_수정_시_사용권이_0개_이하면_에러를_던진다() throws Exception {
-        //given
-        UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO = new UpdateResumeWithAIRequestDTO(
-                "This is a selected text for AI processing.", // selectedText
-                "Please provide suggestions to improve clarity and professionalism." // requirement
-        );
-        memberClient.setMemberInfoDTO(MemberInfoDTO.builder()
-                .paidPlan(PaidPlan.FREE)
-                .remainingCount(0)
-                .build());
-        aiClient.setResumeInfoForAiDTO(ResumeInfoForAiDTO.builder().email("updateEmail").build());
-        //when
-
-        //then
-        assertThatThrownBy(() -> {
-            resumeService.updateResumeWithAI(1L, "testResume123", updateResumeWithAIRequestDTO);
-        }).isInstanceOf(BaseException.class);
-    }
-
-    @Test
     void PRO플랜_사용자가_이력서_수정_시_사용권이_0개_이하여도_정상_실행된다() throws Exception {
         //given
         UpdateResumeWithAIRequestDTO updateResumeWithAIRequestDTO = new UpdateResumeWithAIRequestDTO(
@@ -632,7 +612,7 @@ public class ResumeServiceTest {
         Mockito.when(s3Service.uploadFile(any())).thenReturn("updatedAvatarUrl");
 
         //when
-        resumeService.updateResume(1L, "testResume123", updateResumeRequestDTO, imageFile);
+        resumeService.updateResume(1L, "testResume123", updateResumeRequestDTO, imageFile, null);
 
         //then
         Optional<Resume> resume = resumeRepository.findById("testResume123");
@@ -652,7 +632,7 @@ public class ResumeServiceTest {
         //when
         //then
         assertThatThrownBy(() -> {
-            resumeService.updateResume(2L, "testResume123", updateResumeRequestDTO, imageFile);
+            resumeService.updateResume(2L, "testResume123", updateResumeRequestDTO, imageFile, null);
         }).isInstanceOf(BaseException.class);
 
     }

@@ -23,6 +23,16 @@ spring:
   jwt:
     secret: ${JWT_SECRET_KEY}
 
+  kafka:
+    bootstrap-servers: ${KAFKA_HOST1}:${KAFKA_PORT1}
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: '*'
+
 cloud:
   aws:
     s3:
