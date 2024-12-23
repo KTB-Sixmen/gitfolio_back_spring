@@ -16,7 +16,7 @@ services:
 services:
   auth:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/auth:dev
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/auth:prod
     container_name: gitfolio_auth
     ports:
       - target: 8080
@@ -29,7 +29,7 @@ services:
       - back
   member:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/member:dev
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/member:prod
     container_name: gitfolio_member
     ports:
       - target: 8080
@@ -49,7 +49,7 @@ networks:
 services:
   resume:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/resume:dev
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/resume:prod
     container_name: gitfolio_resume
     ports:
       - target: 8080
@@ -62,7 +62,7 @@ services:
       - back
   payment:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/payment:dev
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/payment:prod
     container_name: gitfolio_payment
     ports:
       - target: 8080
@@ -82,7 +82,7 @@ networks:
 services:
   notification:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/notification:dev
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/notification:prod
     container_name: gitfolio_notification
     ports:
       - target: 8080
@@ -93,6 +93,7 @@ services:
         protocol: tcp
     networks:
       - back
+
   zookeeper:
     platform: linux/amd64
     image: zookeeper:3.6
@@ -105,6 +106,7 @@ services:
       - zookeeper_data:/var/lib/zookeeper/data
     networks:
       - back
+
   kafka:
     platform: linux/amd64
     image: confluentinc/cp-kafka:7.4.0
@@ -116,15 +118,25 @@ services:
       - target: 29092
         published: 29092
         protocol: tcp
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENERS: LISTENER_DOCKER://0.0.0.0:29092,LISTENER_EXTERNAL://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER://localhost:29092,LISTENER_EXTERNAL://10.0.105.99:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER:PLAINTEXT,LISTENER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     depends_on:
       - zookeeper
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
       - back
+
 volumes:
   zookeeper_data:
   kafka_data:
+
 networks:
   back:
     driver: overlay
