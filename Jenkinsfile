@@ -262,5 +262,26 @@ pipeline {
                                                     """
                                                 }
                                             }
+                                            success {
+                                                discordSend description: "백엔드 CI 파이프라인 성공",
+                                                            footer: "Jenkins Pipeline Success",
+                                                            link: env.BUILD_URL,
+                                                            result: currentBuild.currentResult,
+                                                            title: JOB_NAME,
+                                                            webhookURL: DISCORD_CI_WEBHOOK
+                                            }
+                                            failure {
+                                                discordSend description: "백엔드 CI 파이프라인 실패",
+                                                            footer: "Jenkins Pipeline Failed",
+                                                            link: env.BUILD_URL,
+                                                            result: currentBuild.currentResult,
+                                                            title: JOB_NAME,
+                                                            webhookURL: DISCORD_CI_WEBHOOK
+                                            }
                                         }
+
+
+
+
                                     }
+                                }

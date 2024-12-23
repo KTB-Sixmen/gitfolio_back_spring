@@ -161,4 +161,8 @@ EXPOSE 8082
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
-CMD [ "java", "-jar", "resume.jar" ]
+CMD [ "java", \
+      "-jar", \
+      "resume.jar", \
+      "--spring.config.location=file:.env,classpath:/application.yml", \
+      "--spring.config.import=optional:file:.env[.properties]" ]

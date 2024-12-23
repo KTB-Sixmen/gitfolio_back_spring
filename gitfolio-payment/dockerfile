@@ -161,4 +161,8 @@ EXPOSE 8083
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
 
-CMD [ "java", "-jar", "payment.jar" ]
+CMD [ "java", \
+      "-jar", \
+      "payment.jar", \
+      "--spring.config.location=file:.env,classpath:/application.yml", \
+      "--spring.config.import=optional:file:.env[.properties]" ]

@@ -160,4 +160,8 @@ EXPOSE 8081
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
 
-CMD [ "java", "-jar", "member.jar" ]
+CMD [ "java", \
+      "-jar", \
+      "member.jar", \
+      "--spring.config.location=file:.env,classpath:/application.yml", \
+      "--spring.config.import=optional:file:.env[.properties]" ]

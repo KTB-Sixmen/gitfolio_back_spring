@@ -160,4 +160,9 @@ EXPOSE 8080
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
 
-CMD [ "java", "-jar", "auth.jar" ]
+# 환경변수 우선순위를 .env 파일로 지정
+CMD [ "java", \
+      "-jar", \
+      "auth.jar", \
+      "--spring.config.location=file:.env,classpath:/application.yml", \
+      "--spring.config.import=optional:file:.env[.properties]" ]

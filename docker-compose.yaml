@@ -118,6 +118,7 @@ services:
       - target: 29092
         published: 29092
         protocol: tcp
+        # environment: 섹션이 있다면 제거하거나 주석처리
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_LISTENERS: LISTENER_DOCKER://0.0.0.0:29092,LISTENER_EXTERNAL://0.0.0.0:9092
