@@ -26,7 +26,8 @@ RUN ./gradlew clean build -x test && \
     cp */build/libs/*-SNAPSHOT.jar build
 
     # 환경 파일 권한 설정
-    chmod 644 build/.env && \
+
+RUN chmod 644 build/.env && \
     cp */build/libs/*-SNAPSHOT.jar build && \
     # 환경 변수 확인을 위한 출력
     echo "===== 환경 파일 내용 확인 =====" && \
