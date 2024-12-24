@@ -263,7 +263,7 @@ pipeline {
                                                 }
                                             }
                                             success {
-                                                discordSend description: "백엔드 CI 파이프라인 성공",
+                                                discordSend description: "백엔드 ECR 이미지 빌드 성공",
                                                             footer: "Jenkins Pipeline Success",
                                                             link: env.BUILD_URL,
                                                             result: currentBuild.currentResult,
@@ -271,7 +271,7 @@ pipeline {
                                                             webhookURL: DISCORD_CI_WEBHOOK
                                             }
                                             failure {
-                                                discordSend description: "백엔드 CI 파이프라인 실패",
+                                                discordSend description: "백엔드 ECR 이미지 빌드 실패",
                                                             footer: "Jenkins Pipeline Failed",
                                                             link: env.BUILD_URL,
                                                             result: currentBuild.currentResult,

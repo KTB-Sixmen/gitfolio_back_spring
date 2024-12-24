@@ -7,4 +7,4 @@ EXPOSE 8080
 COPY --from=builder:dev /gitfolio_back/build/.env .env
 COPY --from=builder:dev /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
 
-CMD [ "java", "-jar", "payment.jar" ]
+CMD [ "java", "-jar", "notification.jar" ]
