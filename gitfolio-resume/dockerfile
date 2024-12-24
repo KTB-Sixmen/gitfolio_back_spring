@@ -4,7 +4,7 @@ WORKDIR /resume
 EXPOSE 8082
 
 # 빌더 스테이지에서 파일 복사
-COPY --from=builder /gitfolio_back/build/.env .env
-COPY --from=builder /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
 CMD [ "java", "-jar", "resume.jar" ]

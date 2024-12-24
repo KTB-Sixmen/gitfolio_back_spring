@@ -4,7 +4,7 @@ WORKDIR /member
 EXPOSE 8081
 
 # 빌더 스테이지에서 파일 복사
-COPY --from=builder /gitfolio_back/build/.env .env
-COPY --from=builder /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
 
 CMD [ "java", "-jar", "member.jar" ]

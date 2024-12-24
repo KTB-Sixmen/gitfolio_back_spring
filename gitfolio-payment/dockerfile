@@ -4,7 +4,7 @@ WORKDIR /payment
 EXPOSE 8083
 
 # 빌더 스테이지에서 파일 복사
-COPY --from=builder /gitfolio_back/build/.env .env
-COPY --from=builder /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-payment-*-SNAPSHOT.jar payment.jar
 
 CMD [ "java", "-jar", "payment.jar" ]
