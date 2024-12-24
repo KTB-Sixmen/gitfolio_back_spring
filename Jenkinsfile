@@ -14,7 +14,7 @@ pipeline {
             steps {
                 script {
                     deleteDir()
-                    git branch: '48-Develop브랜치-푸시시-CI/CD-구현',
+                    git branch: 'develop',
                         url: 'https://github.com/KTB-Sixmen/gitfolio_back_spring.git'
                 }
             }
