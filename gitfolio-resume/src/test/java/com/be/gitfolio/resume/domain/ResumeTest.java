@@ -79,13 +79,29 @@ public class ResumeTest {
                 linkList);
 
         List<Project> projects = new ArrayList<>();
-        Project project = Project.builder()
-                .projectEndedAt("2000-00-00")
-                .projectStartedAt("1999-00-00")
-                .projectName("projectName")
-                .repoLink("www.repoLink.com")
-                .skillSet("Java")
-                .projectDescription("projectDescription")
+        Project project = Resume.Project.builder()
+                .projectName("Inventory Management System")
+                .projectStartedAt("2021-05-01")
+                .projectEndedAt("2021-12-01")
+                .skillSet("Java, Spring Boot, Hibernate")
+                .roleAndTask(List.of(
+                        "Designed and implemented a scalable inventory management system.",
+                        "Developed real-time stock tracking features.",
+                        "Optimized database performance with Hibernate."
+                ))
+                .star(Resume.Star.builder()
+                        .situation("The client needed a centralized system to track and manage inventory across multiple warehouses.")
+                        .task("Develop a system that provides real-time stock updates and supports concurrent users.")
+                        .action("Built a Spring Boot application with Hibernate for database management and integrated RESTful APIs for user access.")
+                        .result("Enabled real-time inventory tracking, reducing stock discrepancies by 30%.")
+                        .build())
+                .troubleShooting(Resume.TroubleShooting.builder()
+                        .problem("Concurrency issues during stock updates caused inconsistent inventory data.")
+                        .hypothesis("The issue was due to improper transaction management in high-concurrency environments.")
+                        .tring("Implemented proper transaction isolation levels and optimized Hibernate session handling.")
+                        .result("Resolved data inconsistency and improved transaction reliability under high user load.")
+                        .build())
+                .repoLink("https://github.com/johndoe/inventory")
                 .build();
         projects.add(project);
 
@@ -137,13 +153,29 @@ public class ResumeTest {
         workExperienceList.add(workExperience);
 
         List<Project> projects = new ArrayList<>();
-        Project project = Project.builder()
-                .projectEndedAt("2000-00-00")
-                .projectStartedAt("1999-00-00")
-                .projectName("projectName")
-                .repoLink("www.repoLink.com")
-                .skillSet("Java")
-                .projectDescription("projectDescription")
+        Project project = Resume.Project.builder()
+                .projectName("Inventory Management System")
+                .projectStartedAt("2021-05-01")
+                .projectEndedAt("2021-12-01")
+                .skillSet("Java, Spring Boot, Hibernate")
+                .roleAndTask(List.of(
+                        "Designed and implemented a scalable inventory management system.",
+                        "Developed real-time stock tracking features.",
+                        "Optimized database performance with Hibernate."
+                ))
+                .star(Resume.Star.builder()
+                        .situation("The client needed a centralized system to track and manage inventory across multiple warehouses.")
+                        .task("Develop a system that provides real-time stock updates and supports concurrent users.")
+                        .action("Built a Spring Boot application with Hibernate for database management and integrated RESTful APIs for user access.")
+                        .result("Enabled real-time inventory tracking, reducing stock discrepancies by 30%.")
+                        .build())
+                .troubleShooting(Resume.TroubleShooting.builder()
+                        .problem("Concurrency issues during stock updates caused inconsistent inventory data.")
+                        .hypothesis("The issue was due to improper transaction management in high-concurrency environments.")
+                        .tring("Implemented proper transaction isolation levels and optimized Hibernate session handling.")
+                        .result("Resolved data inconsistency and improved transaction reliability under high user load.")
+                        .build())
+                .repoLink("https://github.com/johndoe/inventory")
                 .build();
         projects.add(project);
 

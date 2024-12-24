@@ -6,6 +6,7 @@ import com.be.gitfolio.common.type.PaidPlan;
 import com.be.gitfolio.common.type.PositionType;
 import com.be.gitfolio.member.domain.Member;
 import com.be.gitfolio.member.domain.MemberAdditionalInfo;
+import com.be.gitfolio.member.event.MemberEventPublisher;
 import com.be.gitfolio.member.mock.FakeMemberAdditionalRepository;
 import com.be.gitfolio.member.mock.FakeMemberRepository;
 import com.be.gitfolio.member.service.port.GithubClient;
@@ -23,6 +24,7 @@ import static com.be.gitfolio.member.controller.response.MemberResponse.*;
 import static com.be.gitfolio.member.domain.request.MemberAdditionalInfoRequest.*;
 import static com.be.gitfolio.member.domain.request.MemberRequest.*;
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
 
 class MemberServiceTest {
 
@@ -31,6 +33,7 @@ class MemberServiceTest {
     private GithubClient githubClient;
     private FakeMemberRepository fakeMemberRepository;
     private FakeMemberAdditionalRepository fakeMemberAdditionalRepository;
+    private MemberEventPublisher memberEventPublisher;
 
     @BeforeEach
     void init() {
@@ -38,11 +41,13 @@ class MemberServiceTest {
         fakeMemberAdditionalRepository = new FakeMemberAdditionalRepository();
         this.s3Service = Mockito.mock(S3Service.class);
         this.githubClient = Mockito.mock(GithubClient.class);
+        this.memberEventPublisher = Mockito.mock(MemberEventPublisher.class);
         this.memberService = MemberServiceImpl.builder()
                 .memberRepository(fakeMemberRepository)
                 .memberAdditionalInfoRepository(fakeMemberAdditionalRepository)
                 .s3Service(s3Service)
                 .githubClient(githubClient)
+                .memberEventPublisher(memberEventPublisher)
                 .build();
         fakeMemberRepository.save(Member.builder()
                 .id(1L)
@@ -127,7 +132,7 @@ class MemberServiceTest {
     @Test
     void 상세_정보_조회시_s3이미지면_prefix를_붙인다() throws Exception {
         //given
-        BDDMockito.given(s3Service.getFullFileUrl(ArgumentMatchers.anyString())).willReturn("https://gitfolio.s3.amazonaws.com/avatarUrl.png");
+        BDDMockito.given(s3Service.getFullFileUrl(anyString())).willReturn("https://gitfolio.s3.amazonaws.com/avatarUrl.png");
         //when
         MemberDetail memberDetail = memberService.getMemberDetails(1L);
         //then
@@ -170,7 +175,7 @@ class MemberServiceTest {
                 .links(Collections.emptyList())
                 .build();
         MockMultipartFile imageFile = new MockMultipartFile("image", "avatar.png", "image/png", "dummy data".getBytes());
-        BDDMockito.given(s3Service.uploadFile(ArgumentMatchers.any(MockMultipartFile.class))).willReturn("new-avatar.png");
+        BDDMockito.given(s3Service.uploadFile(any(MockMultipartFile.class))).willReturn("new-avatar.png");
         //when
         memberService.updateMemberInfo(memberId, memberUpdate, memberAdditionalInfoUpdate, imageFile);
         //then
@@ -219,6 +224,7 @@ class MemberServiceTest {
     void 회원_정보를_삭제할_수_있다() throws Exception {
         //given
         Long memberId = 1L;
+        Mockito.doNothing().when(memberEventPublisher).publishResumeEvent(any(), any());
         //when
         memberService.deleteMember(memberId);
         //then
