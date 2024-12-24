@@ -165,13 +165,7 @@ RUN chmod 644 .env
 
 # 디버깅을 포함한 실행 명령
 CMD [ "sh", "-c", \
-      "echo '=== Checking .env file for Payment Service ===' && \
-       ls -la .env && \
-       echo '=== .env contents ===' && \
-       cat .env && \
-       echo '=== Starting Payment Service ===' && \
+      "echo '=== Starting Payment Service ===' && \
        java -jar payment.jar \
        --debug \
-       --logging.level.org.springframework.core.env=TRACE \
-       --spring.config.location=file:.env,classpath:/application.yml \
-       --spring.config.import=optional:file:.env[.properties]" ]
+       --logging.level.org.springframework.core.env=TRACE" ]
