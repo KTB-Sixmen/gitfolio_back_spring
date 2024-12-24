@@ -14,7 +14,7 @@ agent any
             steps {
                 script {
                     deleteDir()
-                    git branch: 'develop',
+                    git branch: '48-Develop브랜치-푸시시-CI/CD-구현', 
                         url: 'https://github.com/KTB-Sixmen/gitfolio_back_spring.git'
                 }
             }
@@ -55,9 +55,6 @@ agent any
                             -t builder:${DOCKER_TAG} \
                             --platform linux/amd64 \
                             .
-
-                        # ECR용 태그 추가
-                        docker tag builder:${DOCKER_TAG} ${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG}
                     """
                 }
             }
@@ -90,6 +87,7 @@ agent any
                                     docker build \
                                         -f ${config.path}/Dockerfile \
                                         -t ${imageTag} \
+                                        --build-arg BUILDER_IMAGE=${ECR_REGISTRY}/gitfolio/builder:${DOCKER_TAG} \
                                         --platform linux/amd64 \
                                         .
 
@@ -124,10 +122,6 @@ agent any
                                                 --comment "Deploying ${MODULE} module" \
                                                 --parameters commands='
                                                     cd /home/ec2-user
-                                                    export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
-                                                    export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-                                                    export AWS_DEFAULT_REGION=ap-northeast-2
-                                                    aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com
                                                     docker-compose down -v --rmi all
                                                     docker builder prune -f --filter until=24h
                                                     docker image prune -f

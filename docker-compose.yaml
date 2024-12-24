@@ -16,7 +16,7 @@
 services:
   auth:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/auth:prod
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/auth:dev
     container_name: gitfolio_auth
     ports:
       - target: 8080
@@ -29,7 +29,7 @@ services:
       - back
   member:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/member:prod
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/member:dev
     container_name: gitfolio_member
     ports:
       - target: 8080
@@ -49,7 +49,7 @@ networks:
 services:
   resume:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/resume:prod
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/resume:dev
     container_name: gitfolio_resume
     ports:
       - target: 8080
@@ -62,7 +62,7 @@ services:
       - back
   payment:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/payment:prod
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/payment:dev
     container_name: gitfolio_payment
     ports:
       - target: 8080
@@ -82,7 +82,7 @@ networks:
 services:
   notification:
     platform: linux/amd64
-    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/notification:prod
+    image: 727646500036.dkr.ecr.ap-northeast-2.amazonaws.com/gitfolio/notification:dev
     container_name: gitfolio_notification
     ports:
       - target: 8080
