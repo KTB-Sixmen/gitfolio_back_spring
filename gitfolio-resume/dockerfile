@@ -161,8 +161,17 @@ EXPOSE 8082
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-resume-*-SNAPSHOT.jar resume.jar
 
-CMD [ "java", \
-      "-jar", \
-      "resume.jar", \
-      "--spring.config.location=file:.env,classpath:/application.yml", \
-      "--spring.config.import=optional:file:.env[.properties]" ]
+RUN chmod 644 .env
+
+# 디버깅을 포함한 실행 명령
+CMD [ "sh", "-c", \
+      "echo '=== Checking .env file for Resume Service ===' && \
+       ls -la .env && \
+       echo '=== .env contents ===' && \
+       cat .env && \
+       echo '=== Starting Resume Service ===' && \
+       java -jar resume.jar \
+       --debug \
+       --logging.level.org.springframework.core.env=TRACE \
+       --spring.config.location=file:.env,classpath:/application.yml \
+       --spring.config.import=optional:file:.env[.properties]" ]

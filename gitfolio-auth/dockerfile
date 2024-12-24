@@ -159,10 +159,17 @@ EXPOSE 8080
 # 빌더 스테이지에서 파일 복사
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+RUN chmod 644 .env
 
-# 환경변수 우선순위를 .env 파일로 지정
-CMD [ "java", \
-      "-jar", \
-      "auth.jar", \
-      "--spring.config.location=file:.env,classpath:/application.yml", \
-      "--spring.config.import=optional:file:.env[.properties]" ]
+# 디버깅을 포함한 실행 명령
+CMD [ "sh", "-c", \
+      "echo '=== Checking .env file ===' && \
+       ls -la .env && \
+       echo '=== .env contents ===' && \
+       cat .env && \
+       echo '=== Starting application ===' && \
+       java -jar auth.jar \
+       --debug \
+       --logging.level.org.springframework.core.env=TRACE \
+       --spring.config.location=file:.env,classpath:/application.yml \
+       --spring.config.import=optional:file:.env[.properties]" ]

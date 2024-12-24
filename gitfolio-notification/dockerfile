@@ -161,8 +161,17 @@ EXPOSE 8080
 COPY --from=builder:prod /gitfolio_back/build/.env .env
 COPY --from=builder:prod /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
 
-CMD [ "java", \
-      "-jar", \
-      "notification.jar", \
-      "--spring.config.location=file:.env,classpath:/application.yml", \
-      "--spring.config.import=optional:file:.env[.properties]" ]
+RUN chmod 644 .env
+
+# 디버깅을 포함한 실행 명령
+CMD [ "sh", "-c", \
+      "echo '=== Checking .env file for Notification Service ===' && \
+       ls -la .env && \
+       echo '=== .env contents ===' && \
+       cat .env && \
+       echo '=== Starting Notification Service ===' && \
+       java -jar notification.jar \
+       --debug \
+       --logging.level.org.springframework.core.env=TRACE \
+       --spring.config.location=file:.env,classpath:/application.yml \
+       --spring.config.import=optional:file:.env[.properties]" ]
