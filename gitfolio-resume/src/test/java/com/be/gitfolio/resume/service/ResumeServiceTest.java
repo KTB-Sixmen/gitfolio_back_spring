@@ -98,15 +98,48 @@ public class ResumeServiceTest {
                                 .projectStartedAt("2021-05-01")
                                 .projectEndedAt("2021-12-01")
                                 .skillSet("Java, Spring Boot, Hibernate")
-                                .projectDescription("Developed a robust inventory management system.")
+                                .roleAndTask(List.of(
+                                        "Designed and implemented a scalable inventory management system.",
+                                        "Developed real-time stock tracking features.",
+                                        "Optimized database performance with Hibernate."
+                                ))
+                                .star(Resume.Star.builder()
+                                        .situation("The client needed a centralized system to track and manage inventory across multiple warehouses.")
+                                        .task("Develop a system that provides real-time stock updates and supports concurrent users.")
+                                        .action("Built a Spring Boot application with Hibernate for database management and integrated RESTful APIs for user access.")
+                                        .result("Enabled real-time inventory tracking, reducing stock discrepancies by 30%.")
+                                        .build())
+                                .troubleShooting(Resume.TroubleShooting.builder()
+                                        .problem("Concurrency issues during stock updates caused inconsistent inventory data.")
+                                        .hypothesis("The issue was due to improper transaction management in high-concurrency environments.")
+                                        .tring("Implemented proper transaction isolation levels and optimized Hibernate session handling.")
+                                        .result("Resolved data inconsistency and improved transaction reliability under high user load.")
+                                        .build())
                                 .repoLink("https://github.com/johndoe/inventory")
                                 .build(),
+
                         Resume.Project.builder()
                                 .projectName("Payment Gateway")
                                 .projectStartedAt("2020-01-01")
                                 .projectEndedAt("2020-12-31")
                                 .skillSet("Node.js, MongoDB, Express")
-                                .projectDescription("Integrated a scalable payment gateway.")
+                                .roleAndTask(List.of(
+                                        "Integrated a scalable payment gateway for secure transactions.",
+                                        "Developed fraud detection mechanisms.",
+                                        "Optimized API response times for high-traffic scenarios."
+                                ))
+                                .star(Resume.Star.builder()
+                                        .situation("The client required a secure and scalable payment system for their e-commerce platform.")
+                                        .task("Integrate a payment gateway capable of handling high transaction volumes and ensuring security.")
+                                        .action("Developed the gateway using Node.js and MongoDB, implemented tokenized payment processing, and ensured API security.")
+                                        .result("Handled 20,000 transactions daily with a 99.9% success rate.")
+                                        .build())
+                                .troubleShooting(Resume.TroubleShooting.builder()
+                                        .problem("High API response time during peak traffic.")
+                                        .hypothesis("The latency was caused by inefficient database queries and redundant API calls.")
+                                        .tring("Optimized MongoDB queries with indexing and reduced API call redundancy.")
+                                        .result("Improved API response time by 40%, ensuring smooth transaction processing during peak hours.")
+                                        .build())
                                 .repoLink("https://github.com/johndoe/payment")
                                 .build()
                 )) // 프로젝트
@@ -176,12 +209,28 @@ public class ResumeServiceTest {
                 )) // 경력
                 .projects(List.of(
                         Resume.Project.builder()
-                                .projectName("E-commerce Platform")
-                                .projectStartedAt("2021-01-01")
-                                .projectEndedAt("2021-12-31")
-                                .skillSet("React, Redux, Tailwind CSS")
-                                .projectDescription("Built an e-commerce platform.")
-                                .repoLink("https://github.com/janesmith/ecommerce")
+                                .projectName("Inventory Management System")
+                                .projectStartedAt("2021-05-01")
+                                .projectEndedAt("2021-12-01")
+                                .skillSet("Java, Spring Boot, Hibernate")
+                                .roleAndTask(List.of(
+                                        "Designed and implemented a scalable inventory management system.",
+                                        "Developed real-time stock tracking features.",
+                                        "Optimized database performance with Hibernate."
+                                ))
+                                .star(Resume.Star.builder()
+                                        .situation("The client needed a centralized system to track and manage inventory across multiple warehouses.")
+                                        .task("Develop a system that provides real-time stock updates and supports concurrent users.")
+                                        .action("Built a Spring Boot application with Hibernate for database management and integrated RESTful APIs for user access.")
+                                        .result("Enabled real-time inventory tracking, reducing stock discrepancies by 30%.")
+                                        .build())
+                                .troubleShooting(Resume.TroubleShooting.builder()
+                                        .problem("Concurrency issues during stock updates caused inconsistent inventory data.")
+                                        .hypothesis("The issue was due to improper transaction management in high-concurrency environments.")
+                                        .tring("Implemented proper transaction isolation levels and optimized Hibernate session handling.")
+                                        .result("Resolved data inconsistency and improved transaction reliability under high user load.")
+                                        .build())
+                                .repoLink("https://github.com/johndoe/inventory")
                                 .build()
                 )) // 프로젝트
                 .links(List.of(
@@ -241,12 +290,28 @@ public class ResumeServiceTest {
                 )) // 경력
                 .projects(List.of(
                         Resume.Project.builder()
-                                .projectName("AI Recommendation System")
-                                .projectStartedAt("2020-01-01")
-                                .projectEndedAt("2022-01-01")
-                                .skillSet("Python, TensorFlow, Scikit-learn")
-                                .projectDescription("Developed an AI-based recommendation system.")
-                                .repoLink("https://github.com/emilyjohnson/recommendation")
+                                .projectName("Inventory Management System")
+                                .projectStartedAt("2021-05-01")
+                                .projectEndedAt("2021-12-01")
+                                .skillSet("Java, Spring Boot, Hibernate")
+                                .roleAndTask(List.of(
+                                        "Designed and implemented a scalable inventory management system.",
+                                        "Developed real-time stock tracking features.",
+                                        "Optimized database performance with Hibernate."
+                                ))
+                                .star(Resume.Star.builder()
+                                        .situation("The client needed a centralized system to track and manage inventory across multiple warehouses.")
+                                        .task("Develop a system that provides real-time stock updates and supports concurrent users.")
+                                        .action("Built a Spring Boot application with Hibernate for database management and integrated RESTful APIs for user access.")
+                                        .result("Enabled real-time inventory tracking, reducing stock discrepancies by 30%.")
+                                        .build())
+                                .troubleShooting(Resume.TroubleShooting.builder()
+                                        .problem("Concurrency issues during stock updates caused inconsistent inventory data.")
+                                        .hypothesis("The issue was due to improper transaction management in high-concurrency environments.")
+                                        .tring("Implemented proper transaction isolation levels and optimized Hibernate session handling.")
+                                        .result("Resolved data inconsistency and improved transaction reliability under high user load.")
+                                        .build())
+                                .repoLink("https://github.com/johndoe/inventory")
                                 .build()
                 )) // 프로젝트
                 .links(List.of(

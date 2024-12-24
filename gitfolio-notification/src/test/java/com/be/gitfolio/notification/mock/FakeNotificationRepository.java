@@ -43,4 +43,9 @@ public class FakeNotificationRepository implements NotificationRepository {
     public List<Notification> findAllByReceiverIdAndReadFalse(Long receiverId) {
         return data.stream().filter(item -> item.getReceiverId().equals(receiverId) && !item.isRead()).collect(Collectors.toList());
     }
+
+    @Override
+    public void deleteAllByMemberId(Long memberId) {
+        data.removeIf(item -> item.getReceiverId().equals(memberId) || item.getSenderId().equals(memberId));
+    }
 }
