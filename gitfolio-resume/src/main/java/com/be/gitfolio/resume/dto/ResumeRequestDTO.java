@@ -59,6 +59,7 @@ public class ResumeRequestDTO {
 
     @Builder
     public record ResumeInfoForAiDTO(
+            Template template,
             String resumeId,
             Long memberId,
             String memberName,
@@ -76,6 +77,7 @@ public class ResumeRequestDTO {
     ) {
         public static ResumeInfoForAiDTO from(Resume resume, String avatarUrl) {
             return new ResumeInfoForAiDTO(
+                    resume.getTemplate(),
                     resume.getId(),
                     resume.getMemberId(),
                     resume.getMemberName(),
