@@ -20,7 +20,8 @@ RUN chmod +x gradlew && \
 
 COPY . .
 
-RUN ./gradlew clean build -x test && \
+RUN cat .env && \
+    ./gradlew clean build -x test && \
 # 테스트 후 없앨지 결정
     cp .env build && \
     cp */build/libs/*-SNAPSHOT.jar build
