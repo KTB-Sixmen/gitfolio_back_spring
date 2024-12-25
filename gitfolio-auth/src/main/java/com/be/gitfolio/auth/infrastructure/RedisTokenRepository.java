@@ -14,7 +14,7 @@ public class RedisTokenRepository {
 
     // Refresh 토큰 저장
     public void saveRefreshToken(String key, String refreshToken, Long expirationTimeMs) {
-        redisTemplate.opsForValue().set(key, refreshToken, expirationTimeMs, TimeUnit.MILLISECONDS);
+        redisTemplate.opsForValue().set(key, refreshToken, expirationTimeMs, TimeUnit.SECONDS);
     }
 
     // Refresh 토큰 조회
