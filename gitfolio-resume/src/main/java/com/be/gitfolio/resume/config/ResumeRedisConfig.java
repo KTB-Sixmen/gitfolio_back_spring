@@ -12,9 +12,9 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 public class ResumeRedisConfig {
 
     @Bean
-    public RedisTemplate<String, Object> authRedisTemplate(RedisConnectionFactory authConnectionFactory) {
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-        template.setConnectionFactory(authConnectionFactory);
+        template.setConnectionFactory(redisConnectionFactory);
 
         // Key에 프리픽스를 적용한 직렬화 설정
         template.setKeySerializer(keySerializer());
