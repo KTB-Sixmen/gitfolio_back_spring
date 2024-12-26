@@ -4,6 +4,12 @@
 
 </br>
 
+### 📽️ 시연 영상
+
+https://www.youtube.com/watch?v=Y-kImm8S-58
+
+</br>
+
 ### 🔖 프로젝트 개요
   - **주제** : GitHub 데이터를 활용한 LLM 기반 이력서 자동 생성 서비스
   - **대상** : 이력서 작성에 어려움을 느끼는 예비 개발자
@@ -18,20 +24,19 @@
 </br>
 
 ### 📚 기술 스택
-
-|파트|프레임워크 & 라이브러리|
-|---|---|
-|Frontend|`Next.js`, `Typescript`, `TailWindCSS`, `Zustand`|
-|Backend|`Java`, `Spring Boot`, `Spring Security`, `Redis`, `Kafka`, `Spring Data Jpa`|
-|AI/ML|`Fast API`, `GPT-4o`, `LangChain`, `ollama`, `onnx`|
-|Infra|`Docker`, `AWS`, `Ansible`, `Terraform`, `Prometheus`, `Grafana`, `Kubernetes`, `Jenkins`|
-|Collaborative|`Notion`, `Figma`, `Github`, `Discord`|
-
+<img width="801" alt="스크린샷 2024-12-25 12 32 20" src="https://github.com/user-attachments/assets/2e6cbfe5-27cd-4264-98e0-4c46871d8779" />
 
 </br>
 
+### 🌏 서버 아키텍쳐
+<img width="1157" alt="스크린샷 2024-12-27 00 24 13" src="https://github.com/user-attachments/assets/df2dfb9b-d429-49c8-9b11-631727cc9afa" />
+  
 
-### 🔗 주요 기능
+</br>
+</br>
+
+
+### 🔗 주요 기능  
 
   #### 1️⃣ 회원 및 인증 관리 시스템
   - GitHub 소셜 로그인을 통해 회원 가입 및 로그인을 할 수 있습니다.
@@ -91,10 +96,11 @@
 </br>
   
   **JMeter 쓰레드 그룹 설정**  
+<img width="343" alt="스크린샷 2024-12-03 16 35 00" src="https://github.com/user-attachments/assets/fce290f1-b10e-4de5-9594-0bffb3143263">
 
-  <img width="343" alt="스크린샷 2024-12-03 16 35 00" src="https://github.com/user-attachments/assets/fce290f1-b10e-4de5-9594-0bffb3143263">
 
 </br>
+
   
   **1. WebClient(blocking)**  
   
@@ -130,13 +136,15 @@
 </br>
 
 **결론**
+<img width="1166" alt="스크린샷 2024-12-27 00 14 59" src="https://github.com/user-attachments/assets/d01963dd-a400-4583-9f0e-ee93ddd3f7cc" />
+
 확장성 측면에서는 Kafka가 훨씬 더 좋을 것으로 예상되나, 트래픽이 엄청나게 몰리는 것이 아니고 비용적인 측면을 고려해야 한다면 WebClient 비동기 요청도 괜찮을 것 같음
 
 ---
 
 </br>
 
-  #### 3️⃣ GitHub API를 통해 사용자 레포지토리 목록 조회 성능 개선 - <ins>응답속도 약 31배 개선</ins>
+  #### 3️⃣ GitHub API를 통해 사용자 레포지토리 목록 조회 성능 개선 - <ins>응답속도 약 60배 개선</ins>
   
 </br>
 
@@ -155,11 +163,7 @@
 
 </br>
 
-**<캐싱 하기 전>** - 응답시간 <ins>약 3600ms</ins>
-<img width="1287" alt="스크린샷 2024-11-16 16 22 52" src="https://github.com/user-attachments/assets/2baeb23d-2e2a-4486-9e73-009e836743a3">
-
-**<캐싱 이후>** - 응답시간 <ins>약 120ms</ins>
-<img width="1295" alt="스크린샷 2024-11-16 16 23 04" src="https://github.com/user-attachments/assets/bd6d4956-4b41-48cf-b9cb-0306e8b6cc85">
+<img width="748" alt="스크린샷 2024-12-27 00 16 42" src="https://github.com/user-attachments/assets/e93b3708-7146-4a69-813e-c21500ff4b07" />
 
 ---
 
