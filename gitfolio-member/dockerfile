@@ -1,8 +1,10 @@
 FROM amazoncorretto:17 AS runner
+
 WORKDIR /member
 EXPOSE 8081
 
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
+# 빌더 스테이지에서 파일 복사
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-member-*-SNAPSHOT.jar member.jar
 
 CMD [ "java", "-jar", "member.jar" ]

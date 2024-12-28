@@ -1,8 +1,10 @@
 FROM amazoncorretto:17 AS runner
+
 WORKDIR /notification
 EXPOSE 8080
 
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
+# 빌더 스테이지에서 파일 복사
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-notification-*-SNAPSHOT.jar notification.jar
 
 CMD [ "java", "-jar", "notification.jar" ]

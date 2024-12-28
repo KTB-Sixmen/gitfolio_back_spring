@@ -20,7 +20,18 @@ RUN chmod +x gradlew && \
 
 COPY . .
 
-RUN ./gradlew clean build -x test && \
+RUN cat .env && \
+    ./gradlew clean build -x test && \
 # 테스트 후 없앨지 결정
     cp .env build && \
     cp */build/libs/*-SNAPSHOT.jar build
+
+    # 환경 파일 권한 설정
+
+RUN chmod 644 build/.env && \
+    cp */build/libs/*-SNAPSHOT.jar build && \
+    # 환경 변수 확인을 위한 출력
+    # 디버깅을 위한 환경 파일 확인
+    echo "===== 환경 파일 내용 확인 =====" && \
+    ls -la build/.env && \
+    cat build/.env

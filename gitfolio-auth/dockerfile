@@ -1,8 +1,11 @@
 FROM amazoncorretto:17 AS runner
+
 WORKDIR /auth
 EXPOSE 8080
 
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/.env .env
-COPY --from=aida0/gitfolio_builder:test /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
+# 빌더 스테이지에서 파일 복사
+COPY --from=builder:dev /gitfolio_back/build/.env .env
+COPY --from=builder:dev /gitfolio_back/build/*-auth-*-SNAPSHOT.jar auth.jar
 
+# 디버깅을 포함한 실행 명령
 CMD [ "java", "-jar", "auth.jar" ]
